@@ -18,7 +18,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "touch_n_go">("stripe");
+  const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
   const [formData, setFormData] = useState({
     full_name: "",
     phone_number: "",
@@ -73,7 +73,7 @@ export default function Checkout() {
           phone_number: formData.phone_number,
           email: formData.email || null,
           notes: formData.notes || null,
-          total_amount: totalAmount.toString(),
+          total_amount: totalAmount,
           payment_method: paymentMethod,
           payment_status: "pending",
           order_status: "pending",
@@ -190,8 +190,8 @@ export default function Checkout() {
                 <h2 className="text-2xl font-bold mb-4">Payment Method</h2>
                 <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
                   <div className="flex items-center space-x-2 p-4 border rounded">
-                    <RadioGroupItem value="stripe" id="stripe" />
-                    <Label htmlFor="stripe" className="flex-1 cursor-pointer">
+                    <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
+                    <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
                       FPX (Online Banking via Stripe)
                     </Label>
                   </div>
