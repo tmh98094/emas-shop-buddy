@@ -5,14 +5,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export const HeroCarousel = () => {
-  const plugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true })
-  );
-
   const slides = [
     {
       title: "Exquisite 916 Gold Jewelry",
@@ -32,12 +27,7 @@ export const HeroCarousel = () => {
   ];
 
   return (
-    <Carousel
-      plugins={[plugin.current]}
-      className="w-full"
-      onMouseEnter={plugin.current.stop}
-      onMouseLeave={plugin.current.reset}
-    >
+    <Carousel className="w-full" opts={{ loop: true }}>
       <CarouselContent>
         {slides.map((slide, index) => (
           <CarouselItem key={index}>
