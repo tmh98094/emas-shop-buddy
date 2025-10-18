@@ -113,9 +113,28 @@ export default function Checkout() {
       if (paymentMethod === "touch_n_go") {
         navigate(`/payment/touch-n-go/${order.id}`);
       } else {
-        // Navigate to Stripe checkout (to be implemented)
-        toast({ title: "Stripe payment coming soon!" });
-        navigate(`/order-confirmation/${order.id}`);
+        // Create Stripe checkout session
+        const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
+          "create-stripe-checkout",
+          {
+            body: {
+              orderId: order.id,
+              orderNumber: order.order_number,
+              amount: totalAmount,
+              successUrl: `${window.location.origin}/order-confirmation/${order.id}`,
+              cancelUrl: `${window.location.origin}/checkout`,
+            },
+          }
+        );
+
+        if (sessionError) throw sessionError;
+
+        // Redirect to Stripe checkout
+        if (sessionData?.url) {
+          window.location.href = sessionData.url;
+        } else {
+          throw new Error("Failed to create Stripe session");
+        }
       }
     } catch (error: any) {
       toast({
