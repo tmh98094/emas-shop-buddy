@@ -33,16 +33,28 @@ export default function TouchNGo() {
   });
 
   const verifyPayment = useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { error } = await supabase
+    mutationFn: async ({ paymentId, orderId }: { paymentId: string; orderId: string }) => {
+      // Update payment verification
+      const { error: paymentError } = await supabase
         .from("touch_n_go_payments")
         .update({ verified: true, verified_at: new Date().toISOString() })
         .eq("id", paymentId);
-      if (error) throw error;
+      if (paymentError) throw paymentError;
+
+      // Update order status
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({ 
+          payment_status: "completed",
+          order_status: "processing"
+        })
+        .eq("id", orderId);
+      if (orderError) throw orderError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-touch-n-go"] });
-      toast({ title: "Payment verified successfully" });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast({ title: "Payment verified and order updated successfully" });
     },
   });
 
@@ -95,7 +107,10 @@ export default function TouchNGo() {
                     {!payment.verified && (
                       <Button
                         size="sm"
-                        onClick={() => verifyPayment.mutate(payment.id)}
+                        onClick={() => verifyPayment.mutate({ 
+                          paymentId: payment.id, 
+                          orderId: payment.order_id 
+                        })}
                       >
                         Verify
                       </Button>
