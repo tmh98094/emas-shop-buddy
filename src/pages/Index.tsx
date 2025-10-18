@@ -1,12 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { HeroCarousel } from "@/components/HeroCarousel";
+import { AboutSection } from "@/components/AboutSection";
+import { ProductSection } from "@/components/ProductSection";
+import { CategorySection } from "@/components/CategorySection";
+import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      <GoldPriceBanner />
+      
+      <main>
+        <HeroCarousel />
+        <AboutSection />
+        <ProductSection title="Featured Collection" filter="featured" />
+        <CategorySection />
+        <ProductSection title="Best Sellers" filter="best_seller" />
+        <ProductSection title="New Arrivals" filter="new_arrival" />
+      </main>
+      
+      <WhatsAppFloater />
     </div>
   );
 };
