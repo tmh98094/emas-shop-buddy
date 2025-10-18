@@ -23,9 +23,22 @@ export default function TouchNGoPayment() {
 
     setUploading(true);
     try {
-      // For now, just store a placeholder URL
-      // In production, you'd upload to Supabase Storage
-      setReceiptUrl(URL.createObjectURL(file));
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || "guest";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}/${orderId}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from("payment-receipts")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("payment-receipts")
+        .getPublicUrl(fileName);
+
+      setReceiptUrl(publicUrl);
       toast({ title: "Receipt uploaded successfully!" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

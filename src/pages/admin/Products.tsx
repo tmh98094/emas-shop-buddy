@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/table";
 
 export default function Products() {
+  const navigate = useNavigate();
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
@@ -31,7 +33,7 @@ export default function Products() {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-primary">Products</h1>
-        <Button>
+        <Button onClick={() => navigate("/admin/products/new")}>
           <Plus className="h-4 w-4 mr-2" />
           Add Product
         </Button>
@@ -58,7 +60,9 @@ export default function Products() {
                 <TableCell>RM {Number(product.labour_fee).toFixed(2)}</TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">Edit</Button>
+                  <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/products/${product.id}`)}>
+                    Edit
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

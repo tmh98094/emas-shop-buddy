@@ -1,7 +1,9 @@
+import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -41,6 +43,7 @@ export default function Orders() {
               <TableHead>Payment</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -58,6 +61,11 @@ export default function Orders() {
                 </TableCell>
                 <TableCell>
                   {new Date(order.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/admin/orders/${order.id}`}>View</Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
