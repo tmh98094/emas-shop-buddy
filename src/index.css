@@ -4,95 +4,96 @@
 
 @layer base {
   :root {
-    /* Navy Blue Professional Theme for JJ Emas */
-    --background: 0 0% 100%;
-    --foreground: 216 100% 12%;
+    /* Luxury Gold Jewelry Theme for JJ Emas */
+    --background: 40 20% 97%;
+    --foreground: 30 10% 15%;
     
     --card: 0 0% 100%;
-    --card-foreground: 216 100% 12%;
+    --card-foreground: 30 10% 15%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 216 100% 12%;
+    --popover-foreground: 30 10% 15%;
     
-    /* Primary: Navy Blue */
-    --primary: 216 100% 20%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Elegant Gold */
+    --primary: 43 74% 49%;
+    --primary-foreground: 30 10% 15%;
     
-    /* Secondary: Lighter Navy */
-    --secondary: 216 50% 92%;
-    --secondary-foreground: 216 100% 12%;
+    /* Secondary: Cream */
+    --secondary: 35 25% 88%;
+    --secondary-foreground: 30 10% 15%;
     
-    /* Muted: Soft Gray-Blue */
-    --muted: 216 30% 96%;
-    --muted-foreground: 216 20% 45%;
+    /* Muted: Soft Cream */
+    --muted: 40 20% 94%;
+    --muted-foreground: 30 8% 45%;
     
-    /* Accent: Gold */
-    --accent: 45 100% 51%;
-    --accent-foreground: 216 100% 12%;
+    /* Accent: Bright Gold */
+    --accent: 38 92% 50%;
+    --accent-foreground: 30 10% 15%;
     
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 40 20% 97%;
     
-    --border: 216 20% 88%;
-    --input: 216 20% 88%;
-    --ring: 216 100% 20%;
+    --border: 35 15% 88%;
+    --input: 35 15% 88%;
+    --ring: 43 74% 49%;
     
     --radius: 0.5rem;
     
     /* Custom design tokens */
-    --gold: 45 100% 51%;
-    --gold-light: 45 100% 70%;
-    --navy-dark: 216 100% 12%;
-    --navy: 216 100% 20%;
-    --navy-light: 216 70% 35%;
+    --gold: 43 74% 49%;
+    --gold-light: 45 80% 65%;
+    --gold-dark: 38 60% 35%;
+    --cream: 40 30% 92%;
+    --brown: 30 15% 25%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 30 10% 15%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 30 10% 15%;
+    --sidebar-accent: 40 20% 94%;
+    --sidebar-accent-foreground: 30 10% 15%;
+    --sidebar-border: 35 15% 88%;
+    --sidebar-ring: 43 74% 49%;
   }
 
   .dark {
-    --background: 216 100% 8%;
-    --foreground: 0 0% 98%;
+    /* Dark Mode - Luxury Gold Theme */
+    --background: 30 15% 8%;
+    --foreground: 40 20% 95%;
     
-    --card: 216 90% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 30 15% 12%;
+    --card-foreground: 40 20% 95%;
     
-    --popover: 216 90% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 30 15% 12%;
+    --popover-foreground: 40 20% 95%;
     
-    --primary: 216 90% 35%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 74% 49%;
+    --primary-foreground: 30 10% 15%;
     
-    --secondary: 216 40% 18%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 30 20% 18%;
+    --secondary-foreground: 40 20% 95%;
     
-    --muted: 216 30% 18%;
-    --muted-foreground: 216 15% 65%;
+    --muted: 30 20% 18%;
+    --muted-foreground: 35 10% 60%;
     
-    --accent: 45 100% 51%;
-    --accent-foreground: 216 100% 12%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 30 10% 15%;
     
     --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 40 20% 95%;
     
-    --border: 216 30% 20%;
-    --input: 216 30% 20%;
-    --ring: 216 90% 35%;
+    --border: 30 20% 18%;
+    --input: 30 20% 18%;
+    --ring: 43 74% 49%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 30 15% 8%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 30 10% 15%;
+    --sidebar-accent: 30 20% 18%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 30 20% 18%;
+    --sidebar-ring: 43 74% 49%;
   }
 }
 
