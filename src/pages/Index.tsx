@@ -4,11 +4,13 @@ import { AboutSection } from "@/components/AboutSection";
 import { ProductSection } from "@/components/ProductSection";
 import { CategorySection } from "@/components/CategorySection";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
+import { Header } from "@/components/Header";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
       <GoldPriceBanner />
+      <Header />
       
       <main>
         <HeroCarousel />
