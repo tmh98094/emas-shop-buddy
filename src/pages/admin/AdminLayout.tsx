@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ export default function AdminLayout() {
     { name: "Products", href: "/admin/products", icon: Package },
     { name: "Categories", href: "/admin/categories", icon: Package },
     { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
+    { name: "Customers", href: "/admin/customers", icon: Users },
     { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];

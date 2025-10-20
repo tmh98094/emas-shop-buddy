@@ -67,21 +67,16 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
           )}
         </div>
       <CardContent className="p-4 space-y-2">
-        <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
+        <h3 className="font-semibold text-lg line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="px-2 py-1 bg-accent/10 text-accent-foreground rounded">
             {product.gold_type} Gold
           </span>
           <span>{product.weight_grams}g</span>
         </div>
-        <div className="space-y-1">
-          <p className="text-2xl font-bold text-primary">
-            RM {totalPrice.toFixed(2)}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Gold: RM {(goldPrice * product.weight_grams).toFixed(2)} + Labour: RM {product.labour_fee.toFixed(2)}
-          </p>
-        </div>
+        <p className="text-2xl font-bold text-primary">
+          RM {totalPrice.toFixed(2)}
+        </p>
       </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button 
