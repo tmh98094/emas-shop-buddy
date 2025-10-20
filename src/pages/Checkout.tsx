@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
@@ -12,13 +12,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateItemTotal, formatPrice } from "@/lib/price-utils";
+import { checkPriceChange } from "@/lib/price-staleness";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Checkout() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, refreshPrices } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [priceChangeDetected, setPriceChangeDetected] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
   const [formData, setFormData] = useState({
     full_name: "",
@@ -59,8 +63,36 @@ export default function Checkout() {
     }, 0);
   };
 
+  // Check if any prices need updating before checkout
+  useEffect(() => {
+    if (!goldPrices || items.length === 0) return;
+
+    const hasSignificantChange = items.some(item => {
+      if (!item.gold_price_snapshot || !item.product) return false;
+      
+      const currentGoldPrice = goldPrices[item.product.gold_type as "916" | "999"];
+      if (!currentGoldPrice) return false;
+
+      const priceChange = checkPriceChange(item.gold_price_snapshot, currentGoldPrice);
+      return priceChange.hasChanged;
+    });
+
+    setPriceChangeDetected(hasSignificantChange);
+  }, [goldPrices, items]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent order placement if prices changed
+    if (priceChangeDetected) {
+      toast({
+        title: "Price Update Required",
+        description: "Gold prices have changed. Please refresh your cart prices before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -169,6 +201,25 @@ export default function Checkout() {
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-primary mb-8">Checkout</h1>
 
+        {priceChangeDetected && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertTitle>Price Update Required</AlertTitle>
+            <AlertDescription>
+              The gold price has changed since you added items to your cart. You must refresh prices before placing your order.
+              <Button 
+                onClick={refreshPrices} 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Prices Now
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
@@ -262,7 +313,7 @@ export default function Checkout() {
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={loading}
+                  disabled={loading || priceChangeDetected}
                 >
                   {loading ? "Processing..." : "Place Order"}
                 </Button>

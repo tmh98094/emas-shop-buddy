@@ -20,6 +20,7 @@ interface CartContextType {
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
+  refreshPrices: () => Promise<void>;
   loading: boolean;
 }
 
@@ -180,8 +181,51 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshPrices = async () => {
+    try {
+      // Fetch current gold prices
+      const { data: settings, error: settingsError } = await supabase
+        .from("settings")
+        .select("key, value")
+        .in("key", ["gold_price_916", "gold_price_999"]);
+
+      if (settingsError) throw settingsError;
+
+      const goldPrices: Record<string, number> = {};
+      settings?.forEach(item => {
+        if (item.key === "gold_price_916") goldPrices["916"] = (item.value as any).price;
+        else if (item.key === "gold_price_999") goldPrices["999"] = (item.value as any).price;
+      });
+
+      // Update all cart items with new prices
+      for (const item of items) {
+        const product = item.product;
+        if (!product) continue;
+
+        const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
+        const weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
+        const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
+        const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
+
+        await supabase
+          .from("cart_items")
+          .update({
+            calculated_price: calculatedPrice,
+            gold_price_snapshot: goldPrice,
+            locked_at: new Date().toISOString(),
+          })
+          .eq("id", item.id);
+      }
+
+      await fetchCart();
+      toast({ title: "Prices Updated", description: "All cart prices have been refreshed with current gold prices." });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   return (
-    <CartContext.Provider value={{ items, addItem, updateQuantity, removeItem, clearCart, loading }}>
+    <CartContext.Provider value={{ items, addItem, updateQuantity, removeItem, clearCart, refreshPrices, loading }}>
       {children}
     </CartContext.Provider>
   );

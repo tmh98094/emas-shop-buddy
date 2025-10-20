@@ -4,14 +4,18 @@ import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { useCart } from "@/hooks/useCart";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Minus, Plus, Trash2, AlertTriangle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { checkPriceChange, getTimeSinceLocked } from "@/lib/price-staleness";
+import { useState, useEffect } from "react";
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, loading } = useCart();
+  const { items, updateQuantity, removeItem, refreshPrices, loading } = useCart();
   const navigate = useNavigate();
+  const [priceChangeDetected, setPriceChangeDetected] = useState(false);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -45,6 +49,23 @@ export default function Cart() {
 
   const totalAmount = items.reduce((sum, item) => sum + calculateItemPrice(item), 0);
 
+  // Check if any prices need updating
+  useEffect(() => {
+    if (!goldPrices || items.length === 0) return;
+
+    const hasSignificantChange = items.some(item => {
+      if (!item.gold_price_snapshot || !item.product) return false;
+      
+      const currentGoldPrice = goldPrices[item.product.gold_type as "916" | "999"];
+      if (!currentGoldPrice) return false;
+
+      const priceChange = checkPriceChange(item.gold_price_snapshot, currentGoldPrice);
+      return priceChange.hasChanged;
+    });
+
+    setPriceChangeDetected(hasSignificantChange);
+  }, [goldPrices, items]);
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -54,6 +75,25 @@ export default function Cart() {
       
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-primary mb-8">Shopping Cart</h1>
+
+        {priceChangeDetected && (
+          <Alert variant="default" className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-amber-900 dark:text-amber-100">Gold Price Changed</AlertTitle>
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              The gold price has changed since you added items to your cart. Click "Refresh Prices" to update your cart with current prices.
+              <Button 
+                onClick={refreshPrices} 
+                variant="outline" 
+                size="sm" 
+                className="ml-4 border-amber-600 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Prices
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {items.length === 0 ? (
           <Card className="p-12 text-center">
@@ -75,9 +115,14 @@ export default function Cart() {
                         alt={product.name}
                         className="w-24 h-24 object-cover rounded"
                       />
-                      <div className="flex-1">
+                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{product.name}</h3>
                         <p className="text-sm text-muted-foreground">{product.gold_type} Gold</p>
+                        {item.locked_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Price locked {getTimeSinceLocked(item.locked_at)}
+                          </p>
+                        )}
                         <p className="text-primary font-bold mt-2">
                           RM {itemPrice.toFixed(2)}
                         </p>
