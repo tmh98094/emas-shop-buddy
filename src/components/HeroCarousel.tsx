@@ -36,6 +36,7 @@ export const HeroCarousel = () => {
                 src={slide.image}
                 alt={slide.title}
                 className="absolute inset-0 w-full h-full object-cover"
+                fetchPriority={index === 0 ? "high" : undefined}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-navy/80 to-transparent" />
               <div className="absolute inset-0 flex items-center">
