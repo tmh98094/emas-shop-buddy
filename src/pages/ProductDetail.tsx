@@ -18,8 +18,6 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -45,9 +43,7 @@ export default function ProductDetail() {
         .from("products")
         .select(`
           *,
-          product_images (*),
-          product_variants (*),
-          product_colors (*)
+          product_images (*)
         `)
         .eq("slug", slug)
         .single();
@@ -63,7 +59,7 @@ export default function ProductDetail() {
   const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
 
   const handleAddToCart = async () => {
-    await addItem(product.id, quantity, selectedVariant || undefined, selectedColor || undefined);
+    await addItem(product.id, quantity);
     navigate("/cart");
   };
 
@@ -124,42 +120,6 @@ export default function ProductDetail() {
                 Stock: <span className="font-semibold">{product.stock} available</span>
               </p>
             </div>
-
-            {/* Variants */}
-            {product.product_variants && product.product_variants.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3">Select Variant</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.product_variants.map((variant: any) => (
-                    <Button
-                      key={variant.id}
-                      variant={selectedVariant === variant.id ? "default" : "outline"}
-                      onClick={() => setSelectedVariant(variant.id)}
-                    >
-                      {variant.value}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Colors */}
-            {product.product_colors && product.product_colors.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3">Select Color</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.product_colors.map((color: any) => (
-                    <Button
-                      key={color.id}
-                      variant={selectedColor === color.id ? "default" : "outline"}
-                      onClick={() => setSelectedColor(color.id)}
-                    >
-                      {color.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Quantity */}
             <div>

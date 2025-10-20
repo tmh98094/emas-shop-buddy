@@ -92,37 +92,24 @@ export default function About() {
           <h2 className="text-3xl font-bold mb-6 text-center">Visit Our Store</h2>
           <Card>
             <CardContent className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">Store Location</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-primary mt-1" />
-                      <div>
-                        <p className="font-medium">JJ Emas Headquarters</p>
-                        <p className="text-muted-foreground">123 Gold Street</p>
-                        <p className="text-muted-foreground">Kuala Lumpur 50000</p>
-                        <p className="text-muted-foreground">Malaysia</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-primary mt-1" />
-                      <div>
-                        <p className="font-medium">Business Hours</p>
-                        <p className="text-muted-foreground">Monday - Saturday: 10:00 AM - 7:00 PM</p>
-                        <p className="text-muted-foreground">Sunday: 11:00 AM - 5:00 PM</p>
-                      </div>
-                    </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-primary mt-1" />
+                  <div>
+                    <p className="font-medium">JJ Emas Headquarters</p>
+                    <p className="text-muted-foreground">123 Gold Street</p>
+                    <p className="text-muted-foreground">Kuala Lumpur 50000</p>
+                    <p className="text-muted-foreground">Malaysia</p>
                   </div>
                 </div>
 
-                <div className="bg-muted rounded-lg flex items-center justify-center p-8">
-                  <p className="text-muted-foreground text-center">
-                    Google Maps Integration
-                    <br />
-                    <span className="text-sm">(Map would be embedded here)</span>
-                  </p>
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-primary mt-1" />
+                  <div>
+                    <p className="font-medium">Business Hours</p>
+                    <p className="text-muted-foreground">Monday - Saturday: 10:00 AM - 7:00 PM</p>
+                    <p className="text-muted-foreground">Sunday: 11:00 AM - 5:00 PM</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
