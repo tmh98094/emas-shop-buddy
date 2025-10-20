@@ -49,9 +49,12 @@ export type Database = {
       }
       cart_items: {
         Row: {
+          calculated_price: number | null
           color_id: string | null
           created_at: string
+          gold_price_snapshot: number | null
           id: string
+          locked_at: string | null
           product_id: string
           quantity: number
           session_id: string | null
@@ -60,9 +63,12 @@ export type Database = {
           variant_id: string | null
         }
         Insert: {
+          calculated_price?: number | null
           color_id?: string | null
           created_at?: string
+          gold_price_snapshot?: number | null
           id?: string
+          locked_at?: string | null
           product_id: string
           quantity?: number
           session_id?: string | null
@@ -71,9 +77,12 @@ export type Database = {
           variant_id?: string | null
         }
         Update: {
+          calculated_price?: number | null
           color_id?: string | null
           created_at?: string
+          gold_price_snapshot?: number | null
           id?: string
+          locked_at?: string | null
           product_id?: string
           quantity?: number
           session_id?: string | null
@@ -403,6 +412,7 @@ export type Database = {
       }
       products: {
         Row: {
+          cached_current_price: number | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -421,6 +431,7 @@ export type Database = {
           weight_grams: number
         }
         Insert: {
+          cached_current_price?: number | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -439,6 +450,7 @@ export type Database = {
           weight_grams: number
         }
         Update: {
+          cached_current_price?: number | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -676,6 +688,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_product_cached_prices: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

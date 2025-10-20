@@ -31,10 +31,16 @@ export default function Cart() {
   });
 
   const calculateItemPrice = (item: any) => {
+    // Use locked price if available (Phase 1: Price Locking)
+    if (item.calculated_price) {
+      return Math.round(item.calculated_price * item.quantity * 100) / 100;
+    }
+    
+    // Fallback to dynamic calculation for old cart items
     const product = item.product;
     if (!product || !goldPrices) return 0;
     const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
-    return (goldPrice * parseFloat(product.weight_grams) + parseFloat(product.labour_fee)) * item.quantity;
+    return Math.round((goldPrice * parseFloat(product.weight_grams) + parseFloat(product.labour_fee)) * item.quantity * 100) / 100;
   };
 
   const totalAmount = items.reduce((sum, item) => sum + calculateItemPrice(item), 0);

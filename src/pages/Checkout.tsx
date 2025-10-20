@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateItemTotal, formatPrice } from "@/lib/price-utils";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Checkout() {
@@ -45,9 +46,15 @@ export default function Checkout() {
 
   const calculateTotal = () => {
     return items.reduce((sum, item) => {
+      // Use locked price if available
+      if (item.calculated_price) {
+        return sum + Math.round(item.calculated_price * item.quantity * 100) / 100;
+      }
+      
+      // Fallback to dynamic calculation
       const product = item.product;
       const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-      const itemTotal = (goldPrice * parseFloat(product.weight_grams) + parseFloat(product.labour_fee)) * item.quantity;
+      const itemTotal = calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
       return sum + itemTotal;
     }, 0);
   };
@@ -83,11 +90,13 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items
+      // Create order items - use locked prices from cart
       const orderItems = items.map(item => {
         const product = item.product;
-        const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-        const subtotal = (goldPrice * parseFloat(product.weight_grams as string) + parseFloat(product.labour_fee as string)) * item.quantity;
+        const goldPrice = item.gold_price_snapshot || goldPrices?.[product.gold_type as "916" | "999"] || 0;
+        const subtotal = item.calculated_price 
+          ? Math.round(item.calculated_price * item.quantity * 100) / 100
+          : calculateItemTotal(goldPrice, parseFloat(product.weight_grams as string), parseFloat(product.labour_fee as string), item.quantity);
 
         return {
           order_id: order.id,
@@ -230,19 +239,23 @@ export default function Checkout() {
                 <div className="space-y-4 mb-6">
                   {items.map((item) => {
                     const product = item.product;
-                    const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-                    const itemTotal = (goldPrice * parseFloat(product.weight_grams) + parseFloat(product.labour_fee)) * item.quantity;
+                    const itemTotal = item.calculated_price 
+                      ? Math.round(item.calculated_price * item.quantity * 100) / 100
+                      : (() => {
+                          const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
+                          return calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
+                        })();
                     
                     return (
                       <div key={item.id} className="flex justify-between text-sm">
                         <span>{product.name} x {item.quantity}</span>
-                        <span>RM {itemTotal.toFixed(2)}</span>
+                        <span>RM {formatPrice(itemTotal)}</span>
                       </div>
                     );
                   })}
                   <div className="border-t pt-4 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">RM {calculateTotal().toFixed(2)}</span>
+                    <span className="text-primary">RM {formatPrice(calculateTotal())}</span>
                   </div>
                 </div>
                 <Button

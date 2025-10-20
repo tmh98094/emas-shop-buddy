@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
+import { calculatePrice, formatPrice } from "@/lib/price-utils";
 
 interface ProductCardProps {
   product: {
@@ -43,7 +44,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   });
 
   const goldPrice = goldPrices?.[product.gold_type] || 0;
-  const totalPrice = (goldPrice * product.weight_grams) + product.labour_fee;
+  const totalPrice = calculatePrice(goldPrice, product.weight_grams, product.labour_fee);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,9 +75,9 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
           </span>
           <span>{product.weight_grams}g</span>
         </div>
-        <p className="text-2xl font-bold text-primary">
-          RM {totalPrice.toFixed(2)}
-        </p>
+          <p className="text-2xl font-bold text-primary">
+            RM {formatPrice(totalPrice)}
+          </p>
       </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button 

@@ -8,6 +8,7 @@ import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus } from "lucide-react";
@@ -59,7 +60,7 @@ export default function ProductDetail() {
   if (!product) return <div>Product not found</div>;
 
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-  const totalPrice = (goldPrice * Number(product.weight_grams)) + Number(product.labour_fee);
+  const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
 
   const handleAddToCart = async () => {
     await addItem(product.id, quantity, selectedVariant || undefined, selectedColor || undefined);
@@ -102,13 +103,13 @@ export default function ProductDetail() {
             </div>
 
             <div className="text-3xl font-bold text-primary">
-              RM {totalPrice.toFixed(2)}
+              RM {formatPrice(totalPrice)}
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Gold Price ({product.gold_type}): RM {goldPrice.toFixed(2)}/g</p>
+              <p>Gold Price ({product.gold_type}): RM {formatPrice(goldPrice)}/g</p>
               <p>Weight: {product.weight_grams}g</p>
-              <p>Labour Fee: RM {Number(product.labour_fee).toFixed(2)}</p>
+              <p>Labour Fee: RM {formatPrice(Number(product.labour_fee))}</p>
             </div>
 
             {product.description && (
