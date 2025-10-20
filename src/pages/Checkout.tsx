@@ -99,13 +99,15 @@ export default function Checkout() {
       const { data: { user } } = await supabase.auth.getUser();
       const totalAmount = calculateTotal();
 
-      // Generate order number
+      // Generate order id and number
+      const orderId = crypto.randomUUID();
       const orderNumber = `JJ${Date.now()}`;
 
-      // Create order
-      const { data: order, error: orderError } = await supabase
+      // Create order (avoid select to bypass RLS read restrictions for guests)
+      const { error: orderError } = await supabase
         .from("orders")
         .insert([{
+          id: orderId,
           ...(user?.id && { user_id: user.id }),
           order_number: orderNumber,
           full_name: formData.full_name,
@@ -116,9 +118,7 @@ export default function Checkout() {
           payment_method: paymentMethod,
           payment_status: "pending",
           order_status: "pending",
-        }])
-        .select()
-        .single();
+        }]);
 
       if (orderError) throw orderError;
 
@@ -131,7 +131,7 @@ export default function Checkout() {
           : calculateItemTotal(goldPrice, parseFloat(product.weight_grams as string), parseFloat(product.labour_fee as string), item.quantity);
 
         return {
-          order_id: order.id,
+          order_id: orderId,
           product_id: item.product_id,
           product_name: product.name,
           gold_type: product.gold_type,
@@ -152,17 +152,17 @@ export default function Checkout() {
       await clearCart();
 
       if (paymentMethod === "touch_n_go") {
-        navigate(`/payment/touch-n-go/${order.id}`);
+        navigate(`/payment/touch-n-go/${orderId}`);
       } else {
         // Create Stripe checkout session
         const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
           "create-stripe-checkout",
           {
             body: {
-              orderId: order.id,
-              orderNumber: order.order_number,
+              orderId: orderId,
+              orderNumber: orderNumber,
               amount: totalAmount,
-              successUrl: `${window.location.origin}/order-confirmation/${order.id}`,
+              successUrl: `${window.location.origin}/order-confirmation/${orderId}`,
               cancelUrl: `${window.location.origin}/checkout`,
             },
           }
