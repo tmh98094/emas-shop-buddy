@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           color_id: string | null
@@ -289,6 +322,47 @@ export type Database = {
           },
         ]
       }
+      product_reviews: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_approved: boolean | null
+          product_id: string
+          rating: number
+          review_text: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          product_id: string
+          rating: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          product_id?: string
+          rating?: number
+          review_text?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string
@@ -338,6 +412,7 @@ export type Database = {
           is_featured: boolean | null
           is_new_arrival: boolean | null
           labour_fee: number
+          low_stock_threshold: number | null
           name: string
           slug: string
           stock: number
@@ -355,6 +430,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
           labour_fee?: number
+          low_stock_threshold?: number | null
           name: string
           slug: string
           stock?: number
@@ -372,6 +448,7 @@ export type Database = {
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
           labour_fee?: number
+          low_stock_threshold?: number | null
           name?: string
           slug?: string
           stock?: number
@@ -446,6 +523,47 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      stock_notifications: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          notified: boolean | null
+          notified_at: string | null
+          phone: string | null
+          product_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          notified?: boolean | null
+          notified_at?: string | null
+          phone?: string | null
+          product_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          notified?: boolean | null
+          notified_at?: string | null
+          phone?: string | null
+          product_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_notifications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sub_categories: {
         Row: {
