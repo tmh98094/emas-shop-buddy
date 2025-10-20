@@ -36,8 +36,6 @@ export default function ProductForm() {
 
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<any[]>([]);
-  const [variants, setVariants] = useState<Array<{ name: string; value: string; price_adjustment: string; stock_adjustment: string }>>([]);
-  const [colors, setColors] = useState<Array<{ name: string; hex_code: string }>>([]);
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -74,9 +72,7 @@ export default function ProductForm() {
         .from("products")
         .select(`
           *,
-          product_images (*),
-          product_variants (*),
-          product_colors (*)
+          product_images (*)
         `)
         .eq("id", id)
         .single();
@@ -104,16 +100,6 @@ export default function ProductForm() {
         is_new_arrival: product.is_new_arrival || false,
       });
       setExistingImages(product.product_images || []);
-      setVariants(product.product_variants?.map((v: any) => ({
-        name: v.name,
-        value: v.value,
-        price_adjustment: v.price_adjustment?.toString() || "0",
-        stock_adjustment: v.stock_adjustment?.toString() || "0",
-      })) || []);
-      setColors(product.product_colors?.map((c: any) => ({
-        name: c.name,
-        hex_code: c.hex_code || "#000000",
-      })) || []);
     }
   }, [product]);
 
@@ -168,34 +154,6 @@ export default function ProductForm() {
           display_order: existingImages.length + i,
         });
       }
-
-      // Delete and recreate variants
-      if (isEdit) {
-        await supabase.from("product_variants").delete().eq("product_id", productId);
-        await supabase.from("product_colors").delete().eq("product_id", productId);
-      }
-
-      // Insert variants
-      if (variants.length > 0) {
-        const variantsData = variants.map((v) => ({
-          product_id: productId,
-          name: v.name,
-          value: v.value,
-          price_adjustment: parseFloat(v.price_adjustment),
-          stock_adjustment: parseInt(v.stock_adjustment),
-        }));
-        await supabase.from("product_variants").insert(variantsData);
-      }
-
-      // Insert colors
-      if (colors.length > 0) {
-        const colorsData = colors.map((c) => ({
-          product_id: productId,
-          name: c.name,
-          hex_code: c.hex_code,
-        }));
-        await supabase.from("product_colors").insert(colorsData);
-      }
     },
     onSuccess: () => {
       toast({ title: `Product ${isEdit ? "updated" : "created"} successfully` });
@@ -210,14 +168,6 @@ export default function ProductForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate();
-  };
-
-  const addVariant = () => {
-    setVariants([...variants, { name: "", value: "", price_adjustment: "0", stock_adjustment: "0" }]);
-  };
-
-  const addColor = () => {
-    setColors([...colors, { name: "", hex_code: "#000000" }]);
   };
 
   const removeImage = async (imageId: string) => {
@@ -415,90 +365,6 @@ export default function ProductForm() {
             />
           </Label>
           {images.length > 0 && <p className="mt-2">{images.length} new image(s) selected</p>}
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Variants</h2>
-          
-          {variants.map((variant, index) => (
-            <div key={index} className="grid grid-cols-5 gap-2 mb-2">
-              <Input
-                placeholder="Name (e.g., Size)"
-                value={variant.name}
-                onChange={(e) => {
-                  const newVariants = [...variants];
-                  newVariants[index].name = e.target.value;
-                  setVariants(newVariants);
-                }}
-              />
-              <Input
-                placeholder="Value (e.g., Large)"
-                value={variant.value}
-                onChange={(e) => {
-                  const newVariants = [...variants];
-                  newVariants[index].value = e.target.value;
-                  setVariants(newVariants);
-                }}
-              />
-              <Input
-                type="number"
-                placeholder="Price +"
-                value={variant.price_adjustment}
-                onChange={(e) => {
-                  const newVariants = [...variants];
-                  newVariants[index].price_adjustment = e.target.value;
-                  setVariants(newVariants);
-                }}
-              />
-              <Input
-                type="number"
-                placeholder="Stock +"
-                value={variant.stock_adjustment}
-                onChange={(e) => {
-                  const newVariants = [...variants];
-                  newVariants[index].stock_adjustment = e.target.value;
-                  setVariants(newVariants);
-                }}
-              />
-              <Button type="button" variant="destructive" onClick={() => setVariants(variants.filter((_, i) => i !== index))}>
-                Remove
-              </Button>
-            </div>
-          ))}
-          
-          <Button type="button" variant="outline" onClick={addVariant}>Add Variant</Button>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Colors</h2>
-          
-          {colors.map((color, index) => (
-            <div key={index} className="grid grid-cols-3 gap-2 mb-2">
-              <Input
-                placeholder="Color name"
-                value={color.name}
-                onChange={(e) => {
-                  const newColors = [...colors];
-                  newColors[index].name = e.target.value;
-                  setColors(newColors);
-                }}
-              />
-              <Input
-                type="color"
-                value={color.hex_code}
-                onChange={(e) => {
-                  const newColors = [...colors];
-                  newColors[index].hex_code = e.target.value;
-                  setColors(newColors);
-                }}
-              />
-              <Button type="button" variant="destructive" onClick={() => setColors(colors.filter((_, i) => i !== index))}>
-                Remove
-              </Button>
-            </div>
-          ))}
-          
-          <Button type="button" variant="outline" onClick={addColor}>Add Color</Button>
         </Card>
 
         <div className="flex gap-4">

@@ -6,8 +6,6 @@ interface CartItem {
   id: string;
   product_id: string;
   quantity: number;
-  variant_id?: string;
-  color_id?: string;
   calculated_price?: number;
   gold_price_snapshot?: number;
   locked_at?: string;
@@ -16,7 +14,7 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (productId: string, quantity?: number, variantId?: string, colorId?: string) => Promise<void>;
+  addItem: (productId: string, quantity?: number) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -73,7 +71,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     fetchCart();
   }, []);
 
-  const addItem = async (productId: string, quantity = 1, variantId?: string, colorId?: string) => {
+  const addItem = async (productId: string, quantity = 1) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const sessionId = getSessionId();
@@ -109,8 +107,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.from("cart_items").insert({
         product_id: productId,
         quantity,
-        variant_id: variantId,
-        color_id: colorId,
         user_id: user?.id,
         session_id: user ? null : sessionId,
         calculated_price: calculatedPrice,
