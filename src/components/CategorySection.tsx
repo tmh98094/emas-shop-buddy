@@ -2,8 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 export const CategorySection = () => {
+  const navigate = useNavigate();
+  
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -49,6 +52,7 @@ export const CategorySection = () => {
             <Card
               key={category.id}
               className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all"
+              onClick={() => navigate(`/products?category=${category.id}`)}
             >
               <div className="aspect-square relative bg-secondary">
                 {category.image_url ? (

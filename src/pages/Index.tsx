@@ -5,6 +5,7 @@ import { ProductSection } from "@/components/ProductSection";
 import { CategorySection } from "@/components/CategorySection";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -22,6 +23,7 @@ const Index = () => {
       </main>
       
       <WhatsAppFloater />
+      <Footer />
     </div>
   );
 };

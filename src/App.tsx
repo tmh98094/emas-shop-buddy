@@ -13,6 +13,16 @@ import TouchNGoPayment from "./pages/TouchNGoPayment";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTracking from "./pages/OrderTracking";
 import Auth from "./pages/Auth";
+import UserProfile from "./pages/UserProfile";
+import UserDashboard from "./pages/UserDashboard";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import CategoriesPage from "./pages/Categories";
+import FAQ from "./pages/FAQ";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import ShippingPolicy from "./pages/ShippingPolicy";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
@@ -43,6 +53,16 @@ const App = () => (
             <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/return-policy" element={<ReturnPolicy />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
             
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
