@@ -76,28 +76,36 @@ export default function OrderConfirmation() {
             <p className="font-semibold">{order.phone_number}</p>
           </div>
 
-          <Card className="p-6 mb-6 bg-blue-50 border-blue-200">
+          <Card className="p-6 mb-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
             <div className="flex items-start gap-4">
-              <Package className="h-6 w-6 text-blue-600 mt-1" />
+              <Package className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1" />
               <div>
-                <h3 className="font-semibold text-lg mb-2">
+                <h3 className="font-semibold text-lg mb-3">
                   <T zh="如何跟踪您的订单" en="How to Track Your Order" />
                 </h3>
-                {user ? (
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  {user ? (
+                    <p>
+                      <T 
+                        zh="您可以在您的个人资料中查看订单状态。前往我的订单查看实时更新。" 
+                        en="You can check your order status in your profile. Go to My Orders to see real-time updates." 
+                      />
+                    </p>
+                  ) : (
+                    <p>
+                      <T 
+                        zh="作为访客，您可以使用您的手机号码在线查看订单状态。前往订单跟踪页面输入您的电话号码。" 
+                        en="As a guest, you can check your order status online using your mobile number. Go to Order Tracking and enter your phone number." 
+                      />
+                    </p>
+                  )}
+                  <p className="font-semibold text-blue-700 dark:text-blue-300">
                     <T 
-                      zh="您可以在您的个人资料中查看订单状态。前往我的订单查看实时更新。" 
-                      en="You can check your order status in your profile. Go to My Orders to see real-time updates." 
+                      zh="团队在包装完您的金饰后，会透过Whatsapp联系您，并附上运输的Tracking ID" 
+                      en="Our team will contact you via WhatsApp after packaging your jewelry and provide the shipping Tracking ID" 
                     />
                   </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    <T 
-                      zh="作为访客，您可以使用您的手机号码在线查看订单状态。前往订单跟踪页面输入您的电话号码。" 
-                      en="As a guest, you can check your order status online using your mobile number. Go to Order Tracking and enter your phone number." 
-                    />
-                  </p>
-                )}
+                </div>
               </div>
             </div>
           </Card>

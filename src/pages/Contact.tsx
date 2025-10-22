@@ -19,7 +19,7 @@ export default function Contact() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {/* Contact Information */}
           <Card>
             <CardHeader>
@@ -30,14 +30,11 @@ export default function Contact() {
             </CardHeader>
             <CardContent>
               <a
-                href="tel:+60123456789"
+                href="tel:+60122379178"
                 className="text-primary hover:underline"
               >
-                +60 12-345 6789
+                +6012-237 9178
               </a>
-              <p className="text-sm text-muted-foreground mt-2">
-                Available during business hours
-              </p>
             </CardContent>
           </Card>
 
@@ -50,7 +47,7 @@ export default function Contact() {
             </CardHeader>
             <CardContent>
               <a
-                href="https://wa.me/60123456789"
+                href="https://wa.me/60122379178"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
@@ -80,21 +77,6 @@ export default function Contact() {
               <p className="text-sm text-muted-foreground mt-2">
                 We'll respond within 24 hours
               </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Business Hours
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <p>Monday - Saturday</p>
-              <p className="text-muted-foreground">10:00 AM - 7:00 PM</p>
-              <p className="mt-2">Sunday</p>
-              <p className="text-muted-foreground">11:00 AM - 5:00 PM</p>
             </CardContent>
           </Card>
         </div>

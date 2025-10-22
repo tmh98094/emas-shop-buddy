@@ -18,6 +18,14 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { T } from "@/components/T";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Checkout() {
   const { items, clearCart, refreshPrices } = useCart();
@@ -26,6 +34,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     phone_number: "",
@@ -117,6 +126,12 @@ export default function Checkout() {
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const proceedWithOrder = async () => {
+    setShowConfirmDialog(false);
     setLoading(true);
 
     try {
@@ -435,6 +450,50 @@ export default function Checkout() {
             </div>
           </div>
         </form>
+
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">
+                <T zh="确认订单" en="Confirm Order" />
+              </DialogTitle>
+              <DialogDescription className="space-y-3 text-left pt-4">
+                <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                  ⚠️<T zh="请确保邮寄地址是正确的，若不正确请马上透过Whatsapp联系我们" en="Please ensure the shipping address is correct. If incorrect, contact us immediately via WhatsApp" />
+                </p>
+                <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                  ⚠️<T zh="下单前请先询问好洞口/尺寸适不适合" en="Please confirm the hole size/dimensions are suitable before ordering" />
+                </p>
+                <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                  ⚠️<T zh="下单后可以透过 【查询订单】，输入电话号码后查询你的订单详情" en="After ordering, you can track your order by entering your phone number in [Track Order]" />
+                </p>
+                <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                  ⚠️<T zh="小克重/空心款金饰一律不适合每天穿戴，不能拉扯/按压/敲到" en="Light weight/hollow gold jewelry is not suitable for daily wear and cannot be pulled/pressed/knocked" />
+                </p>
+                <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                  ⚠️<T zh="金饰是由手工制成，很难100%完美，完美主义者下单前请慎重考虑" en="Gold jewelry is handmade and may not be 100% perfect. Perfectionists please consider carefully before ordering" />
+                </p>
+                <div className="border-t pt-3 mt-3 space-y-2 text-sm">
+                  <p>-<T zh="由于金价每天波动，价格需要当日汇款，否则隔日金价波动价格将会被影响☺️" en="Due to daily gold price fluctuations, payment must be made on the same day, otherwise the price will be affected by next day's gold price ☺️" /></p>
+                  <p>-<T zh="付款后，需提供付款记录 我们才能确认订单哦☺️" en="After payment, please provide payment proof so we can confirm your order ☺️" /></p>
+                  <p>-<T zh="如需分开单据，需提前注明🥰🙏🏻" en="If you need separate receipts, please inform us in advance 🥰🙏🏻" /></p>
+                  <p>-<T zh="如果之前有保留任何金饰要全部一起发走的话，必须通知我们‼️" en="If you have any previously reserved jewelry to send together, you must notify us ‼️" /></p>
+                  <p>-<T zh="如需透明塑胶stopper，付款后需自行备注哦☺️stopper是附送的，我们会尽量给，有时候小助理太忙会漏放，没收到也不会特别邮寄" en="If you need transparent plastic stoppers, please note after payment ☺️ Stoppers are complimentary, we'll try our best to include them, but if our assistant is busy and forgets, we won't mail them separately" /></p>
+                  <p>-<T zh="基于环保理念♻️，每次下单将提供一个首饰盒子&一个袋子，如需要额外盒子，付款后需备注哦 ☺️" en="Based on environmental principles ♻️, each order comes with one jewelry box & one bag. If you need extra boxes, please note after payment ☺️" /></p>
+                  <p className="text-center mt-2">🙏🏻💕🙏🏻💕</p>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+                <T zh="取消" en="Cancel" />
+              </Button>
+              <Button onClick={proceedWithOrder}>
+                <T zh="我确认" en="I Confirm" />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

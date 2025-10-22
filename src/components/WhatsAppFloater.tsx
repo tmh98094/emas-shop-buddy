@@ -3,8 +3,7 @@ import { Button } from "./ui/button";
 
 export const WhatsAppFloater = () => {
   const handleWhatsAppClick = () => {
-    // Will be connected to backend later
-    window.open("https://wa.me/60123456789", "_blank");
+    window.open("https://wa.me/60122379178", "_blank");
   };
 
   return (

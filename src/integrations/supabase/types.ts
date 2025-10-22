@@ -740,10 +740,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_product_cached_prices: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_product_cached_prices: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "customer"

@@ -81,8 +81,8 @@ export const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <a href="tel:+60123456789" className="text-navy-foreground/80 hover:text-primary transition-colors">
-                  +60 12-345 6789
+                <a href="tel:+60122379178" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  +6012-237 9178
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -94,19 +94,13 @@ export const Footer = () => {
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
                 <a
-                  href="https://wa.me/60123456789"
+                  href="https://wa.me/60122379178"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-navy-foreground/80 hover:text-primary transition-colors"
                 >
                   <T zh="WhatsApp 联系我们" en="WhatsApp Us" />
                 </a>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-primary mt-0.5" />
-                <span className="text-navy-foreground/80">
-                  <T zh="吉隆坡金街123号，马来西亚" en="123 Gold Street, Kuala Lumpur, Malaysia" />
-                </span>
               </li>
             </ul>
           </div>
@@ -116,7 +110,7 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4 text-primary"><T zh="关注我们" en="Follow Us" /></h4>
             <div className="flex gap-4 mb-6">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/152938891239226/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-navy-foreground/80 hover:text-primary transition-colors"
@@ -124,7 +118,7 @@ export const Footer = () => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/jjemas_/?hl=en"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-navy-foreground/80 hover:text-primary transition-colors"

@@ -9,7 +9,7 @@ interface OutOfStockWhatsAppProps {
 
 export function OutOfStockWhatsApp({ productName, productSlug }: OutOfStockWhatsAppProps) {
   const handleWhatsAppClick = () => {
-    const phoneNumber = "60123456789"; // Replace with actual WhatsApp business number
+    const phoneNumber = "60122379178";
     const message = encodeURIComponent(
       `Hi! I'm interested in the product "${productName}" which is currently out of stock. Can you let me know when it will be available?\n\nProduct link: ${window.location.origin}/product/${productSlug}`
     );
