@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -10,12 +10,12 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const navigation = [
-    { name: "仪表板", href: "/admin", icon: LayoutDashboard, en: "Dashboard" },
     { name: "产品", href: "/admin/products", icon: Package, en: "Products" },
     { name: "分类", href: "/admin/categories", icon: Package, en: "Categories" },
     { name: "订单", href: "/admin/orders", icon: ShoppingCart, en: "Orders" },
     { name: "客户", href: "/admin/customers", icon: Users, en: "Customers" },
     { name: "分析", href: "/admin/analytics", icon: LayoutDashboard, en: "Analytics" },
+    { name: "库存", href: "/admin/stock", icon: AlertTriangle, en: "Stock" },
     { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet, en: "Touch N Go" },
     { name: "设置", href: "/admin/settings", icon: Settings, en: "Settings" },
   ];

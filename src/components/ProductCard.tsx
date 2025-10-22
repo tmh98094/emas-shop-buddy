@@ -60,6 +60,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
             src={imageUrl || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80"}
             alt={product.name}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
           />
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

@@ -33,6 +33,7 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminCustomers from "./pages/admin/Customers";
 import AdminTouchNGo from "./pages/admin/TouchNGo";
 import AdminSettings from "./pages/admin/Settings";
+import StockManagement from "./pages/admin/StockManagement";
 import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import OrderDetail from "./pages/admin/OrderDetail";
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="customers/:customerId" element={<CustomerDetail />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="stock" element={<StockManagement />} />
               <Route path="touch-n-go" element={<AdminTouchNGo />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>

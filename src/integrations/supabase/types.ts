@@ -194,9 +194,6 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
-          review_rating: number | null
-          review_text: string | null
-          reviewed_at: string | null
           subtotal: number
           variant_name: string | null
           variant_value: string | null
@@ -213,9 +210,6 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity?: number
-          review_rating?: number | null
-          review_text?: string | null
-          reviewed_at?: string | null
           subtotal: number
           variant_name?: string | null
           variant_value?: string | null
@@ -232,9 +226,6 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
-          review_rating?: number | null
-          review_text?: string | null
-          reviewed_at?: string | null
           subtotal?: number
           variant_name?: string | null
           variant_value?: string | null
@@ -401,47 +392,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_images_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_reviews: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_approved: boolean | null
-          product_id: string
-          rating: number
-          review_text: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_approved?: boolean | null
-          product_id: string
-          rating: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_approved?: boolean | null
-          product_id?: string
-          rating?: number
-          review_text?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_reviews_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

@@ -52,15 +52,22 @@ export default function Settings() {
       for (const update of updates) {
         const { error } = await supabase
           .from("settings")
-          .update({ value: update.value })
+          .update({ value: update.value, updated_at: new Date().toISOString() })
           .eq("key", update.key);
         if (error) throw error;
       }
+      
+      // Trigger update of cached product prices
+      await supabase.rpc('update_product_cached_prices');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-gold-prices"] });
       queryClient.invalidateQueries({ queryKey: ["gold-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast({ title: "Gold prices updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error updating prices", description: error.message, variant: "destructive" });
     },
   });
 

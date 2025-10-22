@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
-import { ProductReviews } from "@/components/ProductReviews";
 import { OutOfStockWhatsApp } from "@/components/OutOfStockWhatsApp";
 import { SEOHead } from "@/components/SEOHead";
 import { useQuery } from "@tanstack/react-query";
@@ -101,7 +100,12 @@ export default function ProductDetail() {
                       {img.media_type === 'video' ? (
                         <video src={img.image_url} className="w-full h-[500px] object-cover" controls />
                       ) : (
-                        <img src={img.image_url} alt={`${product.name} - Image ${index + 1}`} className="w-full h-[500px] object-cover" />
+                        <img 
+                          src={img.image_url} 
+                          alt={`${product.name} - Image ${index + 1}`} 
+                          className="w-full h-[500px] object-cover"
+                          loading="lazy"
+                        />
                       )}
                     </Card>
                   </CarouselItem>
@@ -188,30 +192,16 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Product Details and Reviews Tabs */}
+        {/* Product Details */}
         <div className="mt-16">
-          <Tabs defaultValue="description" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="description">
-                <T zh="产品详情" en="Description" />
-              </TabsTrigger>
-              <TabsTrigger value="reviews">
-                <T zh="客户评论" en="Reviews" />
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="description" className="mt-6">
-              <Card className="p-6">
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {product.description || "No description available."}
-                </p>
-              </Card>
-            </TabsContent>
-            <TabsContent value="reviews" className="mt-6">
-              <Card className="p-6">
-                <ProductReviews productId={product.id} />
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-4">
+              <T zh="产品详情" en="Product Description" />
+            </h2>
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {product.description || "No description available."}
+            </p>
+          </Card>
         </div>
       </main>
 

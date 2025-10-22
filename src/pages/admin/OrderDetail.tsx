@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
@@ -16,6 +18,7 @@ export default function OrderDetail() {
   const queryClient = useQueryClient();
   const [orderStatus, setOrderStatus] = useState<OrderStatus>("pending");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
+  const [postageDeliveryId, setPostageDeliveryId] = useState("");
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", id],
@@ -37,6 +40,7 @@ export default function OrderDetail() {
   if (order && orderStatus === "pending" && order.order_status !== orderStatus) {
     setOrderStatus(order.order_status as OrderStatus);
     setPaymentStatus(order.payment_status as PaymentStatus);
+    setPostageDeliveryId(order.postage_delivery_id || "");
   }
 
   const updateMutation = useMutation({
@@ -46,6 +50,7 @@ export default function OrderDetail() {
         .update({
           order_status: orderStatus,
           payment_status: paymentStatus,
+          postage_delivery_id: postageDeliveryId || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -114,7 +119,7 @@ export default function OrderDetail() {
 
       <Card className="p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4">Update Status</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Order Status</label>
             <Select value={orderStatus} onValueChange={(value: OrderStatus) => setOrderStatus(value)}>
@@ -141,6 +146,15 @@ export default function OrderDetail() {
                 <SelectItem value="failed">Failed</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label htmlFor="postage">Postage Delivery ID</Label>
+            <Input
+              id="postage"
+              value={postageDeliveryId}
+              onChange={(e) => setPostageDeliveryId(e.target.value)}
+              placeholder="Enter tracking number"
+            />
           </div>
         </div>
         <Button className="mt-4" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>

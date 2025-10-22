@@ -24,7 +24,8 @@ export default function OrderTracking() {
         .from("orders")
         .select(`
           *,
-          order_items (*)
+          order_items (*),
+          touch_n_go_payments (*)
         `)
         .eq("phone_number", phoneNumber)
         .order("created_at", { ascending: false });
@@ -114,9 +115,22 @@ export default function OrderTracking() {
                     <span className="text-primary">RM {parseFloat(order.total_amount).toFixed(2)}</span>
                   </div>
 
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    <p>Payment: {order.payment_method.replace("_", " ")}</p>
-                    <p>Status: {order.payment_status}</p>
+                  <div className="mt-4 text-sm space-y-1">
+                    <p><strong>Payment:</strong> {order.payment_method.replace("_", " ")}</p>
+                    <p><strong>Payment Status:</strong> {order.payment_status}</p>
+                    {order.payment_method === 'touch_n_go' && order.touch_n_go_payments?.[0] && (
+                      <p>
+                        <strong>TNG Verification:</strong>{" "}
+                        {order.touch_n_go_payments[0].verified ? (
+                          <span className="text-green-600">✓ Verified</span>
+                        ) : (
+                          <span className="text-yellow-600">⏳ Pending Verification</span>
+                        )}
+                      </p>
+                    )}
+                    {order.postage_delivery_id && (
+                      <p><strong>Tracking:</strong> {order.postage_delivery_id}</p>
+                    )}
                   </div>
                 </Card>
               ))}

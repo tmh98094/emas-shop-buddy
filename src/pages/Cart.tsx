@@ -113,7 +113,8 @@ export default function Cart() {
                       <img
                         src={product.product_images?.[0]?.image_url || "/placeholder.svg"}
                         alt={product.name}
-                        className="w-24 h-24 object-cover rounded"
+                        className="w-full h-64 object-cover"
+                        loading="lazy"
                       />
                        <div className="flex-1">
                         <h3 className="font-semibold text-lg">{product.name}</h3>
@@ -169,7 +170,7 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>FREE</span>
+                    <span className="text-muted-foreground">Calculated at checkout</span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-bold text-lg">
                     <span>Total</span>

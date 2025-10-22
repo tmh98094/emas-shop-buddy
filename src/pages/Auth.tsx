@@ -15,7 +15,8 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"phone" | "otp" | "details">("phone");
+  const [step, setStep] = useState<"phone" | "otp" | "details" | "forgot">("phone");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // Phone auth states
   const [countryCode, setCountryCode] = useState("+60");
@@ -42,7 +43,9 @@ export default function Auth() {
       setStep("otp");
       toast({
         title: "OTP Sent!",
-        description: "Please check your phone for the verification code.",
+        description: isForgotPassword 
+          ? "Enter the code to reset your password."
+          : "Please check your phone for the verification code.",
       });
     } catch (error: any) {
       toast({
@@ -77,7 +80,12 @@ export default function Auth() {
         .eq('id', data.user?.id)
         .single();
 
-      if (!profile) {
+      if (isForgotPassword) {
+        // Password reset flow - allow them to set new password
+        toast({ title: "Password reset successful! You can now log in." });
+        setIsForgotPassword(false);
+        setStep("phone");
+      } else if (!profile) {
         // New user, go to details step
         setStep("details");
       } else {
@@ -139,7 +147,10 @@ export default function Auth() {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold text-primary mb-8 text-center">
-            {step === "phone" ? "Sign In / Sign Up" : step === "otp" ? "Verify Code" : "Complete Profile"}
+            {isForgotPassword ? "Reset Password" : 
+             step === "phone" ? "Sign In / Sign Up" : 
+             step === "otp" ? "Verify Code" : 
+             "Complete Profile"}
           </h1>
 
           <Card className="p-6">
@@ -172,7 +183,19 @@ export default function Auth() {
                   </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Verification Code"}
+                  {loading ? "Sending..." : isForgotPassword ? "Send Reset Code" : "Send Verification Code"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full"
+                  onClick={() => {
+                    setIsForgotPassword(!isForgotPassword);
+                    setStep("phone");
+                  }}
+                  disabled={loading}
+                >
+                  {isForgotPassword ? "Back to Sign In" : "Forgot Password?"}
                 </Button>
               </form>
             )}

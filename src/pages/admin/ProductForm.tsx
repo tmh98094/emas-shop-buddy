@@ -37,6 +37,7 @@ export default function ProductForm() {
   const [images, setImages] = useState<File[]>([]);
   const [videos, setVideos] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [thumbnailId, setThumbnailId] = useState<string>("");
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -101,6 +102,8 @@ export default function ProductForm() {
         is_new_arrival: product.is_new_arrival || false,
       });
       setExistingImages(product.product_images || []);
+      const thumbnail = product.product_images?.find((img: any) => img.is_thumbnail);
+      if (thumbnail) setThumbnailId(thumbnail.id);
     }
   }, [product]);
 
@@ -133,6 +136,12 @@ export default function ProductForm() {
         productId = data.id;
       }
 
+      // Update thumbnail status
+      if (thumbnailId) {
+        await supabase.from("product_images").update({ is_thumbnail: false }).eq("product_id", productId);
+        await supabase.from("product_images").update({ is_thumbnail: true }).eq("id", thumbnailId);
+      }
+
       // Upload images
       for (let i = 0; i < images.length; i++) {
         const file = images[i];
@@ -149,10 +158,36 @@ export default function ProductForm() {
           .from("product-images")
           .getPublicUrl(fileName);
 
+        const { data: newImage } = await supabase.from("product_images").insert({
+          product_id: productId,
+          image_url: publicUrl,
+          media_type: 'image',
+          display_order: existingImages.length + i,
+          is_thumbnail: existingImages.length === 0 && i === 0 && !thumbnailId,
+        }).select().single();
+      }
+
+      // Upload videos
+      for (let i = 0; i < videos.length; i++) {
+        const file = videos[i];
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${productId}/${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("product-images")
+          .upload(fileName, file);
+        
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(fileName);
+
         await supabase.from("product_images").insert({
           product_id: productId,
           image_url: publicUrl,
-          display_order: existingImages.length + i,
+          media_type: 'video',
+          display_order: existingImages.length + images.length + i,
         });
       }
     },
@@ -332,12 +367,24 @@ export default function ProductForm() {
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Images</h2>
+          <h2 className="text-xl font-semibold mb-4">Media</h2>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
             {existingImages.map((img) => (
-              <div key={img.id} className="relative">
-                <img src={img.image_url} alt="" className="w-full h-32 object-cover rounded" />
+              <div key={img.id} className="relative border rounded-lg p-2">
+                {img.media_type === 'video' ? (
+                  <video src={img.image_url} className="w-full h-32 object-cover rounded" controls />
+                ) : (
+                  <img src={img.image_url} alt="" className="w-full h-32 object-cover rounded" loading="lazy" />
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id={`thumb-${img.id}`}
+                    checked={thumbnailId === img.id}
+                    onCheckedChange={(checked) => checked && setThumbnailId(img.id)}
+                  />
+                  <Label htmlFor={`thumb-${img.id}`} className="text-xs">Thumbnail</Label>
+                </div>
                 <Button
                   type="button"
                   variant="destructive"
@@ -351,21 +398,43 @@ export default function ProductForm() {
             ))}
           </div>
 
-          <Label htmlFor="images" className="cursor-pointer">
-            <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-2">Click to upload images</p>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="images" className="cursor-pointer">
+                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-2">Click to upload images</p>
+                </div>
+                <Input
+                  id="images"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setImages(Array.from(e.target.files || []))}
+                />
+              </Label>
+              {images.length > 0 && <p className="mt-2">{images.length} new image(s) selected</p>}
             </div>
-            <Input
-              id="images"
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => setImages(Array.from(e.target.files || []))}
-            />
-          </Label>
-          {images.length > 0 && <p className="mt-2">{images.length} new image(s) selected</p>}
+
+            <div>
+              <Label htmlFor="videos" className="cursor-pointer">
+                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-2">Click to upload videos</p>
+                </div>
+                <Input
+                  id="videos"
+                  type="file"
+                  multiple
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => setVideos(Array.from(e.target.files || []))}
+                />
+              </Label>
+              {videos.length > 0 && <p className="mt-2">{videos.length} new video(s) selected</p>}
+            </div>
+          </div>
         </Card>
 
         <div className="flex gap-4">

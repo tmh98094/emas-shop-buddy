@@ -3,14 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
-import { ProductReviewForm } from "@/components/ProductReviewForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Package, MapPin, Settings, LogOut, User, Star, Download } from "lucide-react";
+import { Package, MapPin, Settings, LogOut, User, Download } from "lucide-react";
 import { T } from "@/components/T";
 import { generateInvoicePDF, InvoiceData } from "@/lib/invoice-generator";
 
@@ -230,34 +229,6 @@ export default function UserDashboard() {
                               <p className="text-sm">
                                 {item.quantity}x {item.product_name}
                               </p>
-                              {order.order_status === "completed" && !item.reviewed_at && (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <Star className="h-4 w-4 mr-1" />
-                                      <T zh="评论" en="Review" />
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>
-                                        <T zh="评论产品" en="Review Product" />
-                                      </DialogTitle>
-                                    </DialogHeader>
-                                    <ProductReviewForm
-                                      orderItemId={item.id}
-                                      productId={item.product_id}
-                                      onSuccess={loadDashboardData}
-                                    />
-                                  </DialogContent>
-                                </Dialog>
-                              )}
-                              {item.reviewed_at && (
-                                <Badge variant="secondary">
-                                  <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-                                  <T zh="已评论" en="Reviewed" />
-                                </Badge>
-                              )}
                             </div>
                           ))}
                         </div>
