@@ -16,6 +16,8 @@ import { checkPriceChange } from "@/lib/price-staleness";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { T } from "@/components/T";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Checkout() {
   const { items, clearCart, refreshPrices } = useCart();
@@ -29,7 +31,14 @@ export default function Checkout() {
     phone_number: "",
     email: "",
     notes: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    postcode: "",
+    country: "Malaysia",
   });
+  const [shippingRegion, setShippingRegion] = useState<"west_malaysia" | "east_malaysia" | "singapore">("west_malaysia");
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -48,14 +57,18 @@ export default function Checkout() {
     },
   });
 
-  const calculateTotal = () => {
+  const getShippingCost = () => {
+    if (shippingRegion === "singapore") return 40;
+    if (shippingRegion === "east_malaysia") return 15;
+    return 10; // west_malaysia
+  };
+
+  const calculateSubtotal = () => {
     return items.reduce((sum, item) => {
-      // Use locked price if available
       if (item.calculated_price) {
         return sum + Math.round(item.calculated_price * item.quantity * 100) / 100;
       }
       
-      // Fallback to dynamic calculation
       const product = item.product;
       const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
       const itemTotal = calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
@@ -63,7 +76,10 @@ export default function Checkout() {
     }, 0);
   };
 
-  // Check if any prices need updating before checkout
+  const calculateTotal = () => {
+    return calculateSubtotal() + getShippingCost();
+  };
+
   useEffect(() => {
     if (!goldPrices || items.length === 0) return;
 
@@ -83,11 +99,19 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prevent order placement if prices changed
     if (priceChangeDetected) {
       toast({
         title: "Price Update Required",
         description: "Gold prices have changed. Please refresh your cart prices before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.address_line1 || !formData.city || !formData.state || !formData.postcode) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required shipping address fields",
         variant: "destructive",
       });
       return;
@@ -99,11 +123,9 @@ export default function Checkout() {
       const { data: { user } } = await supabase.auth.getUser();
       const totalAmount = calculateTotal();
 
-      // Generate order id and number
       const orderId = crypto.randomUUID();
       const orderNumber = `JJ${Date.now()}`;
 
-      // Create order (avoid select to bypass RLS read restrictions for guests)
       const { error: orderError } = await supabase
         .from("orders")
         .insert([{
@@ -114,6 +136,12 @@ export default function Checkout() {
           phone_number: formData.phone_number,
           email: formData.email || null,
           notes: formData.notes || null,
+          shipping_address_line1: formData.address_line1,
+          shipping_address_line2: formData.address_line2 || null,
+          shipping_city: formData.city,
+          shipping_state: formData.state,
+          shipping_postcode: formData.postcode,
+          shipping_country: formData.country,
           total_amount: totalAmount,
           payment_method: paymentMethod,
           payment_status: "pending",
@@ -122,7 +150,6 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Create order items - use locked prices from cart
       const orderItems = items.map(item => {
         const product = item.product;
         const goldPrice = item.gold_price_snapshot || goldPrices?.[product.gold_type as "916" | "999"] || 0;
@@ -154,7 +181,6 @@ export default function Checkout() {
       if (paymentMethod === "touch_n_go") {
         navigate(`/payment/touch-n-go/${orderId}`);
       } else {
-        // Create Stripe checkout session
         const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
           "create-stripe-checkout",
           {
@@ -170,7 +196,6 @@ export default function Checkout() {
 
         if (sessionError) throw sessionError;
 
-        // Redirect to Stripe checkout
         if (sessionData?.url) {
           window.location.href = sessionData.url;
         } else {
@@ -199,14 +224,14 @@ export default function Checkout() {
       <Header />
       
       <main className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-primary mb-8">Checkout</h1>
+        <h1 className="text-4xl font-bold text-primary mb-8"><T zh="结账" en="Checkout" /></h1>
 
         {priceChangeDetected && (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-5 w-5" />
-            <AlertTitle>Price Update Required</AlertTitle>
+            <AlertTitle><T zh="需要更新价格" en="Price Update Required" /></AlertTitle>
             <AlertDescription>
-              The gold price has changed since you added items to your cart. You must refresh prices before placing your order.
+              <T zh="自您将商品添加到购物车以来，黄金价格已发生变化。您必须在下订单之前刷新价格。" en="The gold price has changed since you added items to your cart. You must refresh prices before placing your order." />
               <Button 
                 onClick={refreshPrices} 
                 variant="outline" 
@@ -214,7 +239,7 @@ export default function Checkout() {
                 className="ml-4"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Prices Now
+                <T zh="立即刷新价格" en="Refresh Prices Now" />
               </Button>
             </AlertDescription>
           </Alert>
@@ -224,10 +249,10 @@ export default function Checkout() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <Card className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Contact Information</h2>
+                <h2 className="text-xl font-semibold mb-4"><T zh="联系信息" en="Contact Information" /></h2>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="full_name">Full Name *</Label>
+                    <Label htmlFor="full_name"><T zh="全名" en="Full Name" /> *</Label>
                     <Input
                       id="full_name"
                       required
@@ -236,7 +261,7 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone_number">Phone Number *</Label>
+                    <Label htmlFor="phone_number"><T zh="电话号码" en="Phone Number" /> *</Label>
                     <Input
                       id="phone_number"
                       required
@@ -246,7 +271,7 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email"><T zh="电子邮件" en="Email" /></Label>
                     <Input
                       id="email"
                       type="email"
@@ -255,7 +280,7 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="notes">Order Notes</Label>
+                    <Label htmlFor="notes"><T zh="订单备注" en="Order Notes" /></Label>
                     <Textarea
                       id="notes"
                       value={formData.notes}
@@ -266,12 +291,91 @@ export default function Checkout() {
               </Card>
 
               <Card className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Payment Method</h2>
+                <h2 className="text-xl font-semibold mb-4"><T zh="配送地址" en="Shipping Address" /></h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="address_line1"><T zh="地址第一行" en="Address Line 1" /> *</Label>
+                    <Input
+                      id="address_line1"
+                      required
+                      value={formData.address_line1}
+                      onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address_line2"><T zh="地址第二行" en="Address Line 2" /></Label>
+                    <Input
+                      id="address_line2"
+                      value={formData.address_line2}
+                      onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="city"><T zh="城市" en="City" /> *</Label>
+                      <Input
+                        id="city"
+                        required
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state"><T zh="州/省" en="State" /> *</Label>
+                      <Input
+                        id="state"
+                        required
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="postcode"><T zh="邮政编码" en="Postcode" /> *</Label>
+                      <Input
+                        id="postcode"
+                        required
+                        value={formData.postcode}
+                        onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="country"><T zh="国家" en="Country" /> *</Label>
+                      <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Malaysia">Malaysia</SelectItem>
+                          <SelectItem value="Singapore">Singapore</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="shipping_region"><T zh="配送区域" en="Shipping Region" /> *</Label>
+                    <Select value={shippingRegion} onValueChange={(value: any) => setShippingRegion(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="west_malaysia"><T zh="西马 (RM10)" en="West Malaysia (RM10)" /></SelectItem>
+                        <SelectItem value="east_malaysia"><T zh="东马 (RM15)" en="East Malaysia (RM15)" /></SelectItem>
+                        <SelectItem value="singapore"><T zh="新加坡 (RM40)" en="Singapore (RM40)" /></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4"><T zh="付款方式" en="Payment Method" /></h2>
                 <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
                   <div className="flex items-center space-x-2 p-4 border rounded">
                     <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
                     <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
-                      FPX (Online Banking via Stripe)
+                      <T zh="FPX (在线银行通过 Stripe)" en="FPX (Online Banking via Stripe)" />
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-4 border rounded">
@@ -286,7 +390,7 @@ export default function Checkout() {
 
             <div>
               <Card className="p-6 sticky top-32">
-                <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
+                <h2 className="text-xl font-semibold mb-4"><T zh="订单摘要" en="Order Summary" /></h2>
                 <div className="space-y-4 mb-6">
                   {items.map((item) => {
                     const product = item.product;
@@ -304,9 +408,19 @@ export default function Checkout() {
                       </div>
                     );
                   })}
-                  <div className="border-t pt-4 flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span className="text-primary">RM {formatPrice(calculateTotal())}</span>
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span><T zh="小计" en="Subtotal" /></span>
+                      <span>RM {formatPrice(calculateSubtotal())}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span><T zh="运费" en="Shipping" /></span>
+                      <span>RM {formatPrice(getShippingCost())}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span><T zh="总计" en="Total" /></span>
+                      <span className="text-primary">RM {formatPrice(calculateTotal())}</span>
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -315,7 +429,7 @@ export default function Checkout() {
                   size="lg"
                   disabled={loading || priceChangeDetected}
                 >
-                  {loading ? "Processing..." : "Place Order"}
+                  {loading ? <T zh="处理中..." en="Processing..." /> : <T zh="下订单" en="Place Order" />}
                 </Button>
               </Card>
             </div>

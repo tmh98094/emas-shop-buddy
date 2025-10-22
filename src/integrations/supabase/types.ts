@@ -47,6 +47,44 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          order_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          order_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          order_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           calculated_price: number | null
@@ -213,6 +251,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          delivery_notes: string | null
           email: string | null
           full_name: string
           guest_name: string | null
@@ -224,6 +263,13 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone_number: string
+          postage_delivery_id: string | null
+          shipping_address_line1: string | null
+          shipping_address_line2: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_postcode: string | null
+          shipping_state: string | null
           stripe_payment_id: string | null
           total_amount: number
           updated_at: string
@@ -231,6 +277,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_notes?: string | null
           email?: string | null
           full_name: string
           guest_name?: string | null
@@ -242,6 +289,13 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone_number: string
+          postage_delivery_id?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_postcode?: string | null
+          shipping_state?: string | null
           stripe_payment_id?: string | null
           total_amount: number
           updated_at?: string
@@ -249,6 +303,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_notes?: string | null
           email?: string | null
           full_name?: string
           guest_name?: string | null
@@ -260,6 +315,13 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone_number?: string
+          postage_delivery_id?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_postcode?: string | null
+          shipping_state?: string | null
           stripe_payment_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -305,6 +367,8 @@ export type Database = {
           display_order: number | null
           id: string
           image_url: string
+          is_thumbnail: boolean | null
+          media_type: string | null
           product_id: string
         }
         Insert: {
@@ -312,6 +376,8 @@ export type Database = {
           display_order?: number | null
           id?: string
           image_url: string
+          is_thumbnail?: boolean | null
+          media_type?: string | null
           product_id: string
         }
         Update: {
@@ -319,6 +385,8 @@ export type Database = {
           display_order?: number | null
           id?: string
           image_url?: string
+          is_thumbnail?: boolean | null
+          media_type?: string | null
           product_id?: string
         }
         Relationships: [
@@ -509,6 +577,30 @@ export type Database = {
           id?: string
           phone_number?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      search_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          search_query: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          search_query: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          search_query?: string
+          session_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

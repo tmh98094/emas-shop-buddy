@@ -35,6 +35,7 @@ import AdminSettings from "./pages/admin/Settings";
 import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import OrderDetail from "./pages/admin/OrderDetail";
+import AdminNotifications from "./pages/admin/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:id" element={<OrderDetail />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="notifications" element={<AdminNotifications />} />
               <Route path="touch-n-go" element={<AdminTouchNGo />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
