@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
+import { ProductReviews } from "@/components/ProductReviews";
+import { OutOfStockWhatsApp } from "@/components/OutOfStockWhatsApp";
+import { SEOHead } from "@/components/SEOHead";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -12,7 +15,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Minus, Plus } from "lucide-react";
+import { T } from "@/components/T";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -68,6 +73,13 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen">
+      <SEOHead
+        title={product.name}
+        description={product.description || `${product.gold_type} gold jewelry, ${product.weight_grams}g`}
+        keywords={`${product.name}, ${product.gold_type} gold, gold jewelry, buy gold online`}
+        ogImage={product.product_images?.[0]?.image_url}
+        type="product"
+      />
       <GoldPriceBanner />
       <Header />
       
@@ -119,27 +131,20 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Gold Price ({product.gold_type}): RM {formatPrice(goldPrice)}/g</p>
-              <p>Weight: {product.weight_grams}g</p>
-              <p>Labour Fee: RM {formatPrice(Number(product.labour_fee))}</p>
+              <p><T zh="金价" en="Gold Price" /> ({product.gold_type}): RM {formatPrice(goldPrice)}/g</p>
+              <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
+              <p><T zh="工费" en="Labour Fee" />: RM {formatPrice(Number(product.labour_fee))}</p>
             </div>
-
-            {product.description && (
-              <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-muted-foreground">{product.description}</p>
-              </div>
-            )}
 
             <div>
               <p className="text-sm">
-                Stock: <span className="font-semibold">{product.stock} available</span>
+                <T zh="库存" en="Stock" />: <span className="font-semibold">{product.stock} <T zh="件可用" en="available" /></span>
               </p>
             </div>
 
             {/* Quantity */}
             <div>
-              <h3 className="font-semibold mb-3">Quantity</h3>
+              <h3 className="font-semibold mb-3"><T zh="数量" en="Quantity" /></h3>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -159,15 +164,54 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleAddToCart}
-              disabled={product.stock === 0}
-            >
-              {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+                size="lg"
+                className="w-full"
+              >
+                {product.stock === 0 ? (
+                  <T zh="缺货" en="Out of Stock" />
+                ) : (
+                  <T zh="加入购物车" en="Add to Cart" />
+                )}
+              </Button>
+              
+              {product.stock <= 0 && (
+                <OutOfStockWhatsApp
+                  productName={product.name}
+                  productSlug={product.slug}
+                />
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Product Details and Reviews Tabs */}
+        <div className="mt-16">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsTrigger value="description">
+                <T zh="产品详情" en="Description" />
+              </TabsTrigger>
+              <TabsTrigger value="reviews">
+                <T zh="客户评论" en="Reviews" />
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="description" className="mt-6">
+              <Card className="p-6">
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {product.description || "No description available."}
+                </p>
+              </Card>
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-6">
+              <Card className="p-6">
+                <ProductReviews productId={product.id} />
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 

@@ -17,7 +17,7 @@ export default function OrderConfirmation() {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  const { data: order } = useQuery({
+  const { data: order, isLoading, error } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,13 +27,36 @@ export default function OrderConfirmation() {
           order_items (*)
         `)
         .eq("id", orderId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
+    enabled: !!orderId,
   });
 
-  if (!order) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Unable to load order details</p>
+          <Button asChild>
+            <Link to="/">Return to Home</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

@@ -35,6 +35,7 @@ export default function ProductForm() {
   });
 
   const [images, setImages] = useState<File[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<any[]>([]);
 
   // Fetch categories

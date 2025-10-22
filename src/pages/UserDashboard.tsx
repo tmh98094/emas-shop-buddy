@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { ProductReviewForm } from "@/components/ProductReviewForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Package, MapPin, Settings, LogOut, User } from "lucide-react";
+import { Package, MapPin, Settings, LogOut, User, Star, Download } from "lucide-react";
+import { T } from "@/components/T";
+import { generateInvoicePDF, InvoiceData } from "@/lib/invoice-generator";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -38,16 +42,24 @@ export default function UserDashboard() {
 
       setProfile(profileData);
 
-      // Load orders
+      // Load orders with review status
       const { data: ordersData } = await supabase
         .from("orders")
         .select(`
           *,
           order_items (
             id,
+            product_id,
             product_name,
             quantity,
-            subtotal
+            subtotal,
+            gold_type,
+            weight_grams,
+            gold_price_at_purchase,
+            labour_fee,
+            review_rating,
+            review_text,
+            reviewed_at
           )
         `)
         .eq("user_id", user.id)
@@ -198,7 +210,9 @@ export default function UserDashboard() {
                       <div key={order.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <p className="font-semibold">Order #{order.order_number}</p>
+                            <p className="font-semibold">
+                              <T zh="订单" en="Order" /> #{order.order_number}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString()}
                             </p>
@@ -210,25 +224,96 @@ export default function UserDashboard() {
                         
                         <Separator className="my-2" />
                         
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {order.order_items?.map((item: any) => (
-                            <p key={item.id} className="text-sm">
-                              {item.quantity}x {item.product_name}
-                            </p>
+                            <div key={item.id} className="flex justify-between items-center">
+                              <p className="text-sm">
+                                {item.quantity}x {item.product_name}
+                              </p>
+                              {order.order_status === "completed" && !item.reviewed_at && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <Star className="h-4 w-4 mr-1" />
+                                      <T zh="评论" en="Review" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>
+                                        <T zh="评论产品" en="Review Product" />
+                                      </DialogTitle>
+                                    </DialogHeader>
+                                    <ProductReviewForm
+                                      orderItemId={item.id}
+                                      productId={item.product_id}
+                                      onSuccess={loadDashboardData}
+                                    />
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              {item.reviewed_at && (
+                                <Badge variant="secondary">
+                                  <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+                                  <T zh="已评论" en="Reviewed" />
+                                </Badge>
+                              )}
+                            </div>
                           ))}
                         </div>
                         
-                        <div className="flex justify-between items-center mt-3 pt-3 border-t">
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t gap-2">
                           <span className="font-semibold">
-                            Total: RM {parseFloat(order.total_amount).toFixed(2)}
+                            <T zh="总计" en="Total" />: RM {parseFloat(order.total_amount).toFixed(2)}
                           </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/order-tracking?orderId=${order.id}`)}
-                          >
-                            Track Order
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const invoiceData: InvoiceData = {
+                                  orderNumber: order.order_number,
+                                  orderDate: order.created_at,
+                                  customerName: order.full_name,
+                                  customerPhone: order.phone_number,
+                                  customerEmail: order.email,
+                                  shippingAddress: {
+                                    line1: order.shipping_address_line1,
+                                    line2: order.shipping_address_line2,
+                                    city: order.shipping_city,
+                                    state: order.shipping_state,
+                                    postcode: order.shipping_postcode,
+                                    country: order.shipping_country,
+                                  },
+                                  items: order.order_items.map((item: any) => ({
+                                    name: item.product_name,
+                                    quantity: item.quantity,
+                                    goldType: item.gold_type,
+                                    weight: item.weight_grams,
+                                    goldPrice: item.gold_price_at_purchase,
+                                    labourFee: item.labour_fee,
+                                    subtotal: parseFloat(item.subtotal),
+                                  })),
+                                  subtotal: parseFloat(order.total_amount),
+                                  shippingFee: 0,
+                                  total: parseFloat(order.total_amount),
+                                  paymentMethod: order.payment_method,
+                                  paymentStatus: order.payment_status,
+                                };
+                                generateInvoicePDF(invoiceData);
+                              }}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              <T zh="发票" en="Invoice" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/order-confirmation/${order.id}`)}
+                            >
+                              <T zh="查看详情" en="View Details" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}

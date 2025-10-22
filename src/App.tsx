@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "@/hooks/useCart";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
@@ -44,10 +45,11 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light">
-      <LanguageProvider>
-        <CartProvider>
-          <TooltipProvider>
+    <HelmetProvider>
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <LanguageProvider>
+          <CartProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -92,10 +94,11 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+            </TooltipProvider>
+          </CartProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   </QueryClientProvider>
 );
 
