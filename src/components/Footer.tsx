@@ -1,47 +1,48 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, MessageCircle, Mail, Phone, MapPin } from "lucide-react";
 import { Separator } from "./ui/separator";
+import { T } from "./T";
 
 export const Footer = () => {
   return (
-    <footer className="bg-muted mt-16">
+    <footer className="bg-navy mt-16">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About Column */}
           <div className="lg:col-span-1">
-            <h3 className="font-bold text-lg mb-4">JJ Emas</h3>
-            <p className="text-sm text-muted-foreground">
-              Your trusted gold jewelry destination in Malaysia. Quality craftsmanship since establishment.
+            <h3 className="font-bold text-lg mb-4 text-primary">JJ Emas</h3>
+            <p className="text-sm text-navy-foreground/80">
+              <T zh="您在马来西亚值得信赖的黄金珠宝目的地。自成立以来，我们致力于提供优质工艺。" en="Your trusted gold jewelry destination in Malaysia. Quality craftsmanship since establishment." />
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold mb-4 text-primary"><T zh="快速链接" en="Quick Links" /></h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/products" className="text-muted-foreground hover:text-primary transition-colors">
-                  Shop
+                <Link to="/products" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="商店" en="Shop" />
                 </Link>
               </li>
               <li>
-                <Link to="/categories" className="text-muted-foreground hover:text-primary transition-colors">
-                  Categories
+                <Link to="/categories" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="分类" en="Categories" />
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                  About Us
+                <Link to="/about" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="关于我们" en="About Us" />
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                  Contact
+                <Link to="/contact" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="联系我们" en="Contact" />
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-muted-foreground hover:text-primary transition-colors">
-                  FAQ
+                <Link to="/faq" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="常见问题" en="FAQ" />
                 </Link>
               </li>
             </ul>
@@ -49,26 +50,26 @@ export const Footer = () => {
 
           {/* Customer Service */}
           <div>
-            <h4 className="font-semibold mb-4">Customer Service</h4>
+            <h4 className="font-semibold mb-4 text-primary"><T zh="客户服务" en="Customer Service" /></h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/shipping-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                  Shipping Policy
+                <Link to="/shipping-policy" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="运输政策" en="Shipping Policy" />
                 </Link>
               </li>
               <li>
-                <Link to="/return-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                  Return Policy
+                <Link to="/return-policy" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="退货政策" en="Return Policy" />
                 </Link>
               </li>
               <li>
-                <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                  Privacy Policy
+                <Link to="/privacy-policy" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="隐私政策" en="Privacy Policy" />
                 </Link>
               </li>
               <li>
-                <Link to="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
-                  Terms of Service
+                <Link to="/terms-of-service" className="text-navy-foreground/80 hover:text-primary transition-colors">
+                  <T zh="服务条款" en="Terms of Service" />
                 </Link>
               </li>
             </ul>
@@ -76,35 +77,35 @@ export const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-semibold mb-4">Contact Us</h4>
+            <h4 className="font-semibold mb-4 text-primary"><T zh="联系我们" en="Contact Us" /></h4>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <a href="tel:+60123456789" className="text-muted-foreground hover:text-primary transition-colors">
+                <Phone className="h-4 w-4 text-primary" />
+                <a href="tel:+60123456789" className="text-navy-foreground/80 hover:text-primary transition-colors">
                   +60 12-345 6789
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <a href="mailto:info@jjemas.com" className="text-muted-foreground hover:text-primary transition-colors">
+                <Mail className="h-4 w-4 text-primary" />
+                <a href="mailto:info@jjemas.com" className="text-navy-foreground/80 hover:text-primary transition-colors">
                   info@jjemas.com
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                <MessageCircle className="h-4 w-4 text-primary" />
                 <a
                   href="https://wa.me/60123456789"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-navy-foreground/80 hover:text-primary transition-colors"
                 >
-                  WhatsApp Us
+                  <T zh="WhatsApp 联系我们" en="WhatsApp Us" />
                 </a>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <span className="text-muted-foreground">
-                  123 Gold Street, Kuala Lumpur, Malaysia
+                <MapPin className="h-4 w-4 text-primary mt-0.5" />
+                <span className="text-navy-foreground/80">
+                  <T zh="吉隆坡金街123号，马来西亚" en="123 Gold Street, Kuala Lumpur, Malaysia" />
                 </span>
               </li>
             </ul>
@@ -112,13 +113,13 @@ export const Footer = () => {
 
           {/* Social Media & Payment */}
           <div>
-            <h4 className="font-semibold mb-4">Follow Us</h4>
+            <h4 className="font-semibold mb-4 text-primary"><T zh="关注我们" en="Follow Us" /></h4>
             <div className="flex gap-4 mb-6">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-navy-foreground/80 hover:text-primary transition-colors"
               >
                 <Facebook className="h-5 w-5" />
               </a>
@@ -126,28 +127,28 @@ export const Footer = () => {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-navy-foreground/80 hover:text-primary transition-colors"
               >
                 <Instagram className="h-5 w-5" />
               </a>
             </div>
 
-            <h4 className="font-semibold mb-4">Payment Methods</h4>
+            <h4 className="font-semibold mb-4 text-primary"><T zh="支付方式" en="Payment Methods" /></h4>
             <div className="flex flex-wrap gap-2">
-              <div className="bg-background px-3 py-1 rounded text-xs font-medium border">
+              <div className="bg-navy-800 px-3 py-1 rounded text-xs font-medium border border-navy-700 text-navy-foreground">
                 Stripe
               </div>
-              <div className="bg-background px-3 py-1 rounded text-xs font-medium border">
+              <div className="bg-navy-800 px-3 py-1 rounded text-xs font-medium border border-navy-700 text-navy-foreground">
                 Touch N Go
               </div>
             </div>
           </div>
         </div>
 
-        <Separator className="my-8" />
+        <Separator className="my-8 bg-navy-700" />
 
-        <div className="text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} JJ Emas. All rights reserved.</p>
+        <div className="text-center text-sm text-navy-foreground/70">
+          <p>© {new Date().getFullYear()} JJ Emas. <T zh="版权所有。" en="All rights reserved." /></p>
         </div>
       </div>
     </footer>

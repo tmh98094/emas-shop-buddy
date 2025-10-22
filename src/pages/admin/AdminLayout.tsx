@@ -3,19 +3,20 @@ import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { T } from "@/components/T";
 
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const navigation = [
-    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Products", href: "/admin/products", icon: Package },
-    { name: "Categories", href: "/admin/categories", icon: Package },
-    { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { name: "Customers", href: "/admin/customers", icon: Users },
-    { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "仪表板", href: "/admin", icon: LayoutDashboard, en: "Dashboard" },
+    { name: "产品", href: "/admin/products", icon: Package, en: "Products" },
+    { name: "分类", href: "/admin/categories", icon: Package, en: "Categories" },
+    { name: "订单", href: "/admin/orders", icon: ShoppingCart, en: "Orders" },
+    { name: "客户", href: "/admin/customers", icon: Users, en: "Customers" },
+    { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet, en: "Touch N Go" },
+    { name: "设置", href: "/admin/settings", icon: Settings, en: "Settings" },
   ];
 
   const handleLogout = async () => {
@@ -26,9 +27,9 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-card border-r">
+      <aside className="w-64 bg-navy border-r border-navy-700">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-primary">JJ Emas Admin</h1>
+          <h1 className="text-2xl font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
         </div>
         <nav className="px-4 space-y-2">
           {navigation.map((item) => {
@@ -40,27 +41,31 @@ export default function AdminLayout() {
               <Link key={item.name} to={item.href}>
                 <Button
                   variant={isActive ? "default" : "ghost"}
-                  className="w-full justify-start"
+                  className={`w-full justify-start ${
+                    isActive 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "text-navy-foreground hover:text-primary hover:bg-navy-800"
+                  }`}
                 >
                   <Icon className="h-4 w-4 mr-2" />
-                  {item.name}
+                  <T zh={item.name} en={item.en} />
                 </Button>
               </Link>
             );
           })}
           <Button
             variant="ghost"
-            className="w-full justify-start text-red-500 hover:text-red-600"
+            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-navy-800"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Logout
+            <T zh="退出" en="Logout" />
           </Button>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto bg-background">
         <Outlet />
       </main>
     </div>

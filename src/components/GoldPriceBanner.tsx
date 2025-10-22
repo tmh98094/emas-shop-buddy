@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp } from "lucide-react";
+import { T } from "./T";
 
 export const GoldPriceBanner = () => {
   const { data: goldPrices } = useQuery({
@@ -36,18 +37,18 @@ export const GoldPriceBanner = () => {
         <div className="flex items-center justify-center gap-8">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            <span className="font-semibold">Today's Gold Price</span>
+            <span className="font-semibold"><T zh="今日金价" en="Today's Gold Price" /></span>
           </div>
           <div className="flex gap-6">
             <div className="text-center">
-              <span className="text-sm opacity-90">916 Gold</span>
+              <span className="text-sm opacity-90"><T zh="916金" en="916 Gold" /></span>
               <p className="text-lg font-bold">
                 RM {goldPrices?.["916"]?.toFixed(2) || "0.00"}/g
               </p>
             </div>
             <div className="h-10 w-px bg-primary-foreground/20" />
             <div className="text-center">
-              <span className="text-sm opacity-90">999 Gold</span>
+              <span className="text-sm opacity-90"><T zh="999金" en="999 Gold" /></span>
               <p className="text-lg font-bold">
                 RM {goldPrices?.["999"]?.toFixed(2) || "0.00"}/g
               </p>

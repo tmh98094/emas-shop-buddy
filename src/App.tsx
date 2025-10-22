@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { CartProvider } from "@/hooks/useCart";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -41,11 +42,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light">
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <LanguageProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<Products />} />
@@ -83,9 +85,10 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      </CartProvider>
+          </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
