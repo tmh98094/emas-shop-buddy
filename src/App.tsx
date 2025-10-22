@@ -36,6 +36,8 @@ import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
 import OrderDetail from "./pages/admin/OrderDetail";
 import AdminNotifications from "./pages/admin/Notifications";
+import CustomerDetail from "./pages/admin/CustomerDetail";
+import AdminAnalytics from "./pages/admin/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -109,8 +109,9 @@ export default function TouchNGoPayment() {
                   />
                 </label>
                 {receiptUrl && (
-                  <div className="mt-4">
-                    <img src={receiptUrl} alt="Receipt preview" className="max-w-xs mx-auto rounded" />
+                  <div className="mt-4 p-4 border rounded-lg bg-muted/20">
+                    <p className="text-sm font-medium mb-2">Receipt Preview:</p>
+                    <img src={receiptUrl} alt="Receipt preview" className="max-w-full max-h-96 mx-auto rounded border" />
                   </div>
                 )}
               </div>

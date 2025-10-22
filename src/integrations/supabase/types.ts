@@ -194,6 +194,9 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          review_rating: number | null
+          review_text: string | null
+          reviewed_at: string | null
           subtotal: number
           variant_name: string | null
           variant_value: string | null
@@ -210,6 +213,9 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity?: number
+          review_rating?: number | null
+          review_text?: string | null
+          reviewed_at?: string | null
           subtotal: number
           variant_name?: string | null
           variant_value?: string | null
@@ -226,6 +232,9 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          review_rating?: number | null
+          review_text?: string | null
+          reviewed_at?: string | null
           subtotal?: number
           variant_name?: string | null
           variant_value?: string | null

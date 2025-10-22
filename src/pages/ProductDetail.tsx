@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ImageZoomModal } from "@/components/ImageZoomModal";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -18,6 +19,8 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showZoom, setShowZoom] = useState(false);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -72,16 +75,16 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Carousel */}
           <div>
-            <Carousel className="w-full">
+            <Carousel className="w-full" onSelect={(index) => setSelectedImageIndex(index)}>
               <CarouselContent>
                 {product.product_images?.map((img: any, index: number) => (
                   <CarouselItem key={index}>
-                    <Card className="overflow-hidden">
-                      <img
-                        src={img.image_url}
-                        alt={`${product.name} - Image ${index + 1}`}
-                        className="w-full h-[500px] object-cover"
-                      />
+                    <Card className="overflow-hidden cursor-zoom-in" onClick={() => setShowZoom(true)}>
+                      {img.media_type === 'video' ? (
+                        <video src={img.image_url} className="w-full h-[500px] object-cover" controls />
+                      ) : (
+                        <img src={img.image_url} alt={`${product.name} - Image ${index + 1}`} className="w-full h-[500px] object-cover" />
+                      )}
                     </Card>
                   </CarouselItem>
                 ))}
@@ -89,6 +92,13 @@ export default function ProductDetail() {
               <CarouselPrevious />
               <CarouselNext />
             </Carousel>
+            <ImageZoomModal
+              images={product.product_images || []}
+              currentIndex={selectedImageIndex}
+              open={showZoom}
+              onOpenChange={setShowZoom}
+              onNavigate={(dir) => setSelectedImageIndex(prev => dir === 'prev' ? Math.max(0, prev - 1) : Math.min(product.product_images.length - 1, prev + 1))}
+            />
           </div>
 
           {/* Product Details */}

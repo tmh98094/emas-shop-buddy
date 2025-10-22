@@ -48,7 +48,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         .from("cart_items")
         .select(`
           *,
-          product:products(*)
+          product:products(
+            *,
+            product_images(*)
+          )
         `);
 
       if (user) {
