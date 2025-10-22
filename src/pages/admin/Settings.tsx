@@ -12,6 +12,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [goldPrice916, setGoldPrice916] = useState("");
   const [goldPrice999, setGoldPrice999] = useState("");
+  const [initialized, setInitialized] = useState(false);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["admin-gold-prices"],
@@ -26,15 +27,20 @@ export default function Settings() {
       data?.forEach(item => {
         if (item.key === "gold_price_916") {
           prices["916"] = (item.value as any).price;
-          setGoldPrice916((item.value as any).price.toString());
         } else if (item.key === "gold_price_999") {
           prices["999"] = (item.value as any).price;
-          setGoldPrice999((item.value as any).price.toString());
         }
       });
       return prices;
     },
   });
+
+  // Initialize inputs once when data is loaded
+  if (!initialized && goldPrices) {
+    setGoldPrice916(goldPrices["916"].toString());
+    setGoldPrice999(goldPrices["999"].toString());
+    setInitialized(true);
+  }
 
   const updatePrices = useMutation({
     mutationFn: async () => {

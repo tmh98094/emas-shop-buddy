@@ -18,6 +18,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { T } from "@/components/T";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { normalizePhone } from "@/lib/phone-utils";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ export default function Checkout() {
     country: "Malaysia",
   });
   const [shippingRegion, setShippingRegion] = useState<"west_malaysia" | "east_malaysia" | "singapore">("west_malaysia");
+  const [countryCodePhone, setCountryCodePhone] = useState<string>("+60");
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -148,7 +150,7 @@ export default function Checkout() {
           ...(user?.id && { user_id: user.id }),
           order_number: orderNumber,
           full_name: formData.full_name,
-          phone_number: formData.phone_number,
+          phone_number: normalizePhone(formData.phone_number, countryCodePhone),
           email: formData.email || null,
           notes: formData.notes || null,
           shipping_address_line1: formData.address_line1,
@@ -276,14 +278,28 @@ export default function Checkout() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone_number"><T zh="电话号码" en="Phone Number" /> *</Label>
+                  <Label htmlFor="phone_number"><T zh="电话号码" en="Phone Number" /> *</Label>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Select value={countryCodePhone} onValueChange={setCountryCodePhone}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+60">Malaysia (+60)</SelectItem>
+                        <SelectItem value="+65">Singapore (+65)</SelectItem>
+                        <SelectItem value="+62">Indonesia (+62)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Input
                       id="phone_number"
                       required
                       type="tel"
+                      placeholder="11-1234 5678"
                       value={formData.phone_number}
                       onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      className="col-span-2"
                     />
+                  </div>
                   </div>
                   <div>
                     <Label htmlFor="email"><T zh="电子邮件" en="Email" /></Label>

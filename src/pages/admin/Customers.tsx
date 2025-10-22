@@ -19,7 +19,7 @@ export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const { data: customers = [], isLoading } = useQuery({
+  const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ["customers", searchQuery],
     queryFn: async () => {
       let query = supabase

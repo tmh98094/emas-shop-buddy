@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WhatsAppFloater } from "@/components/WhatsAppFloater";
+import { generatePhoneVariants, normalizePhone } from "@/lib/phone-utils";
 export default function OrderTracking() {
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [countryCode, setCountryCode] = useState<string>("+60");
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -20,6 +23,9 @@ export default function OrderTracking() {
     setLoading(true);
 
     try {
+      const variants = generatePhoneVariants(phoneNumber, countryCode);
+      const orFilter = variants.map((v) => `phone_number.eq.${v}`).join(",");
+
       const { data, error } = await supabase
         .from("orders")
         .select(`
@@ -27,16 +33,16 @@ export default function OrderTracking() {
           order_items (*),
           touch_n_go_payments (*)
         `)
-        .eq("phone_number", phoneNumber)
+        .or(orFilter)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         toast({ title: "No orders found for this phone number" });
       }
 
-      setOrders(data);
+      setOrders(data || []);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -68,14 +74,27 @@ export default function OrderTracking() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="phone">Enter Your Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+60123456789"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    required
-                  />
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+60">Malaysia (+60)</SelectItem>
+                        <SelectItem value="+65">Singapore (+65)</SelectItem>
+                        <SelectItem value="+62">Indonesia (+62)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="11-1234 5678"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                      className="col-span-2"
+                    />
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Searching..." : "Track Orders"}
@@ -138,6 +157,7 @@ export default function OrderTracking() {
           )}
         </div>
       </main>
+      <WhatsAppFloater />
     </div>
   );
 }

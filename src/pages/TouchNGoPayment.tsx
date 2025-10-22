@@ -10,6 +10,32 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
 
+function ReceiptPreview({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  useState(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from("payment-receipts")
+          .createSignedUrl(path, 60);
+        if (error) throw error;
+        setUrl(data.signedUrl);
+      } catch (e: any) {
+        setError(e.message);
+      }
+    })();
+  });
+
+  if (error) {
+    return <p className="text-sm text-destructive">Failed to generate preview. You can still submit.</p>;
+  }
+  if (!url) return <p className="text-sm text-muted-foreground">Generating preview…</p>;
+  return <img src={url} alt="Receipt preview" className="max-w-full max-h-96 mx-auto rounded border" loading="lazy" />;
+}
+
+
 export default function TouchNGoPayment() {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -34,11 +60,8 @@ export default function TouchNGoPayment() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("payment-receipts")
-        .getPublicUrl(fileName);
-
-      setReceiptUrl(publicUrl);
+      // Store path instead of public URL for private bucket
+      setReceiptUrl(fileName);
       toast({ title: "Receipt uploaded successfully!" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -111,7 +134,10 @@ export default function TouchNGoPayment() {
                 {receiptUrl && (
                   <div className="mt-4 p-4 border rounded-lg bg-muted/20">
                     <p className="text-sm font-medium mb-2">Receipt Preview:</p>
-                    <img src={receiptUrl} alt="Receipt preview" className="max-w-full max-h-96 mx-auto rounded border" loading="lazy" />
+                    {/* Generate a short-lived preview URL for private bucket */}
+                    {/* In case preview fails, the admin can still view via signed link */}
+                    {/* We'll attempt to create a signed URL on the fly */}
+                    <ReceiptPreview path={receiptUrl} />
                   </div>
                 )}
               </div>

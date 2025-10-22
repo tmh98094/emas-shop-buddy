@@ -57,13 +57,22 @@ export default function TouchNGo() {
         .eq("id", orderId);
       if (orderError) throw orderError;
     },
+    onMutate: async ({ paymentId }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-touch-n-go"] });
+      const previous = queryClient.getQueryData<any[]>(["admin-touch-n-go"]);
+      queryClient.setQueryData<any[]>(["admin-touch-n-go"], (old) =>
+        (old || []).map((p) => p.id === paymentId ? { ...p, verified: true, verified_at: new Date().toISOString() } : p)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(["admin-touch-n-go"], context.previous);
+      toast({ title: "Failed to verify payment", variant: "destructive" });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-touch-n-go"] });
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       toast({ title: "Payment verified successfully" });
-    },
-    onError: () => {
-      toast({ title: "Failed to verify payment", variant: "destructive" });
     },
   });
 
@@ -95,14 +104,28 @@ export default function TouchNGo() {
                   <TableCell>{order?.full_name}</TableCell>
                   <TableCell>RM {parseFloat(order?.total_amount).toFixed(2)}</TableCell>
                   <TableCell>
-                    <a
-                      href={payment.receipt_image_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+                    <Button
+                      variant="link"
+                      className="text-primary px-0"
+                      onClick={async () => {
+                        try {
+                          const url = payment.receipt_image_url as string;
+                          const marker = "/payment-receipts/";
+                          let path = url;
+                          const idx = url.indexOf(marker);
+                          if (idx !== -1) path = url.slice(idx + marker.length);
+                          const { data, error } = await supabase.storage
+                            .from("payment-receipts")
+                            .createSignedUrl(path, 60);
+                          if (error) throw error;
+                          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                        } catch (err: any) {
+                          toast({ title: "Failed to open receipt", description: err.message, variant: "destructive" });
+                        }
+                      }}
                     >
                       View Receipt
-                    </a>
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Badge variant={payment.verified ? "default" : "secondary"}>
@@ -122,7 +145,7 @@ export default function TouchNGo() {
                       disabled={payment.verified || verifyPayment.isPending}
                       variant={payment.verified ? "secondary" : "default"}
                     >
-                      {payment.verified ? "Confirmed" : "Verify"}
+                      {payment.verified ? "Verified" : (verifyPayment.isPending ? "Verifying..." : "Verify")}
                     </Button>
                   </TableCell>
                 </TableRow>
