@@ -2,6 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { X } from "lucide-react";
@@ -119,9 +120,24 @@ export const ProductFilters = ({
 
       {/* Price Range */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">
-          Price Range: RM {priceRange[0]} - RM {priceRange[1]}
-        </Label>
+        <Label className="text-sm font-semibold">Price Range</Label>
+        <div className="flex gap-2 items-center">
+          <Input
+            type="number"
+            placeholder="Min"
+            value={priceRange[0]}
+            onChange={(e) => onPriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
+            className="w-20"
+          />
+          <span>-</span>
+          <Input
+            type="number"
+            placeholder="Max"
+            value={priceRange[1]}
+            onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value) || maxPrice])}
+            className="w-20"
+          />
+        </div>
         <Slider
           min={0}
           max={maxPrice}
@@ -130,6 +146,9 @@ export const ProductFilters = ({
           onValueChange={(value) => onPriceRangeChange(value as [number, number])}
           className="py-4"
         />
+        <div className="text-xs text-muted-foreground">
+          RM {priceRange[0]} - RM {priceRange[1]}
+        </div>
       </div>
 
       <Separator />

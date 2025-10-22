@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ImageCropper } from "@/components/ImageCropper";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -38,6 +39,8 @@ export default function ProductForm() {
   const [videos, setVideos] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [thumbnailId, setThumbnailId] = useState<string>("");
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -142,7 +145,7 @@ export default function ProductForm() {
         await supabase.from("product_images").update({ is_thumbnail: true }).eq("id", thumbnailId);
       }
 
-      // Upload images
+      // Upload images (already cropped to 1:1)
       for (let i = 0; i < images.length; i++) {
         const file = images[i];
         const fileExt = file.name.split(".").pop();
@@ -158,13 +161,13 @@ export default function ProductForm() {
           .from("product-images")
           .getPublicUrl(fileName);
 
-        const { data: newImage } = await supabase.from("product_images").insert({
+        await supabase.from("product_images").insert({
           product_id: productId,
           image_url: publicUrl,
           media_type: 'image',
           display_order: existingImages.length + i,
           is_thumbnail: existingImages.length === 0 && i === 0 && !thumbnailId,
-        }).select().single();
+        });
       }
 
       // Upload videos
@@ -204,6 +207,23 @@ export default function ProductForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate();
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    setImages([...images, croppedFile]);
   };
 
   const removeImage = async (imageId: string) => {

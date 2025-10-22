@@ -110,20 +110,17 @@ export default function Cart() {
                 return (
                   <Card key={item.id} className="p-6">
                     <div className="flex gap-4">
-                      <img
-                        src={product.product_images?.[0]?.image_url || "/placeholder.svg"}
-                        alt={product.name}
-                        className="w-full h-64 object-cover"
-                        loading="lazy"
-                      />
+                      <div className="w-24 h-24 flex-shrink-0">
+                        <img
+                          src={product.product_images?.[0]?.image_url || "/placeholder.svg"}
+                          alt={product.name}
+                          className="w-full h-full object-cover rounded"
+                          loading="lazy"
+                        />
+                      </div>
                        <div className="flex-1">
                         <h3 className="font-semibold text-lg">{product.name}</h3>
                         <p className="text-sm text-muted-foreground">{product.gold_type} Gold</p>
-                        {item.locked_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Price locked {getTimeSinceLocked(item.locked_at)}
-                          </p>
-                        )}
                         <p className="text-primary font-bold mt-2">
                           RM {itemPrice.toFixed(2)}
                         </p>

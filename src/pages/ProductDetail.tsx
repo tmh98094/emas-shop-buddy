@@ -83,6 +83,15 @@ export default function ProductDetail() {
       <Header />
       
       <main className="container mx-auto px-4 py-12">
+        {/* Breadcrumb */}
+        <nav className="mb-6 text-sm">
+          <ol className="flex items-center space-x-2">
+            <li><a href="/categories" className="text-muted-foreground hover:text-primary">Categories</a></li>
+            <li className="text-muted-foreground">/</li>
+            <li className="text-foreground font-medium">{product.name}</li>
+          </ol>
+        </nav>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Carousel */}
           <div>
@@ -135,9 +144,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p><T zh="金价" en="Gold Price" /> ({product.gold_type}): RM {formatPrice(goldPrice)}/g</p>
               <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
-              <p><T zh="工费" en="Labour Fee" />: RM {formatPrice(Number(product.labour_fee))}</p>
             </div>
 
             <div>

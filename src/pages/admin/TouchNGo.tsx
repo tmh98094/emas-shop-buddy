@@ -34,10 +34,16 @@ export default function TouchNGo() {
 
   const verifyPayment = useMutation({
     mutationFn: async ({ paymentId, orderId }: { paymentId: string; orderId: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Update payment verification
       const { error: paymentError } = await supabase
         .from("touch_n_go_payments")
-        .update({ verified: true, verified_at: new Date().toISOString() })
+        .update({ 
+          verified: true, 
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id 
+        })
         .eq("id", paymentId);
       if (paymentError) throw paymentError;
 
@@ -54,7 +60,10 @@ export default function TouchNGo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-touch-n-go"] });
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      toast({ title: "Payment verified and order updated successfully" });
+      toast({ title: "Payment verified successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to verify payment", variant: "destructive" });
     },
   });
 
@@ -104,17 +113,17 @@ export default function TouchNGo() {
                     {new Date(payment.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    {!payment.verified && (
-                      <Button
-                        size="sm"
-                        onClick={() => verifyPayment.mutate({ 
-                          paymentId: payment.id, 
-                          orderId: payment.order_id 
-                        })}
-                      >
-                        Verify
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => verifyPayment.mutate({ 
+                        paymentId: payment.id, 
+                        orderId: payment.order_id 
+                      })}
+                      disabled={payment.verified || verifyPayment.isPending}
+                      variant={payment.verified ? "secondary" : "default"}
+                    >
+                      {payment.verified ? "Confirmed" : "Verify"}
+                    </Button>
                   </TableCell>
                 </TableRow>
               );

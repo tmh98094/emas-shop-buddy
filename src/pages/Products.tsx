@@ -47,7 +47,7 @@ export default function Products() {
 
   // Fetch products
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategories, selectedGoldTypes, searchQuery, inStockOnly, sortBy],
+    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -76,10 +76,10 @@ export default function Products() {
       // Apply sorting
       switch (sortBy) {
         case "price-asc":
-          query = query.order("labour_fee", { ascending: true });
+          query = query.order("cached_current_price", { ascending: true });
           break;
         case "price-desc":
-          query = query.order("labour_fee", { ascending: false });
+          query = query.order("cached_current_price", { ascending: false });
           break;
         case "best-seller":
           query = query.eq("is_best_seller", true).order("created_at", { ascending: false });
@@ -91,7 +91,13 @@ export default function Products() {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data.map(product => ({
+      // Filter by price range on client side
+      const filteredData = data.filter(product => {
+        const price = parseFloat(String(product.cached_current_price || 0));
+        return price >= priceRange[0] && price <= priceRange[1];
+      });
+
+      return filteredData.map(product => ({
         ...product,
         product_images: product.product_images?.sort((a: any, b: any) => 
           (a.display_order || 0) - (b.display_order || 0)
