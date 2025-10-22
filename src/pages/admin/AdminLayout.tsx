@@ -15,6 +15,7 @@ export default function AdminLayout() {
     { name: "分类", href: "/admin/categories", icon: Package, en: "Categories" },
     { name: "订单", href: "/admin/orders", icon: ShoppingCart, en: "Orders" },
     { name: "客户", href: "/admin/customers", icon: Users, en: "Customers" },
+    { name: "分析", href: "/admin/analytics", icon: LayoutDashboard, en: "Analytics" },
     { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet, en: "Touch N Go" },
     { name: "设置", href: "/admin/settings", icon: Settings, en: "Settings" },
   ];

@@ -81,6 +81,8 @@ const App = () => (
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:id" element={<OrderDetail />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="customers/:customerId" element={<CustomerDetail />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="touch-n-go" element={<AdminTouchNGo />} />
               <Route path="settings" element={<AdminSettings />} />

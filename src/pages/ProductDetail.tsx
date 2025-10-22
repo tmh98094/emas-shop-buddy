@@ -75,11 +75,17 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Carousel */}
           <div>
-            <Carousel className="w-full" onSelect={(index) => setSelectedImageIndex(index)}>
+            <Carousel className="w-full">
               <CarouselContent>
                 {product.product_images?.map((img: any, index: number) => (
                   <CarouselItem key={index}>
-                    <Card className="overflow-hidden cursor-zoom-in" onClick={() => setShowZoom(true)}>
+                    <Card 
+                      className="overflow-hidden cursor-zoom-in" 
+                      onClick={() => {
+                        setSelectedImageIndex(index);
+                        setShowZoom(true);
+                      }}
+                    >
                       {img.media_type === 'video' ? (
                         <video src={img.image_url} className="w-full h-[500px] object-cover" controls />
                       ) : (
