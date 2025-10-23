@@ -19,12 +19,12 @@ const formatPhoneNumber = (value: string, countryCode: string): string => {
   
   // Format based on country code
   if (countryCode === '+60') {
-    // Malaysia: +60 11 1122 3455
+    // Malaysia: XX XXXX XXXX (max 10 digits)
     if (digits.length <= 2) return digits;
     if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
     return `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6, 10)}`;
   } else if (countryCode === '+65') {
-    // Singapore: +65 1234 1234
+    // Singapore: XXXX XXXX (max 8 digits)
     if (digits.length <= 4) return digits;
     return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
   }
@@ -71,11 +71,17 @@ export const PhoneInput = ({
           onChange={handlePhoneInput}
           required={required}
           className="flex-1"
+          inputMode="numeric"
+          pattern="[0-9 ]*"
         />
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <p className="text-xs text-muted-foreground">
-        {countryCode === '+60' ? 'Format: 11 1122 3455' : 'Format: 1234 1234'}
+        {countryCode === '+60' 
+          ? 'Malaysia: XX XXXX XXXX (10 digits)' 
+          : countryCode === '+65'
+          ? 'Singapore: XXXX XXXX (8 digits)'
+          : 'Enter phone number'}
       </p>
     </div>
   );

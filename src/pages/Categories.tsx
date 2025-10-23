@@ -15,14 +15,27 @@ export default function Categories() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select(`
-          *,
-          products (count)
-        `)
+        .select("*")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return data;
+      
+      // Fetch product counts for each category
+      const categoriesWithCounts = await Promise.all(
+        data.map(async (category) => {
+          const { count } = await supabase
+            .from("products")
+            .select("*", { count: "exact", head: true })
+            .eq("category_id", category.id);
+          
+          return {
+            ...category,
+            productCount: count || 0,
+          };
+        })
+      );
+      
+      return categoriesWithCounts;
     },
   });
 
@@ -52,10 +65,6 @@ export default function Categories() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories?.map((category) => {
-              const productCount = Array.isArray(category.products) 
-                ? category.products.length 
-                : 0;
-
               return (
                 <Card
                   key={category.id}
@@ -86,7 +95,7 @@ export default function Categories() {
                       </p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      {productCount} {productCount === 1 ? 'product' : 'products'}
+                      {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
                     </p>
                   </CardContent>
                 </Card>

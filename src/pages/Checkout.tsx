@@ -27,6 +27,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PhoneInput } from "@/components/PhoneInput";
+import { Loader2 } from "lucide-react";
 
 export default function Checkout() {
   const { items, clearCart, refreshPrices } = useCart();
@@ -327,60 +329,50 @@ export default function Checkout() {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4"><T zh="联系信息" en="Contact Information" /></h2>
                 <div className="space-y-4">
-                  <div>
+                  <div className="relative">
                     <Label htmlFor="full_name"><T zh="全名" en="Full Name" /> *</Label>
                     <Input
                       id="full_name"
                       required
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      disabled={profileLoading}
                     />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
                   <div>
-                  <Label htmlFor="phone_number"><T zh="电话号码" en="Phone Number" /> *</Label>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Select value={countryCodePhone} onValueChange={setCountryCodePhone} disabled={profileLoading}>
-                      <SelectTrigger className="md:hidden">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectTrigger className="hidden md:flex">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="+60" className="md:hidden">+60</SelectItem>
-                        <SelectItem value="+60" className="hidden md:flex">Malaysia (+60)</SelectItem>
-                        <SelectItem value="+65" className="md:hidden">+65</SelectItem>
-                        <SelectItem value="+65" className="hidden md:flex">Singapore (+65)</SelectItem>
-                        <SelectItem value="+62" className="md:hidden">+62</SelectItem>
-                        <SelectItem value="+62" className="hidden md:flex">Indonesia (+62)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="col-span-2 relative">
-                      <Input
-                        id="phone_number"
-                        required
-                        type="tel"
-                        placeholder="11-1234 5678"
-                        value={formData.phone_number}
-                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                        disabled={profileLoading}
-                      />
-                      {profileLoading && (
-                        <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded">
-                          <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        </div>
-                      )}
-                    </div>
+                    <PhoneInput
+                      countryCode={countryCodePhone}
+                      phoneNumber={formData.phone_number}
+                      onCountryCodeChange={setCountryCodePhone}
+                      onPhoneNumberChange={(value) => setFormData({ ...formData, phone_number: value })}
+                      label="Phone Number"
+                      required
+                    />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
-                  </div>
-                  <div>
+                  <div className="relative">
                     <Label htmlFor="email"><T zh="电子邮件" en="Email" /></Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      disabled={profileLoading}
                     />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="notes"><T zh="订单备注" en="Order Notes" /></Label>
@@ -396,52 +388,82 @@ export default function Checkout() {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4"><T zh="配送地址" en="Shipping Address" /></h2>
                 <div className="space-y-4">
-                  <div>
+                  <div className="relative">
                     <Label htmlFor="address_line1"><T zh="地址第一行" en="Address Line 1" /> *</Label>
                     <Input
                       id="address_line1"
                       required
                       value={formData.address_line1}
                       onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
+                      disabled={profileLoading}
                     />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
-                  <div>
+                  <div className="relative">
                     <Label htmlFor="address_line2"><T zh="地址第二行" en="Address Line 2" /></Label>
                     <Input
                       id="address_line2"
                       value={formData.address_line2}
                       onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+                      disabled={profileLoading}
                     />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="relative">
                       <Label htmlFor="city"><T zh="城市" en="City" /> *</Label>
                       <Input
                         id="city"
                         required
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        disabled={profileLoading}
                       />
+                      {profileLoading && (
+                        <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
                     </div>
-                    <div>
+                    <div className="relative">
                       <Label htmlFor="state"><T zh="州/省" en="State" /> *</Label>
                       <Input
                         id="state"
                         required
                         value={formData.state}
                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        disabled={profileLoading}
                       />
+                      {profileLoading && (
+                        <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="relative">
                       <Label htmlFor="postcode"><T zh="邮政编码" en="Postcode" /> *</Label>
                       <Input
                         id="postcode"
                         required
                         value={formData.postcode}
                         onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                        disabled={profileLoading}
                       />
+                      {profileLoading && (
+                        <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="country"><T zh="国家" en="Country" /> *</Label>

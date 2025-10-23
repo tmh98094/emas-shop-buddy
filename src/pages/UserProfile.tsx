@@ -10,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { normalizePhone, formatDisplayPhone } from "@/lib/phone-utils";
+import { PhoneInput } from "@/components/PhoneInput";
+import { normalizePhone } from "@/lib/phone-utils";
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -50,17 +50,14 @@ export default function UserProfile() {
 
       if (error) throw error;
       if (data) {
-        // Parse existing phone number
+        // Parse existing phone number for country code and number
         const phone = data.phone_number || "";
-        if (phone.startsWith("+60")) {
-          setCountryCode("+60");
-          setPhoneNumber(phone.substring(3));
-        } else if (phone.startsWith("+65")) {
-          setCountryCode("+65");
-          setPhoneNumber(phone.substring(3));
-        } else {
-          setPhoneNumber(phone);
-        }
+        const phoneMatch = phone.match(/^(\+\d+)(.+)$/);
+        const extractedCountryCode = phoneMatch?.[1] || "+60";
+        const extractedPhone = phoneMatch?.[2]?.replace(/\s/g, "") || "";
+        
+        setCountryCode(extractedCountryCode);
+        setPhoneNumber(extractedPhone);
         
         setProfile({
           full_name: data.full_name || "",
@@ -208,35 +205,14 @@ export default function UserProfile() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="country-code">Country Code</Label>
-                    <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="+60">🇲🇾 Malaysia (+60)</SelectItem>
-                        <SelectItem value="+65">🇸🇬 Singapore (+65)</SelectItem>
-                        <SelectItem value="+86">🇨🇳 China (+86)</SelectItem>
-                        <SelectItem value="+1">🇺🇸 USA (+1)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                      placeholder="123456789"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Current: {formatDisplayPhone(normalizePhone(phoneNumber, countryCode))}
-                    </p>
-                  </div>
+                  <PhoneInput
+                    countryCode={countryCode}
+                    phoneNumber={phoneNumber}
+                    onCountryCodeChange={setCountryCode}
+                    onPhoneNumberChange={setPhoneNumber}
+                    label="Phone Number"
+                    required
+                  />
 
                   <Button type="submit" disabled={loading} className="w-full">
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
