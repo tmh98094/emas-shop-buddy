@@ -791,6 +791,15 @@ export type Database = {
       }
       normalize_phone_sql: { Args: { p_input: string }; Returns: string }
       update_product_cached_prices: { Args: never; Returns: undefined }
+      upsert_gold_settings: {
+        Args: {
+          price_916: number
+          price_999: number
+          qr_url: string
+          updated_by: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "customer"
