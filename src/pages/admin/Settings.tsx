@@ -75,38 +75,27 @@ export default function Settings() {
         qrUrl = publicUrl;
       }
 
-      // Update gold prices using individual updates
-      const { error: price916Error } = await supabase
-        .from("settings")
-        .update({ 
-          value: { price: parseFloat(goldPrice916) },
-          updated_by: user?.id 
-        })
-        .eq('key', 'gold_price_916');
-      
-      if (price916Error) throw price916Error;
+      // Validate inputs
+      const price916 = Number(goldPrice916);
+      const price999 = Number(goldPrice999);
+      if (!Number.isFinite(price916) || price916 < 0 || !Number.isFinite(price999) || price999 < 0) {
+        throw new Error("Please enter valid non-negative numbers for gold prices.");
+      }
 
-      const { error: price999Error } = await supabase
+      // Upsert settings by unique key to avoid WHERE clause issues
+      const { error: upsertError } = await supabase
         .from("settings")
-        .update({ 
-          value: { price: parseFloat(goldPrice999) },
-          updated_by: user?.id 
-        })
-        .eq('key', 'gold_price_999');
-      
-      if (price999Error) throw price999Error;
+        .upsert(
+          [
+            { key: "gold_price_916", value: { price: price916 }, updated_by: user?.id },
+            { key: "gold_price_999", value: { price: price999 }, updated_by: user?.id },
+            { key: "touch_n_go_qr", value: { qr_code_url: qrUrl }, updated_by: user?.id },
+          ],
+          { onConflict: "key" }
+        );
 
-      // Update QR code
-      const { error: qrError } = await supabase
-        .from("settings")
-        .update({ 
-          value: { qr_code_url: qrUrl },
-          updated_by: user?.id 
-        })
-        .eq('key', 'touch_n_go_qr');
+      if (upsertError) throw upsertError;
 
-      if (qrError) throw qrError;
-      
       // Trigger update of cached product prices
       await supabase.rpc('update_product_cached_prices');
     },
