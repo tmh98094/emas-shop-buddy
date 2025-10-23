@@ -353,21 +353,50 @@ export default function Auth() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
+                    placeholder="Enter your full name"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="email">Email (Optional)</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Optional - for order receipts and notifications
-                  </p>
-                </div>
+                {/* Show phone input for email signup, email input for phone signup */}
+                {emailAuth && !phoneNumber && (
+                  <div>
+                    <Label>Phone Number *</Label>
+                    <div className="flex gap-2">
+                      <Select value={countryCode} onValueChange={setCountryCode}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                          <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                          <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="tel"
+                        placeholder="123456789"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+                {phoneNumber && !emailAuth && (
+                  <div>
+                    <Label htmlFor="email-optional">Email (Optional)</Label>
+                    <Input
+                      id="email-optional"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Optional - for order receipts and notifications
+                    </p>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating Account..." : "Complete Registration"}
                 </Button>

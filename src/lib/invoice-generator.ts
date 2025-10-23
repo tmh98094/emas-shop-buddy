@@ -45,6 +45,7 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; padding: 40px; }
         .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #FFD700; padding-bottom: 20px; }
+        .header img { max-width: 150px; margin-bottom: 15px; }
         .header h1 { color: #B8860B; font-size: 32px; margin-bottom: 10px; }
         .info-section { margin-bottom: 30px; }
         .info-section h2 { font-size: 16px; color: #333; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
@@ -66,7 +67,8 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
     </head>
     <body>
       <div class="header">
-        <h1>🏆 INVOICE</h1>
+        <img src="/src/assets/logo.png" alt="JJ Emas Logo" />
+        <h1>INVOICE</h1>
         <p style="font-size: 14px; color: #666;">Premium Gold Jewelry</p>
       </div>
 

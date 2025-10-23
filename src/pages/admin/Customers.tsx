@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -22,20 +23,20 @@ export default function Customers() {
   const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ["customers", searchQuery],
     queryFn: async () => {
-      let query = supabase
+      // Get all registered users from profiles
+      let profileQuery = supabase
         .from("profiles")
         .select("*");
 
       if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
+        profileQuery = profileQuery.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
       }
 
-      const { data: profiles, error } = await query.order("created_at", { ascending: false });
-      
-      if (error) throw error;
+      const { data: profiles, error: profileError } = await profileQuery.order("created_at", { ascending: false });
+      if (profileError) throw profileError;
 
-      // Fetch orders separately for each customer
-      const customersWithStats = await Promise.all(
+      // Fetch orders for registered users
+      const registeredCustomers = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { data: orders } = await supabase
             .from("orders")
@@ -43,15 +44,56 @@ export default function Customers() {
             .eq("user_id", profile.id);
 
           return {
-            ...profile,
+            id: profile.id,
+            full_name: profile.full_name || "",
+            email: profile.email || "",
+            phone_number: profile.phone_number || "",
+            created_at: profile.created_at,
             total_orders: orders?.length || 0,
             total_spent: orders?.reduce((sum, order) => 
               sum + parseFloat(order.total_amount.toString()), 0) || 0,
+            is_guest: false,
           };
         })
       );
 
-      return customersWithStats;
+      // Get guest orders (orders without user_id)
+      let guestOrdersQuery = supabase
+        .from("orders")
+        .select("*")
+        .is("user_id", null);
+
+      if (searchQuery) {
+        guestOrdersQuery = guestOrdersQuery.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
+      }
+
+      const { data: guestOrders } = await guestOrdersQuery;
+
+      // Group guest orders by phone number
+      const guestCustomersMap = new Map();
+      guestOrders?.forEach(order => {
+        const phone = order.phone_number;
+        if (!guestCustomersMap.has(phone)) {
+          guestCustomersMap.set(phone, {
+            id: `guest-${phone}`,
+            full_name: order.full_name || "",
+            email: order.email || "",
+            phone_number: phone,
+            created_at: order.created_at,
+            total_orders: 0,
+            total_spent: 0,
+            is_guest: true,
+          });
+        }
+        const customer = guestCustomersMap.get(phone);
+        customer.total_orders += 1;
+        customer.total_spent += parseFloat(order.total_amount.toString());
+      });
+
+      const guestCustomers = Array.from(guestCustomersMap.values());
+
+      // Combine and sort by total spent
+      return [...registeredCustomers, ...guestCustomers].sort((a, b) => b.total_spent - a.total_spent);
     },
   });
 
@@ -130,7 +172,12 @@ export default function Customers() {
             <TableBody>
               {customers.map((customer) => (
                 <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.full_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {customer.full_name || "-"}
+                    {customer.is_guest && (
+                      <Badge variant="outline" className="ml-2 text-xs">Guest</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{customer.email || "-"}</TableCell>
                   <TableCell>{customer.phone_number}</TableCell>
                   <TableCell className="text-right">{customer.total_orders}</TableCell>

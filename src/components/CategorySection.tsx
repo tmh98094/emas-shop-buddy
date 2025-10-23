@@ -41,6 +41,9 @@ export const CategorySection = () => {
     return null;
   }
 
+  // Limit to 6 categories on homepage
+  const displayedCategories = categories?.slice(0, 6) || [];
+
   return (
     <section className="py-12 bg-muted">
       <div className="container mx-auto px-4">
@@ -48,7 +51,7 @@ export const CategorySection = () => {
           Shop by Category
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((category) => (
+          {displayedCategories.map((category) => (
             <Card
               key={category.id}
               className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all"

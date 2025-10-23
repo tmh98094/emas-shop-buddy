@@ -1,9 +1,11 @@
-import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -12,20 +14,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/invoice-generator";
 
 export default function Orders() {
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["admin-orders"],
+    queryKey: ["admin-orders", searchQuery],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("orders")
         .select(`
           *,
           order_items(*)
-        `)
-        .order("created_at", { ascending: false });
+        `);
+      
+      if (searchQuery) {
+        query = query.or(`order_number.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
+      }
+      
+      query = query.order("created_at", { ascending: false });
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -68,6 +79,18 @@ export default function Orders() {
   return (
     <div>
       <h1 className="text-4xl font-bold text-primary mb-8">Orders</h1>
+
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by order number, customer name, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
 
       <Card>
         <Table>

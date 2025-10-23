@@ -210,8 +210,9 @@ export default function ProductForm() {
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
       const reader = new FileReader();
       reader.onload = () => {
         setImageToCrop(reader.result as string);
@@ -224,6 +225,10 @@ export default function ProductForm() {
   const handleCropComplete = (croppedBlob: Blob) => {
     const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
     setImages([...images, croppedFile]);
+  };
+
+  const setExistingThumbnail = async (imageId: string) => {
+    setThumbnailId(imageId);
   };
 
   const removeImage = async (imageId: string) => {
@@ -391,7 +396,7 @@ export default function ProductForm() {
           
           <div className="grid grid-cols-4 gap-4 mb-4">
             {existingImages.map((img) => (
-              <div key={img.id} className="relative border rounded-lg p-2">
+              <div key={img.id} className="relative border rounded-lg p-2 bg-card">
                 {img.media_type === 'video' ? (
                   <video src={img.image_url} className="w-full h-32 object-cover rounded" controls />
                 ) : (
@@ -401,9 +406,13 @@ export default function ProductForm() {
                   <Checkbox
                     id={`thumb-${img.id}`}
                     checked={thumbnailId === img.id}
-                    onCheckedChange={(checked) => checked && setThumbnailId(img.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) setExistingThumbnail(img.id);
+                    }}
                   />
-                  <Label htmlFor={`thumb-${img.id}`} className="text-xs">Thumbnail</Label>
+                  <Label htmlFor={`thumb-${img.id}`} className="text-xs cursor-pointer">
+                    {thumbnailId === img.id ? '⭐ Thumbnail' : 'Set as Thumbnail'}
+                  </Label>
                 </div>
                 <Button
                   type="button"
@@ -416,25 +425,54 @@ export default function ProductForm() {
                 </Button>
               </div>
             ))}
+            
+            {/* Preview new images before upload */}
+            {images.map((img, idx) => (
+              <div key={`new-${idx}`} className="relative border rounded-lg p-2 bg-muted">
+                <img 
+                  src={URL.createObjectURL(img)} 
+                  alt="Preview" 
+                  className="w-full h-32 object-cover rounded" 
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id={`new-thumb-${idx}`}
+                    checked={existingImages.length === 0 && idx === 0}
+                    disabled
+                  />
+                  <Label className="text-xs text-muted-foreground">
+                    {existingImages.length === 0 && idx === 0 ? 'Will be thumbnail' : 'New image'}
+                  </Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
           </div>
 
           <div className="space-y-4">
             <div>
               <Label htmlFor="images" className="cursor-pointer">
-                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary">
+                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary transition-colors">
                   <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-2">Click to upload images</p>
+                  <p className="mt-2 font-medium">Click to upload and crop images (1:1 ratio)</p>
+                  <p className="text-xs text-muted-foreground mt-1">Images will be automatically cropped to square format</p>
                 </div>
                 <Input
                   id="images"
                   type="file"
-                  multiple
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => setImages(Array.from(e.target.files || []))}
+                  onChange={handleImageSelect}
                 />
               </Label>
-              {images.length > 0 && <p className="mt-2">{images.length} new image(s) selected</p>}
             </div>
 
             <div>
@@ -467,6 +505,16 @@ export default function ProductForm() {
           </Button>
         </div>
       </form>
+
+      <ImageCropper
+        image={imageToCrop}
+        open={cropperOpen}
+        onClose={() => {
+          setCropperOpen(false);
+          setImageToCrop("");
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 }
