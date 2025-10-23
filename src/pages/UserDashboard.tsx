@@ -229,6 +229,10 @@ export default function UserDashboard() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
+                                const itemsTotal = order.order_items.reduce((sum: number, item: any) => 
+                                  sum + parseFloat(item.subtotal), 0);
+                                const shippingFee = parseFloat(order.total_amount) - itemsTotal;
+                                
                                 const invoiceData: InvoiceData = {
                                   orderNumber: order.order_number,
                                   orderDate: order.created_at,
@@ -252,8 +256,8 @@ export default function UserDashboard() {
                                     labourFee: item.labour_fee,
                                     subtotal: parseFloat(item.subtotal),
                                   })),
-                                  subtotal: parseFloat(order.total_amount),
-                                  shippingFee: 0,
+                                  subtotal: itemsTotal,
+                                  shippingFee: shippingFee,
                                   total: parseFloat(order.total_amount),
                                   paymentMethod: order.payment_method,
                                   paymentStatus: order.payment_status,

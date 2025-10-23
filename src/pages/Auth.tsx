@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
 
@@ -16,7 +15,6 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<"phone" | "otp" | "details">("phone");
   
   // Phone auth states
@@ -24,68 +22,9 @@ export default function Auth() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   
-  // Email auth states
-  const [emailAuth, setEmailAuth] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
   // User details
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (authMode === "signup") {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-        if (password.length < 6) {
-          throw new Error("Password must be at least 6 characters");
-        }
-
-        const { error } = await supabase.auth.signUp({
-          email: emailAuth,
-          password: password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-
-        if (error) throw error;
-
-        // Set step to details for new users
-        setStep("details");
-        toast({
-          title: "Account created!",
-          description: "Please complete your profile.",
-        });
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: emailAuth,
-          password: password,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-        navigate("/");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,15 +108,7 @@ export default function Auth() {
         throw new Error('Full name is required');
       }
 
-      if (!phoneNumber) {
-        throw new Error('Phone number is required');
-      }
-
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
-
-      if (authMode === 'signup' && emailAuth && !phoneNumber) {
-        throw new Error('Please enter your phone number');
-      }
 
       const { error } = await supabase
         .from('profiles')
@@ -185,7 +116,7 @@ export default function Auth() {
           id: user.id,
           full_name: fullName,
           phone_number: normalizedPhone,
-          email: email || emailAuth || null,
+          email: email || null,
         });
 
       if (error) throw error;
@@ -215,9 +146,7 @@ export default function Auth() {
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold text-primary mb-8 text-center">
             {step === "phone" 
-              ? authMode === "signup" 
-                ? "Sign Up" 
-                : "Sign In" 
+              ? "Sign In / Sign Up" 
               : step === "otp" 
                 ? "Verify Code" 
                 : "Complete Profile"}
@@ -225,80 +154,19 @@ export default function Auth() {
 
           <Card className="p-6">
             {step === "phone" && (
-              <Tabs defaultValue="phone" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="phone">Phone Number</TabsTrigger>
-                  <TabsTrigger value="email">Email</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="phone">
-                  <form onSubmit={handleSendOTP} className="space-y-4">
-                    <PhoneInput
-                      countryCode={countryCode}
-                      phoneNumber={phoneNumber}
-                      onCountryCodeChange={setCountryCode}
-                      onPhoneNumberChange={setPhoneNumber}
-                      label="Phone Number"
-                      required
-                    />
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Sending..." : "Send Verification Code (OTP)"}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="email">
-                  <div className="mb-4">
-                    <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="signin">Sign In</TabsTrigger>
-                        <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div>
-                      <Label htmlFor="email-auth">Email</Label>
-                      <Input
-                        id="email-auth"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={emailAuth}
-                        onChange={(e) => setEmailAuth(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    {authMode === "signup" && (
-                      <div>
-                        <Label htmlFor="confirm-password">Confirm Password</Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          placeholder="••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    )}
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Processing..." : authMode === "signup" ? "Sign Up" : "Sign In"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+              <form onSubmit={handleSendOTP} className="space-y-4">
+                <PhoneInput
+                  countryCode={countryCode}
+                  phoneNumber={phoneNumber}
+                  onCountryCodeChange={setCountryCode}
+                  onPhoneNumberChange={setPhoneNumber}
+                  label="Phone Number"
+                  required
+                />
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send Verification Code (OTP)"}
+                </Button>
+              </form>
             )}
 
             {step === "otp" && (
@@ -346,32 +214,19 @@ export default function Auth() {
                     placeholder="Enter your full name"
                   />
                 </div>
-                {/* Show phone input for email signup, email input for phone signup */}
-                {emailAuth && !phoneNumber && (
-                  <PhoneInput
-                    countryCode={countryCode}
-                    phoneNumber={phoneNumber}
-                    onCountryCodeChange={setCountryCode}
-                    onPhoneNumberChange={setPhoneNumber}
-                    label="Phone Number"
-                    required
+                <div>
+                  <Label htmlFor="email-optional">Email (Optional)</Label>
+                  <Input
+                    id="email-optional"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.email@example.com"
                   />
-                )}
-                {phoneNumber && !emailAuth && (
-                  <div>
-                    <Label htmlFor="email-optional">Email (Optional)</Label>
-                    <Input
-                      id="email-optional"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.email@example.com"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Optional - for order receipts and notifications
-                    </p>
-                  </div>
-                )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optional - for order receipts and notifications
+                  </p>
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating Account..." : "Complete Registration"}
                 </Button>

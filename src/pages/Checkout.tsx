@@ -33,6 +33,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -54,6 +55,7 @@ export default function Checkout() {
   // Load user profile data for auto-fill
   useEffect(() => {
     const loadUserProfile = async () => {
+      setProfileLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
@@ -63,9 +65,15 @@ export default function Checkout() {
           .single();
         
         if (profile) {
+          // Parse phone number properly
+          const phoneMatch = profile.phone_number?.match(/^(\+\d+)(.+)$/);
+          const extractedCountryCode = phoneMatch?.[1] || "+60";
+          const extractedPhone = phoneMatch?.[2]?.replace(/\s/g, "") || "";
+          
+          setCountryCodePhone(extractedCountryCode);
           setFormData({
             full_name: profile.full_name || "",
-            phone_number: profile.phone_number?.replace(/^\+\d+/, "") || "",
+            phone_number: extractedPhone,
             email: profile.email || "",
             notes: "",
             address_line1: profile.address_line1 || "",
@@ -75,14 +83,9 @@ export default function Checkout() {
             postcode: profile.postcode || "",
             country: profile.country || "Malaysia",
           });
-          
-          // Extract country code if exists
-          const phoneMatch = profile.phone_number?.match(/^(\+\d+)/);
-          if (phoneMatch) {
-            setCountryCodePhone(phoneMatch[1]);
-          }
         }
       }
+      setProfileLoading(false);
     };
     loadUserProfile();
   }, []);
@@ -336,25 +339,38 @@ export default function Checkout() {
                   <div>
                   <Label htmlFor="phone_number"><T zh="电话号码" en="Phone Number" /> *</Label>
                   <div className="mt-2 grid grid-cols-3 gap-2">
-                    <Select value={countryCodePhone} onValueChange={setCountryCodePhone}>
-                      <SelectTrigger>
+                    <Select value={countryCodePhone} onValueChange={setCountryCodePhone} disabled={profileLoading}>
+                      <SelectTrigger className="md:hidden">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectTrigger className="hidden md:flex">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="+60">Malaysia (+60)</SelectItem>
-                        <SelectItem value="+65">Singapore (+65)</SelectItem>
-                        <SelectItem value="+62">Indonesia (+62)</SelectItem>
+                        <SelectItem value="+60" className="md:hidden">+60</SelectItem>
+                        <SelectItem value="+60" className="hidden md:flex">Malaysia (+60)</SelectItem>
+                        <SelectItem value="+65" className="md:hidden">+65</SelectItem>
+                        <SelectItem value="+65" className="hidden md:flex">Singapore (+65)</SelectItem>
+                        <SelectItem value="+62" className="md:hidden">+62</SelectItem>
+                        <SelectItem value="+62" className="hidden md:flex">Indonesia (+62)</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input
-                      id="phone_number"
-                      required
-                      type="tel"
-                      placeholder="11-1234 5678"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      className="col-span-2"
-                    />
+                    <div className="col-span-2 relative">
+                      <Input
+                        id="phone_number"
+                        required
+                        type="tel"
+                        placeholder="11-1234 5678"
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                        disabled={profileLoading}
+                      />
+                      {profileLoading && (
+                        <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded">
+                          <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   </div>
                   <div>

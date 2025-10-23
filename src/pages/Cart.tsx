@@ -108,9 +108,9 @@ export default function Cart() {
                 const itemPrice = calculateItemPrice(item);
                 
                 return (
-                  <Card key={item.id} className="p-6">
-                    <div className="flex gap-4">
-                      <div className="w-24 h-24 flex-shrink-0">
+                  <Card key={item.id} className="p-3 md:p-6">
+                    <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                      <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 mx-auto md:mx-0">
                         <img
                           src={product.product_images?.[0]?.image_url || "/placeholder.svg"}
                           alt={product.name}
@@ -118,38 +118,41 @@ export default function Cart() {
                           loading="lazy"
                         />
                       </div>
-                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">{product.gold_type} Gold</p>
-                        <p className="text-primary font-bold mt-2">
+                      <div className="flex-1 text-center md:text-left">
+                        <h3 className="font-semibold text-base md:text-lg">{product.name}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">{product.gold_type} Gold</p>
+                        <p className="text-primary font-bold mt-1 md:mt-2 text-lg md:text-base">
                           RM {itemPrice.toFixed(2)}
                         </p>
                       </div>
-                      <div className="flex flex-col items-end gap-4">
+                      <div className="flex flex-row md:flex-col items-center justify-between md:justify-start md:items-end gap-3 md:gap-4">
+                        <div className="flex items-center gap-2 order-1 md:order-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 order-2 md:order-1"
                           onClick={() => removeItem(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   </Card>
