@@ -52,62 +52,81 @@ export default function Settings() {
     }
   }, [settings, initialized]);
 
-  const updatePrices = useMutation({
+  const updateGoldPrices = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Upload QR code if new file selected
-      let qrUrl = qrCodeUrl;
-      if (qrCodeFile) {
-        const fileExt = qrCodeFile.name.split(".").pop();
-        const fileName = `touch-n-go-qr.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("product-images")
-          .upload(fileName, qrCodeFile, { upsert: true });
-        
-        if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(fileName);
-        
-        qrUrl = publicUrl;
-      }
-
-      // Validate inputs
       const price916 = Number(goldPrice916);
       const price999 = Number(goldPrice999);
       if (!Number.isFinite(price916) || price916 < 0 || !Number.isFinite(price999) || price999 < 0) {
         throw new Error("Please enter valid non-negative numbers for gold prices.");
       }
 
-      // Upsert settings by unique key to avoid WHERE clause issues
-      const { error: upsertError } = await supabase
-        .from("settings")
-        .upsert(
-          [
-            { key: "gold_price_916", value: { price: price916 }, updated_by: user?.id },
-            { key: "gold_price_999", value: { price: price999 }, updated_by: user?.id },
-            { key: "touch_n_go_qr", value: { qr_code_url: qrUrl }, updated_by: user?.id },
-          ],
-          { onConflict: "key" }
-        );
+      const { error } = await supabase.rpc('upsert_gold_settings', {
+        price_916: price916,
+        price_999: price999,
+        qr_url: qrCodeUrl,
+        updated_by: user?.id ?? null,
+      });
 
-      if (upsertError) throw upsertError;
-
-      // Trigger update of cached product prices
-      await supabase.rpc('update_product_cached_prices');
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
       queryClient.invalidateQueries({ queryKey: ["gold-prices"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      setQrCodeFile(null);
-      toast({ title: "Settings updated successfully" });
+      toast({ title: "Gold prices updated" });
     },
     onError: (error: any) => {
-      toast({ title: "Error updating settings", description: error.message, variant: "destructive" });
+      console.error('updateGoldPrices error', error);
+      toast({ title: "Error updating gold prices", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateQrCode = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!qrCodeFile) {
+        throw new Error("Please choose a QR image to upload.");
+      }
+
+      const fileExt = qrCodeFile.name.split('.').pop();
+      const fileName = `touch-n-go-qr.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, qrCodeFile, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      const price916Parsed = Number(goldPrice916);
+      const price999Parsed = Number(goldPrice999);
+      const price916 = Number.isFinite(price916Parsed) ? price916Parsed : (settings?.goldPrices["916"] ?? 0);
+      const price999 = Number.isFinite(price999Parsed) ? price999Parsed : (settings?.goldPrices["999"] ?? 0);
+
+      const { error } = await supabase.rpc('upsert_gold_settings', {
+        price_916: price916,
+        price_999: price999,
+        qr_url: publicUrl,
+        updated_by: user?.id ?? null,
+      });
+      if (error) throw error;
+
+      setQrCodeUrl(publicUrl);
+      setQrPreview(publicUrl);
+      setQrCodeFile(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast({ title: "QR code updated" });
+    },
+    onError: (error: any) => {
+      console.error('updateQrCode error', error);
+      toast({ title: "Error updating QR code", description: error.message, variant: "destructive" });
     },
   });
 
@@ -150,6 +169,12 @@ export default function Settings() {
                 value={goldPrice999}
                 onChange={(e) => setGoldPrice999(e.target.value)}
               />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => updateGoldPrices.mutate()} disabled={updateGoldPrices.isPending}>
+                {updateGoldPrices.isPending ? "Saving..." : "Save Gold Prices"}
+              </Button>
             </div>
           </div>
         </Card>
@@ -195,16 +220,15 @@ export default function Settings() {
                 />
               </Label>
             </div>
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => updateQrCode.mutate()} disabled={updateQrCode.isPending || !qrCodeFile}>
+                {updateQrCode.isPending ? "Saving..." : "Save QR Code"}
+              </Button>
+            </div>
           </div>
         </Card>
 
-        <Button
-          onClick={() => updatePrices.mutate()}
-          disabled={updatePrices.isPending}
-          size="lg"
-        >
-          {updatePrices.isPending ? "Saving..." : "Save All Settings"}
-        </Button>
       </div>
     </div>
   );
