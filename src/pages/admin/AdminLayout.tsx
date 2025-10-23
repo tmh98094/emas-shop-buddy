@@ -26,9 +26,9 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-navy border-r border-navy-700">
+      <aside className="w-full md:w-64 bg-navy border-b md:border-r border-navy-700">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
         </div>
@@ -66,7 +66,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto bg-background">
+      <main className="flex-1 p-4 md:p-8 overflow-auto bg-background">
         <Outlet />
       </main>
     </div>

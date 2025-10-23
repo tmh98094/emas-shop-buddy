@@ -2,11 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "@/hooks/useCart";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -43,9 +45,46 @@ import AdminAnalytics from "./pages/admin/Analytics";
 import AdminContent from "./pages/admin/Content";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
-import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
+
+// Protected Route Component for Admin
+const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .single();
+
+      if (roleData) {
+        setIsAdmin(true);
+      } else {
+        navigate("/");
+      }
+    };
+
+    checkAdminStatus();
+  }, [navigate]);
+
+  if (isAdmin === null) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  return isAdmin ? <>{children}</> : null;
+};
 
 const App = () => {
   const AppContent = () => {
@@ -75,7 +114,8 @@ const App = () => {
           <Route path="/return-policy" element={<ReturnPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin Routes - Protected */}
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="products/new" element={<ProductForm />} />

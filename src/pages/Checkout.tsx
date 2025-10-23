@@ -51,6 +51,42 @@ export default function Checkout() {
   const [shippingRegion, setShippingRegion] = useState<"west_malaysia" | "east_malaysia" | "singapore">("west_malaysia");
   const [countryCodePhone, setCountryCodePhone] = useState<string>("+60");
 
+  // Load user profile data for auto-fill
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          setFormData({
+            full_name: profile.full_name || "",
+            phone_number: profile.phone_number?.replace(/^\+\d+/, "") || "",
+            email: profile.email || "",
+            notes: "",
+            address_line1: profile.address_line1 || "",
+            address_line2: profile.address_line2 || "",
+            city: profile.city || "",
+            state: profile.state || "",
+            postcode: profile.postcode || "",
+            country: profile.country || "Malaysia",
+          });
+          
+          // Extract country code if exists
+          const phoneMatch = profile.phone_number?.match(/^(\+\d+)/);
+          if (phoneMatch) {
+            setCountryCodePhone(phoneMatch[1]);
+          }
+        }
+      }
+    };
+    loadUserProfile();
+  }, []);
+
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
     queryFn: async () => {
@@ -166,6 +202,21 @@ export default function Checkout() {
         }]);
 
       if (orderError) throw orderError;
+
+      // Save shipping address to user profile for logged in users
+      if (user?.id) {
+        await supabase
+          .from("profiles")
+          .update({
+            address_line1: formData.address_line1,
+            address_line2: formData.address_line2 || null,
+            city: formData.city,
+            state: formData.state,
+            postcode: formData.postcode,
+            country: formData.country,
+          })
+          .eq('id', user.id);
+      }
 
       const orderItems = items.map(item => {
         const product = item.product;

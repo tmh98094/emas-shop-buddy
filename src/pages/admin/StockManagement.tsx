@@ -7,13 +7,31 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function StockManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stockUpdates, setStockUpdates] = useState<Record<string, number>>({});
 
-  const { data: products, isLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["admin-stock-products"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,65 +61,146 @@ export default function StockManagement() {
     },
   });
 
-  const lowStockProducts = products?.filter(p => p.stock <= (p.low_stock_threshold || 10)) || [];
+  if (categoriesLoading || productsLoading) return <div>Loading...</div>;
 
-  if (isLoading) return <div>Loading...</div>;
+  // Group products by category
+  const productsByCategory = categories?.reduce((acc, category) => {
+    const categoryProducts = products?.filter(p => p.category_id === category.id) || [];
+    const lowStockCount = categoryProducts.filter(p => p.stock <= (p.low_stock_threshold || 10)).length;
+    acc[category.id] = { products: categoryProducts, lowStockCount };
+    return acc;
+  }, {} as Record<string, { products: any[], lowStockCount: number }>);
+
+  const uncategorizedProducts = products?.filter(p => !p.category_id) || [];
+  const uncategorizedLowStock = uncategorizedProducts.filter(p => p.stock <= (p.low_stock_threshold || 10)).length;
 
   return (
-    <div>
-      <h1 className="text-4xl font-bold text-primary mb-8">Stock Management</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl md:text-4xl font-bold text-primary mb-8">Stock Management</h1>
 
-      {lowStockProducts.length > 0 && (
-        <Card className="p-6 mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
-            <h2 className="text-xl font-bold text-amber-900 dark:text-amber-100">Low Stock Alerts</h2>
-          </div>
-          <div className="space-y-2">
-            {lowStockProducts.map((product) => (
-              <div key={product.id} className="flex justify-between items-center">
-                <span className="text-amber-900 dark:text-amber-100">{product.name}</span>
-                <Badge variant="destructive">
-                  {product.stock} units left
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      <Accordion type="multiple" className="space-y-4">
+        {categories?.map((category) => {
+          const { products: categoryProducts, lowStockCount } = productsByCategory?.[category.id] || { products: [], lowStockCount: 0 };
+          
+          return (
+            <AccordionItem key={category.id} value={category.id}>
+              <Card className={lowStockCount > 0 ? "border-amber-500" : ""}>
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      {lowStockCount > 0 && <AlertTriangle className="h-5 w-5 text-amber-600" />}
+                      <span className="text-lg font-semibold">{category.name}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {lowStockCount > 0 && (
+                        <Badge variant="destructive">{lowStockCount} low stock</Badge>
+                      )}
+                      <Badge variant="secondary">{categoryProducts.length} total</Badge>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="px-6 pb-4">
+                    {categoryProducts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4">No products in this category</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {categoryProducts.map((product) => (
+                          <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b pb-4">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold truncate">{product.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Current Stock: {product.stock} | Gold Type: {product.gold_type}
+                              </p>
+                              {product.stock <= (product.low_stock_threshold || 10) && (
+                                <Badge variant="destructive" className="mt-1">Low Stock Alert</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <Input
+                                type="number"
+                                placeholder="New stock"
+                                value={stockUpdates[product.id] ?? ""}
+                                onChange={(e) => setStockUpdates({
+                                  ...stockUpdates,
+                                  [product.id]: parseInt(e.target.value) || 0
+                                })}
+                                className="w-full sm:w-32"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          );
+        })}
 
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-6">Bulk Stock Update</h2>
-        <div className="space-y-4">
-          {products?.map((product) => (
-            <div key={product.id} className="flex items-center gap-4 border-b pb-4">
-              <div className="flex-1">
-                <p className="font-semibold">{product.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  Current Stock: {product.stock} | Gold Type: {product.gold_type}
-                </p>
-              </div>
-              <Input
-                type="number"
-                placeholder="New stock"
-                value={stockUpdates[product.id] ?? ""}
-                onChange={(e) => setStockUpdates({
-                  ...stockUpdates,
-                  [product.id]: parseInt(e.target.value) || 0
-                })}
-                className="w-32"
-              />
-            </div>
-          ))}
-        </div>
+        {uncategorizedProducts.length > 0 && (
+          <AccordionItem value="uncategorized">
+            <Card className={uncategorizedLowStock > 0 ? "border-amber-500" : ""}>
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex items-center justify-between w-full pr-4">
+                  <div className="flex items-center gap-3">
+                    {uncategorizedLowStock > 0 && <AlertTriangle className="h-5 w-5 text-amber-600" />}
+                    <span className="text-lg font-semibold">Uncategorized</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {uncategorizedLowStock > 0 && (
+                      <Badge variant="destructive">{uncategorizedLowStock} low stock</Badge>
+                    )}
+                    <Badge variant="secondary">{uncategorizedProducts.length} total</Badge>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="px-6 pb-4">
+                  <div className="space-y-4">
+                    {uncategorizedProducts.map((product) => (
+                      <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b pb-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate">{product.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Current Stock: {product.stock} | Gold Type: {product.gold_type}
+                          </p>
+                          {product.stock <= (product.low_stock_threshold || 10) && (
+                            <Badge variant="destructive" className="mt-1">Low Stock Alert</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <Input
+                            type="number"
+                            placeholder="New stock"
+                            value={stockUpdates[product.id] ?? ""}
+                            onChange={(e) => setStockUpdates({
+                              ...stockUpdates,
+                              [product.id]: parseInt(e.target.value) || 0
+                            })}
+                            className="w-full sm:w-32"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </AccordionContent>
+            </Card>
+          </AccordionItem>
+        )}
+      </Accordion>
+
+      <div className="flex justify-end">
         <Button
-          className="mt-6"
           onClick={() => updateStockMutation.mutate()}
           disabled={Object.keys(stockUpdates).length === 0 || updateStockMutation.isPending}
+          size="lg"
         >
           {updateStockMutation.isPending ? "Updating..." : "Update All Stock"}
         </Button>
-      </Card>
+      </div>
     </div>
   );
 }

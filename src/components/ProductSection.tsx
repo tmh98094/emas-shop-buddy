@@ -67,7 +67,7 @@ export const ProductSection = ({ title, filter }: ProductSectionProps) => {
         <Carousel>
           <CarouselContent>
             {products.map((product) => (
-              <CarouselItem key={product.id} className="basis-3/4 sm:basis-1/2 lg:basis-1/4">
+              <CarouselItem key={product.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
                 <ProductCard
                   product={product}
                   imageUrl={product.product_images?.[0]?.image_url}

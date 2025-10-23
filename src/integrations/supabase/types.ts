@@ -544,27 +544,45 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           phone_number: string
+          postcode: string | null
+          state: string | null
           updated_at: string
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id: string
           phone_number: string
+          postcode?: string | null
+          state?: string | null
           updated_at?: string
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           phone_number?: string
+          postcode?: string | null
+          state?: string | null
           updated_at?: string
         }
         Relationships: []

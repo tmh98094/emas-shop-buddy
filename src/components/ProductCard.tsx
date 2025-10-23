@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
+import { T } from "./T";
+import { Badge } from "./ui/badge";
 
 interface ProductCardProps {
   product: {
@@ -16,6 +18,7 @@ interface ProductCardProps {
     weight_grams: number;
     labour_fee: number;
     stock: number;
+    description?: string;
   };
   imageUrl?: string;
 }
@@ -54,7 +57,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
 
   return (
     <Link to={`/product/${product.slug}`}>
-      <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+      <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={imageUrl || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80"}
@@ -64,30 +67,43 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
           />
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <span className="text-white font-semibold">Out of Stock</span>
+              <span className="text-white font-semibold text-sm"><T zh="缺货" en="Out of Stock" /></span>
             </div>
           )}
         </div>
-      <CardContent className="p-4 space-y-2">
-        <h3 className="font-semibold text-lg line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="px-2 py-1 bg-accent/10 text-accent-foreground rounded">
-            {product.gold_type} Gold
+      <CardContent className="p-3 md:p-4 space-y-2 flex-1 flex flex-col">
+        <h3 className="font-semibold text-sm md:text-lg line-clamp-2">{product.name}</h3>
+        {product.description && (
+          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 hidden md:block">
+            {product.description}
+          </p>
+        )}
+        <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+          <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-accent/10 text-accent-foreground rounded text-xs">
+            {product.gold_type}
           </span>
           <span>{product.weight_grams}g</span>
         </div>
-          <p className="text-2xl font-bold text-primary">
+        <div className="flex justify-between items-center mt-auto">
+          <p className="text-lg md:text-2xl font-bold text-primary">
             RM {formatPrice(totalPrice)}
           </p>
+          {product.stock > 0 && (
+            <Badge variant="secondary" className="text-xs hidden md:inline-flex">
+              <T zh="库存" en="Stock" />: {product.stock}
+            </Badge>
+          )}
+        </div>
       </CardContent>
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-3 md:p-4 pt-0">
           <Button 
-            className="w-full" 
+            className="w-full text-xs md:text-sm py-2" 
+            size="sm"
             disabled={product.stock === 0}
             onClick={handleAddToCart}
           >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
+            <ShoppingCart className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+            <T zh="加入购物车" en="Add to Cart" />
           </Button>
         </CardFooter>
       </Card>
