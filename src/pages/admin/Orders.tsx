@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,12 @@ import { generateInvoicePDF } from "@/lib/invoice-generator";
 
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchInput), 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-orders", searchQuery],
     queryFn: async () => {
@@ -85,8 +90,8 @@ export default function Orders() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by order number, customer name, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
           />
         </div>

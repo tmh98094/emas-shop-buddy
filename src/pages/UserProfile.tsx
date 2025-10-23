@@ -85,12 +85,12 @@ export default function UserProfile() {
 
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user.id,
           full_name: profile.full_name,
           email: profile.email,
           phone_number: normalizedPhone,
-        })
-        .eq("id", user.id);
+        });
 
       if (error) throw error;
 

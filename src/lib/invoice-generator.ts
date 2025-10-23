@@ -99,26 +99,23 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
         <thead>
           <tr>
             <th>Product</th>
-            <th>Gold Type</th>
-            <th>Weight (g)</th>
-            <th>Gold Price/g</th>
-            <th>Labour Fee</th>
             <th>Qty</th>
-            <th>Subtotal</th>
+            <th>Cost (Unit)</th>
+            <th>Total</th>
           </tr>
         </thead>
         <tbody>
-          ${invoiceData.items.map(item => `
-            <tr>
-              <td>${item.name}</td>
-              <td>${item.goldType}</td>
-              <td>${item.weight.toFixed(2)}g</td>
-              <td>RM ${item.goldPrice.toFixed(2)}</td>
-              <td>RM ${item.labourFee.toFixed(2)}</td>
-              <td>${item.quantity}</td>
-              <td>RM ${item.subtotal.toFixed(2)}</td>
-            </tr>
-          `).join("")}
+          ${invoiceData.items.map(item => {
+            const unit = item.quantity ? item.subtotal / item.quantity : item.subtotal;
+            return `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>RM ${unit.toFixed(2)}</td>
+                <td>RM ${item.subtotal.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join("")}
         </tbody>
       </table>
 

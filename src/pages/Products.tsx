@@ -65,13 +65,10 @@ export default function Products() {
         query = query.in("gold_type", selectedGoldTypes as ("916" | "999")[]);
       }
 
-      if (inStockOnly) {
-        query = query.gt("stock", 0);
-      }
-
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-      }
+      // Price filter server-side when possible
+      query = query
+        .gte("cached_current_price", priceRange[0])
+        .lte("cached_current_price", priceRange[1]);
 
       // Apply sorting
       switch (sortBy) {
@@ -91,13 +88,7 @@ export default function Products() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filter by price range on client side
-      const filteredData = data.filter(product => {
-        const price = parseFloat(String(product.cached_current_price || 0));
-        return price >= priceRange[0] && price <= priceRange[1];
-      });
-
-      return filteredData.map(product => ({
+      return data.map(product => ({
         ...product,
         product_images: product.product_images?.sort((a: any, b: any) => 
           (a.display_order || 0) - (b.display_order || 0)

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "./ProductCard";
 import { Skeleton } from "./ui/skeleton";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./ui/carousel";
 
 interface ProductSectionProps {
   title: string;
@@ -63,15 +64,22 @@ export const ProductSection = ({ title, filter }: ProductSectionProps) => {
     <section className="py-12">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-primary mb-8">{title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              imageUrl={product.product_images?.[0]?.image_url}
-            />
-          ))}
-        </div>
+        <Carousel>
+          <CarouselContent>
+            {products.map((product) => (
+              <CarouselItem key={product.id} className="basis-3/4 sm:basis-1/2 lg:basis-1/4">
+                <ProductCard
+                  product={product}
+                  imageUrl={product.product_images?.[0]?.image_url}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <div className="flex items-center justify-between mt-4">
+            <CarouselPrevious />
+            <CarouselNext />
+          </div>
+        </Carousel>
       </div>
     </section>
   );

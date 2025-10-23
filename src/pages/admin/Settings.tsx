@@ -73,36 +73,44 @@ export default function Settings() {
         qrUrl = publicUrl;
       }
 
-      // Update gold prices
+      // Update settings via upsert to avoid WHERE clause issues and create if missing
+      const now = new Date().toISOString();
+
       const { error: error916 } = await supabase
         .from("settings")
-        .update({ 
-          value: { price: parseFloat(goldPrice916) }, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq("key", "gold_price_916");
-      
+        .upsert(
+          {
+            key: "gold_price_916",
+            value: { price: parseFloat(goldPrice916) },
+            updated_at: now,
+          },
+          { onConflict: "key" }
+        );
       if (error916) throw error916;
 
       const { error: error999 } = await supabase
         .from("settings")
-        .update({ 
-          value: { price: parseFloat(goldPrice999) }, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq("key", "gold_price_999");
-      
+        .upsert(
+          {
+            key: "gold_price_999",
+            value: { price: parseFloat(goldPrice999) },
+            updated_at: now,
+          },
+          { onConflict: "key" }
+        );
       if (error999) throw error999;
 
       // Update QR code
       const { error: qrError } = await supabase
         .from("settings")
-        .update({ 
-          value: { qr_code_url: qrUrl }, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq("key", "touch_n_go_qr");
-      
+        .upsert(
+          {
+            key: "touch_n_go_qr",
+            value: { qr_code_url: qrUrl },
+            updated_at: now,
+          },
+          { onConflict: "key" }
+        );
       if (qrError) throw qrError;
       
       // Trigger update of cached product prices
