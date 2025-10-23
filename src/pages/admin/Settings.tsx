@@ -54,6 +54,8 @@ export default function Settings() {
 
   const updatePrices = useMutation({
     mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Upload QR code if new file selected
       let qrUrl = qrCodeUrl;
       if (qrCodeFile) {
@@ -73,45 +75,30 @@ export default function Settings() {
         qrUrl = publicUrl;
       }
 
-      // Update settings via upsert to avoid WHERE clause issues and create if missing
-      const now = new Date().toISOString();
+      // Update settings via upsert
+      const updates = [
+        {
+          key: "gold_price_916",
+          value: { price: parseFloat(goldPrice916) },
+          updated_by: user?.id,
+        },
+        {
+          key: "gold_price_999",
+          value: { price: parseFloat(goldPrice999) },
+          updated_by: user?.id,
+        },
+        {
+          key: "touch_n_go_qr",
+          value: { qr_code_url: qrUrl },
+          updated_by: user?.id,
+        }
+      ];
 
-      const { error: error916 } = await supabase
+      const { error } = await supabase
         .from("settings")
-        .upsert(
-          {
-            key: "gold_price_916",
-            value: { price: parseFloat(goldPrice916) },
-            updated_at: now,
-          },
-          { onConflict: "key" }
-        );
-      if (error916) throw error916;
+        .upsert(updates, { onConflict: "key" });
 
-      const { error: error999 } = await supabase
-        .from("settings")
-        .upsert(
-          {
-            key: "gold_price_999",
-            value: { price: parseFloat(goldPrice999) },
-            updated_at: now,
-          },
-          { onConflict: "key" }
-        );
-      if (error999) throw error999;
-
-      // Update QR code
-      const { error: qrError } = await supabase
-        .from("settings")
-        .upsert(
-          {
-            key: "touch_n_go_qr",
-            value: { qr_code_url: qrUrl },
-            updated_at: now,
-          },
-          { onConflict: "key" }
-        );
-      if (qrError) throw qrError;
+      if (error) throw error;
       
       // Trigger update of cached product prices
       await supabase.rpc('update_product_cached_prices');

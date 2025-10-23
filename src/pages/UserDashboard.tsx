@@ -41,25 +41,12 @@ export default function UserDashboard() {
 
       setProfile(profileData);
 
-      // Load orders with review status
+      // Load orders
       const { data: ordersData } = await supabase
         .from("orders")
         .select(`
           *,
-          order_items (
-            id,
-            product_id,
-            product_name,
-            quantity,
-            subtotal,
-            gold_type,
-            weight_grams,
-            gold_price_at_purchase,
-            labour_fee,
-            review_rating,
-            review_text,
-            reviewed_at
-          )
+          order_items (*)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })

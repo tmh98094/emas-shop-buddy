@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
+import { T } from "@/components/T";
 
 function ReceiptPreview({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -103,17 +104,22 @@ export default function TouchNGoPayment() {
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold text-primary mb-8">Touch 'n Go Payment</h1>
 
-          <Card className="p-8 space-y-6">
+          <Card className="p-4 md:p-8 space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">Scan QR Code to Pay</h2>
-              <div className="bg-muted p-8 rounded-lg inline-block">
-                <div className="w-64 h-64 bg-background border-2 border-dashed flex items-center justify-center">
-                  <p className="text-muted-foreground">QR Code Here</p>
+              <h2 className="text-xl md:text-2xl font-bold mb-4"><T zh="扫描二维码支付" en="Scan QR Code to Pay" /></h2>
+              <div className="bg-muted p-4 md:p-8 rounded-lg inline-block max-w-full">
+                <div className="w-48 h-48 md:w-64 md:h-64 bg-background border-2 border-dashed flex items-center justify-center mx-auto">
+                  <p className="text-muted-foreground text-sm"><T zh="二维码在此" en="QR Code Here" /></p>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Scan with your Touch 'n Go app to make payment
-              </p>
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  <T zh="使用 Touch 'n Go 应用扫描以支付" en="Scan with your Touch 'n Go app to make payment" />
+                </p>
+                <p className="text-xs text-primary font-medium bg-primary/10 py-2 px-4 rounded-lg inline-block">
+                  <T zh="截屏 → Touch 'n Go → 扫描 → 相册" en="Take screenshot → Touch 'n Go → Scan → Gallery" />
+                </p>
+              </div>
             </div>
 
             <div className="border-t pt-6">

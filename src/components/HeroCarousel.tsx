@@ -1,15 +1,23 @@
+import { useEffect, useRef, useState } from "react";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { T } from "./T";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
+import Autoplay from "embla-carousel-autoplay";
 
 export const HeroCarousel = () => {
+  const [api, setApi] = useState<CarouselApi>();
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
+
   const slides = [
     {
       title: "精美916黄金珠宝",
@@ -35,7 +43,12 @@ export const HeroCarousel = () => {
   ];
 
   return (
-    <Carousel className="w-full" opts={{ loop: true }}>
+    <Carousel 
+      className="w-full" 
+      opts={{ loop: true }}
+      plugins={[autoplayPlugin.current]}
+      setApi={setApi}
+    >
       <CarouselContent>
         {slides.map((slide, index) => (
           <CarouselItem key={index}>

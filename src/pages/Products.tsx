@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
@@ -23,6 +23,8 @@ export default function Products() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 24;
 
   // Load initial filters from URL
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function Products() {
   });
 
   // Fetch products
-  const { data: products = [], isLoading } = useQuery({
+  const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, sortBy],
     queryFn: async () => {
       let query = supabase
@@ -65,10 +67,19 @@ export default function Products() {
         query = query.in("gold_type", selectedGoldTypes as ("916" | "999")[]);
       }
 
+      if (inStockOnly) {
+        query = query.gt("stock", 0);
+      }
+
       // Price filter server-side when possible
       query = query
         .gte("cached_current_price", priceRange[0])
         .lte("cached_current_price", priceRange[1]);
+
+      // Apply search
+      if (searchQuery) {
+        query = query.ilike("name", `%${searchQuery}%`);
+      }
 
       // Apply sorting
       switch (sortBy) {
@@ -96,6 +107,13 @@ export default function Products() {
       }));
     },
   });
+
+  // Pagination
+  const totalPages = Math.ceil((allProducts?.length || 0) / itemsPerPage);
+  const products = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return allProducts?.slice(start, start + itemsPerPage) || [];
+  }, [allProducts, currentPage, itemsPerPage]);
 
   // Get max price for slider
   const { data: priceData } = useQuery({
@@ -141,7 +159,13 @@ export default function Products() {
     setSortBy("newest");
     setSearchQuery("");
     setSearchParams({});
+    setCurrentPage(1);
   };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, sortBy]);
 
   const FilterPanel = () => (
     <ProductFilters
@@ -198,9 +222,9 @@ export default function Products() {
           {/* Products Grid */}
           <div className="lg:col-span-3">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-96" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-64 md:h-96" />
                 ))}
               </div>
             ) : products.length === 0 ? (
@@ -211,15 +235,40 @@ export default function Products() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    imageUrl={product.product_images?.[0]?.image_url}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      imageUrl={product.product_images?.[0]?.image_url}
+                    />
+                  ))}
+                </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

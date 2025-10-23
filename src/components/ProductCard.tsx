@@ -71,38 +71,33 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
             </div>
           )}
         </div>
-      <CardContent className="p-3 md:p-4 space-y-2 flex-1 flex flex-col">
-        <h3 className="font-semibold text-sm md:text-lg line-clamp-2">{product.name}</h3>
-        {product.description && (
-          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 hidden md:block">
-            {product.description}
-          </p>
-        )}
-        <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-          <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-accent/10 text-accent-foreground rounded text-xs">
+      <CardContent className="p-2 md:p-4 space-y-1 md:space-y-2 flex-1 flex flex-col">
+        <h3 className="font-semibold text-xs md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{product.name}</h3>
+        <div className="flex items-center gap-1 md:gap-2 text-xs text-muted-foreground">
+          <span className="px-1 md:px-2 py-0.5 bg-accent/10 text-accent-foreground rounded text-[10px] md:text-xs">
             {product.gold_type}
           </span>
-          <span>{product.weight_grams}g</span>
+          <span className="text-[10px] md:text-xs">{product.weight_grams}g</span>
         </div>
-        <div className="flex justify-between items-center mt-auto">
-          <p className="text-lg md:text-2xl font-bold text-primary">
+        <div className="flex justify-between items-center mt-auto pt-1 md:pt-2">
+          <p className="text-sm md:text-xl font-bold text-primary">
             RM {formatPrice(totalPrice)}
           </p>
           {product.stock > 0 && (
-            <Badge variant="secondary" className="text-xs hidden md:inline-flex">
+            <Badge variant="secondary" className="text-[9px] md:text-xs px-1 md:px-2 py-0 md:py-0.5">
               <T zh="库存" en="Stock" />: {product.stock}
             </Badge>
           )}
         </div>
       </CardContent>
-        <CardFooter className="p-3 md:p-4 pt-0">
+        <CardFooter className="p-2 md:p-4 pt-0">
           <Button 
-            className="w-full text-xs md:text-sm py-2" 
+            className="w-full text-[10px] md:text-sm py-1 md:py-2 h-7 md:h-9" 
             size="sm"
             disabled={product.stock === 0}
             onClick={handleAddToCart}
           >
-            <ShoppingCart className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+            <ShoppingCart className="mr-0.5 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
             <T zh="加入购物车" en="Add to Cart" />
           </Button>
         </CardFooter>

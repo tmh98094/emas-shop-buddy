@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
 
 export default function Auth() {
@@ -223,34 +223,14 @@ export default function Auth() {
 
                 <TabsContent value="phone">
                   <form onSubmit={handleSendOTP} className="space-y-4">
-                    <div>
-                      <Label htmlFor="country-code">Country Code</Label>
-                      <Select value={countryCode} onValueChange={setCountryCode}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+60">🇲🇾 Malaysia (+60)</SelectItem>
-                          <SelectItem value="+65">🇸🇬 Singapore (+65)</SelectItem>
-                          <SelectItem value="+86">🇨🇳 China (+86)</SelectItem>
-                          <SelectItem value="+1">🇺🇸 USA (+1)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="123456789"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Enter your phone number without the country code
-                      </p>
-                    </div>
+                    <PhoneInput
+                      countryCode={countryCode}
+                      phoneNumber={phoneNumber}
+                      onCountryCodeChange={setCountryCode}
+                      onPhoneNumberChange={setPhoneNumber}
+                      label="Phone Number"
+                      required
+                    />
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Sending..." : "Send Verification Code (OTP)"}
                     </Button>
@@ -358,29 +338,14 @@ export default function Auth() {
                 </div>
                 {/* Show phone input for email signup, email input for phone signup */}
                 {emailAuth && !phoneNumber && (
-                  <div>
-                    <Label>Phone Number *</Label>
-                    <div className="flex gap-2">
-                      <Select value={countryCode} onValueChange={setCountryCode}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                          <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                          <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type="tel"
-                        placeholder="123456789"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                        required
-                      />
-                    </div>
-                  </div>
+                  <PhoneInput
+                    countryCode={countryCode}
+                    phoneNumber={phoneNumber}
+                    onCountryCodeChange={setCountryCode}
+                    onPhoneNumberChange={setPhoneNumber}
+                    label="Phone Number"
+                    required
+                  />
                 )}
                 {phoneNumber && !emailAuth && (
                   <div>
