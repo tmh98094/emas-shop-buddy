@@ -781,6 +781,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_next_order_sequence: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -788,6 +789,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      normalize_phone_sql: { Args: { p_input: string }; Returns: string }
       update_product_cached_prices: { Args: never; Returns: undefined }
     }
     Enums: {

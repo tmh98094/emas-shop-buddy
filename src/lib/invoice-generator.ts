@@ -1,3 +1,5 @@
+import logoUrl from '@/assets/logo.png';
+
 export interface InvoiceData {
   orderNumber: string;
   orderDate: string;
@@ -67,7 +69,7 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
     </head>
     <body>
       <div class="header">
-        <img src="/src/assets/logo.png" alt="JJ Emas Logo" />
+        <img src="${logoUrl}" alt="JJ Emas Logo" />
         <h1>INVOICE</h1>
         <p style="font-size: 14px; color: #666;">Premium Gold Jewelry</p>
       </div>

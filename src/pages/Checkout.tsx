@@ -177,7 +177,12 @@ export default function Checkout() {
       const totalAmount = calculateTotal();
 
       const orderId = crypto.randomUUID();
-      const orderNumber = `JJ${Date.now()}`;
+      const { data: seq, error: seqError } = await supabase.rpc('get_next_order_sequence');
+      if (seqError) {
+        console.warn('Sequence fetch failed, falling back:', seqError.message);
+      }
+      const sequence = (seq as number | null) ?? null;
+      const orderNumber = sequence ? `JJ-${String(sequence).padStart(5, '0')}` : `JJ-${Date.now()}`;
 
       const { error: orderError } = await supabase
         .from("orders")

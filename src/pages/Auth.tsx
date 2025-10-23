@@ -165,16 +165,26 @@ export default function Auth() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const normalizedPhone = phoneNumber 
-        ? normalizePhone(phoneNumber, countryCode)
-        : null;
+      if (!fullName.trim()) {
+        throw new Error('Full name is required');
+      }
+
+      if (!phoneNumber) {
+        throw new Error('Phone number is required');
+      }
+
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+
+      if (authMode === 'signup' && emailAuth && !phoneNumber) {
+        throw new Error('Please enter your phone number');
+      }
 
       const { error } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
           full_name: fullName,
-          phone_number: normalizedPhone || emailAuth,
+          phone_number: normalizedPhone,
           email: email || emailAuth || null,
         });
 

@@ -222,10 +222,10 @@ export default function Products() {
           {/* Products Grid */}
           <div className="lg:col-span-3">
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-64 md:h-96" />
-                ))}
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-6">
+                  {[...Array(12)].map((_, i) => (
+                    <Skeleton key={i} className="h-40 md:h-60" />
+                  ))}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-12">
@@ -236,7 +236,7 @@ export default function Products() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-6">
                   {products.map((product) => (
                     <ProductCard
                       key={product.id}
