@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -15,12 +16,17 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [authMode, setAuthMode] = useState<"phone" | "email">("phone");
   const [step, setStep] = useState<"phone" | "otp" | "details">("phone");
   
   // Phone auth states
   const [countryCode, setCountryCode] = useState("+60");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  
+  // Email auth states
+  const [emailInput, setEmailInput] = useState("");
+  const [password, setPassword] = useState("");
   
   // User details
   const [fullName, setFullName] = useState("");
@@ -137,6 +143,38 @@ export default function Auth() {
     }
   };
 
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailInput,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAdminLogin = () => {
+    setEmailInput("admin@jjemas.com");
+  };
+
   return (
     <div className="min-h-screen">
       <GoldPriceBanner />
@@ -145,15 +183,63 @@ export default function Auth() {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold text-primary mb-8 text-center">
-            {step === "phone" 
-              ? "Sign In / Sign Up" 
-              : step === "otp" 
-                ? "Verify Code" 
-                : "Complete Profile"}
+            {authMode === "email" 
+              ? "Admin Login (Temporary)" 
+              : step === "phone" 
+                ? "Sign In / Sign Up" 
+                : step === "otp" 
+                  ? "Verify Code" 
+                  : "Complete Profile"}
           </h1>
 
           <Card className="p-6">
-            {step === "phone" && (
+            <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "phone" | "email")} className="mb-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="phone">Phone Login</TabsTrigger>
+                <TabsTrigger value="email">Email Login (Temporary)</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {authMode === "email" && (
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div>
+                  <Label htmlFor="email-login">Email</Label>
+                  <Input
+                    id="email-login"
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password-login">Password</Label>
+                  <Input
+                    id="password-login"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleQuickAdminLogin}
+                  disabled={loading}
+                >
+                  Quick Admin Login
+                </Button>
+              </form>
+            )}
+
+            {authMode === "phone" && step === "phone" && (
               <form onSubmit={handleSendOTP} className="space-y-4">
                 <PhoneInput
                   countryCode={countryCode}
@@ -169,7 +255,7 @@ export default function Auth() {
               </form>
             )}
 
-            {step === "otp" && (
+            {authMode === "phone" && step === "otp" && (
               <form onSubmit={handleVerifyOTP} className="space-y-4">
                 <div>
                   <Label htmlFor="otp">Verification Code</Label>
@@ -202,7 +288,7 @@ export default function Auth() {
               </form>
             )}
 
-            {step === "details" && (
+            {authMode === "phone" && step === "details" && (
               <form onSubmit={handleCompleteProfile} className="space-y-4">
                 <div>
                   <Label htmlFor="full-name">Full Name *</Label>
