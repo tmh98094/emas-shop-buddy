@@ -10,11 +10,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { normalizePhone, formatDisplayPhone } from "@/lib/phone-utils";
 
 export default function UserProfile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState("+60");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -46,10 +50,22 @@ export default function UserProfile() {
 
       if (error) throw error;
       if (data) {
+        // Parse existing phone number
+        const phone = data.phone_number || "";
+        if (phone.startsWith("+60")) {
+          setCountryCode("+60");
+          setPhoneNumber(phone.substring(3));
+        } else if (phone.startsWith("+65")) {
+          setCountryCode("+65");
+          setPhoneNumber(phone.substring(3));
+        } else {
+          setPhoneNumber(phone);
+        }
+        
         setProfile({
           full_name: data.full_name || "",
           email: data.email || "",
-          phone_number: data.phone_number || "",
+          phone_number: phone,
         });
       }
     } catch (error: any) {
@@ -65,12 +81,14 @@ export default function UserProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+
       const { error } = await supabase
         .from("profiles")
         .update({
           full_name: profile.full_name,
           email: profile.email,
-          phone_number: profile.phone_number,
+          phone_number: normalizedPhone,
         })
         .eq("id", user.id);
 
@@ -191,16 +209,33 @@ export default function UserProfile() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="country-code">Country Code</Label>
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+60">🇲🇾 Malaysia (+60)</SelectItem>
+                        <SelectItem value="+65">🇸🇬 Singapore (+65)</SelectItem>
+                        <SelectItem value="+86">🇨🇳 China (+86)</SelectItem>
+                        <SelectItem value="+1">🇺🇸 USA (+1)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input
                       id="phone"
-                      value={profile.phone_number}
-                      onChange={(e) =>
-                        setProfile({ ...profile, phone_number: e.target.value })
-                      }
-                      placeholder="+60123456789"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456789"
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Current: {formatDisplayPhone(normalizePhone(phoneNumber, countryCode))}
+                    </p>
                   </div>
 
                   <Button type="submit" disabled={loading} className="w-full">

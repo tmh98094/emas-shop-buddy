@@ -40,68 +40,88 @@ import OrderDetail from "./pages/admin/OrderDetail";
 import AdminNotifications from "./pages/admin/Notifications";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import AdminAnalytics from "./pages/admin/Analytics";
+import AdminContent from "./pages/admin/Content";
 import NotFound from "./pages/NotFound";
+import { WhatsAppFloater } from "./components/WhatsAppFloater";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const AppContent = () => {
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    
+    return (
+      <>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/product/:slug" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payment/touch-n-go/:orderId" element={<TouchNGoPayment />} />
+          <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+          <Route path="/order-tracking" element={<OrderTracking />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+          
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="products/new" element={<ProductForm />} />
+            <Route path="products/:id" element={<ProductForm />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="customers/:customerId" element={<CustomerDetail />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="stock" element={<StockManagement />} />
+            <Route path="touch-n-go" element={<AdminTouchNGo />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="content" element={<AdminContent />} />
+          </Route>
+
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        
+        {/* Show WhatsApp floater everywhere except admin routes */}
+        {!isAdminRoute && <WhatsAppFloater />}
+      </>
+    );
+  };
+
+  return (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <ThemeProvider attribute="class" defaultTheme="light">
         <LanguageProvider>
           <CartProvider>
             <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-            <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:slug" element={<ProductDetail />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/payment/touch-n-go/:orderId" element={<TouchNGoPayment />} />
-            <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-            <Route path="/order-tracking" element={<OrderTracking />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/return-policy" element={<ReturnPolicy />} />
-            <Route path="/shipping-policy" element={<ShippingPolicy />} />
-            
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="products/new" element={<ProductForm />} />
-              <Route path="products/:id" element={<ProductForm />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="orders/:id" element={<OrderDetail />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="customers/:customerId" element={<CustomerDetail />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
-              <Route path="notifications" element={<AdminNotifications />} />
-              <Route path="stock" element={<StockManagement />} />
-              <Route path="touch-n-go" element={<AdminTouchNGo />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Route>
-
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
             </TooltipProvider>
           </CartProvider>
         </LanguageProvider>
       </ThemeProvider>
     </HelmetProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

@@ -182,6 +182,36 @@ export type Database = {
         }
         Relationships: []
       }
+      content_pages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          key: string
+          title: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          key: string
+          title: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          key?: string
+          title?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           color_name: string | null
