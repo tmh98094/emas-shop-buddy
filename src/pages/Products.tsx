@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { T } from "@/components/T";
 
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,7 +25,7 @@ export default function Products() {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 24;
+  const itemsPerPage = 12;
 
   // Load initial filters from URL
   useEffect(() => {
@@ -135,6 +136,24 @@ export default function Products() {
     },
   });
 
+  // Shop page content (admin-editable)
+  const { data: shopContent } = useQuery({
+    queryKey: ["content", "shop_page_intro"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("content_pages")
+          .select("title, content")
+          .eq("key", "shop_page_intro")
+          .single();
+        if (error) throw error;
+        return data as { title: string; content: string } | null;
+      } catch {
+        return null;
+      }
+    },
+  });
+
   const handleCategoryToggle = (categoryId: string) => {
     setSelectedCategories(prev =>
       prev.includes(categoryId)
@@ -192,7 +211,17 @@ export default function Products() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-4">Shop</h1>
+          {shopContent?.title ? (
+            <h1 className="text-4xl font-bold text-primary mb-2">{shopContent.title}</h1>
+          ) : (
+            <h1 className="text-4xl font-bold text-primary mb-2"><T zh="商店" en="Shop" /></h1>
+          )}
+          {shopContent?.content && (
+            <div
+              className="prose prose-sm max-w-none text-muted-foreground mb-4"
+              dangerouslySetInnerHTML={{ __html: shopContent.content }}
+            />
+          )}
           <ProductSearch value={searchQuery} onChange={setSearchQuery} />
         </div>
 
@@ -210,7 +239,7 @@ export default function Products() {
               <SheetTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Filters & Sort
+                  <T zh="筛选与排序" en="Filters & Sort" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="overflow-y-auto">
@@ -222,27 +251,28 @@ export default function Products() {
           {/* Products Grid */}
           <div className="lg:col-span-3">
             {isLoading ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   {[...Array(12)].map((_, i) => (
                     <Skeleton key={i} className="h-40 md:h-60" />
                   ))}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No products found</p>
+                <p className="text-muted-foreground text-lg"><T zh="未找到商品" en="No products found" /></p>
                 <Button onClick={handleClearAll} variant="outline" className="mt-4">
-                  Clear Filters
+                  <T zh="清除筛选" en="Clear Filters" />
                 </Button>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   {products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      imageUrl={product.product_images?.[0]?.image_url}
-                    />
+                    <div key={product.id} className="">
+                      <ProductCard
+                        product={product}
+                        imageUrl={product.product_images?.[0]?.image_url}
+                      />
+                    </div>
                   ))}
                 </div>
                 

@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
+import { T } from "@/components/T";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Categories() {
@@ -50,10 +51,11 @@ export default function Categories() {
 
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Shop by Category</h1>
-          <p className="text-lg text-muted-foreground">
-            Explore our collection of fine gold jewelry
-          </p>
+          <h1 className="text-4xl font-bold mb-4"><T zh="按类别选购" en="Shop by Category" /></h1>
+          {/* Admin-editable intro */}
+          {content?.content && (
+            <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: content.content }} />
+          )}
         </div>
 
         {isLoading ? (
@@ -95,7 +97,7 @@ export default function Categories() {
                       </p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                      {category.productCount} 件商品
                     </p>
                   </CardContent>
                 </Card>

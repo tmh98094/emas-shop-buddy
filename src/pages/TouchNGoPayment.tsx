@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
 import { T } from "@/components/T";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 function ReceiptPreview({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -43,6 +45,20 @@ export default function TouchNGoPayment() {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState("");
+
+  const { data: qr } = useQuery({
+    queryKey: ["settings", "touch_n_go_qr"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "touch_n_go_qr")
+        .single();
+      if (error) throw error;
+      const url = (data?.value as any)?.qr_code_url || "";
+      return { qrCode: url };
+    },
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,14 +118,18 @@ export default function TouchNGoPayment() {
       
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold text-primary mb-8">Touch 'n Go Payment</h1>
+          <h1 className="text-4xl font-bold text-primary mb-8">Touch 'n Go 支付</h1>
 
           <Card className="p-4 md:p-8 space-y-6">
             <div className="text-center">
               <h2 className="text-xl md:text-2xl font-bold mb-4"><T zh="扫描二维码支付" en="Scan QR Code to Pay" /></h2>
               <div className="bg-muted p-4 md:p-8 rounded-lg inline-block max-w-full">
-                <div className="w-48 h-48 md:w-64 md:h-64 bg-background border-2 border-dashed flex items-center justify-center mx-auto">
-                  <p className="text-muted-foreground text-sm"><T zh="二维码在此" en="QR Code Here" /></p>
+                <div className="w-48 h-48 md:w-64 md:h-64 bg-background border flex items-center justify-center mx-auto overflow-hidden rounded">
+                  {qr?.qrCode ? (
+                    <img src={qr.qrCode} alt="Touch 'n Go QR" className="w-full h-full object-contain" />
+                  ) : (
+                    <p className="text-muted-foreground text-sm"><T zh="后台尚未上传二维码" en="QR not uploaded yet" /></p>
+                  )}
                 </div>
               </div>
               <div className="mt-4 space-y-2">

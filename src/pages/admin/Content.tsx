@@ -23,6 +23,8 @@ const contentKeys = [
   { key: "shipping_policy", label: "Shipping Policy" },
   { key: "return_policy", label: "Return Policy" },
   { key: "faq", label: "FAQ" },
+  { key: "shop_page_intro", label: "Shop Page Intro" },
+  { key: "categories_page_intro", label: "Categories Page Intro" },
   { key: "order_confirmation_message", label: "Order Confirmation Message" },
 ];
 
