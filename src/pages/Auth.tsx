@@ -11,28 +11,111 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
+import { T } from "@/components/T";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<"phone" | "email">("phone");
-  const [step, setStep] = useState<"phone" | "otp" | "details">("phone");
+  const [authTab, setAuthTab] = useState<"signin" | "signup" | "recover">("signin");
+  const [useOtp, setUseOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   
-  // Phone auth states
+  // Form states
   const [countryCode, setCountryCode] = useState("+60");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
-  
-  // Email auth states
-  const [emailInput, setEmailInput] = useState("");
   const [password, setPassword] = useState("");
-  
-  // User details
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  
+  // Admin email login
+  const [emailInput, setEmailInput] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!fullName.trim()) {
+        throw new Error("Full name is required");
+      }
+
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      
+      // Sign up with password
+      const { data, error } = await supabase.auth.signUp({
+        phone: normalizedPhone,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            email: email || null,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Create profile
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            full_name: fullName,
+            phone_number: normalizedPhone,
+            email: email || null,
+          });
+      }
+
+      toast({
+        title: "注册成功！",
+        description: "您的账户已创建。",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "注册失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        phone: normalizedPhone,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "登录成功！",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "登录失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -45,14 +128,14 @@ export default function Auth() {
 
       if (error) throw error;
 
-      setStep("otp");
+      setOtpSent(true);
       toast({
-        title: "OTP Sent!",
-        description: "Please check your phone for the verification code.",
+        title: "验证码已发送",
+        description: "请检查您的手机。",
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "发送失败",
         description: error.message,
         variant: "destructive",
       });
@@ -61,14 +144,14 @@ export default function Auth() {
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       
-      const { data, error } = await supabase.auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         phone: normalizedPhone,
         token: otp,
         type: 'sms',
@@ -76,24 +159,13 @@ export default function Auth() {
 
       if (error) throw error;
 
-      // Check if profile exists
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user?.id)
-        .single();
-
-      if (!profile) {
-        // New user, go to details step
-        setStep("details");
-      } else {
-        // Existing user, redirect home
-        toast({ title: "Welcome back!" });
-        navigate("/");
-      }
+      toast({
+        title: "登录成功！",
+      });
+      navigate("/");
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "验证失败",
         description: error.message,
         variant: "destructive",
       });
@@ -102,39 +174,27 @@ export default function Auth() {
     }
   };
 
-  const handleCompleteProfile = async (e: React.FormEvent) => {
+  const handleRecoverPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      if (!fullName.trim()) {
-        throw new Error('Full name is required');
-      }
-
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
-
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          full_name: fullName,
-          phone_number: normalizedPhone,
-          email: email || null,
-        });
+      
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: normalizedPhone,
+      });
 
       if (error) throw error;
 
+      setOtpSent(true);
       toast({
-        title: "Success!",
-        description: "Your account has been created.",
+        title: "验证码已发送",
+        description: "请使用验证码登录并更改密码。",
       });
-      navigate("/");
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "发送失败",
         description: error.message,
         variant: "destructive",
       });
@@ -148,31 +208,26 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: emailInput,
-        password: password,
+        password: emailPassword,
       });
 
       if (error) throw error;
 
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: "登录成功！",
       });
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Login Failed",
+        title: "登录失败",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickAdminLogin = () => {
-    setEmailInput("admin@jjemas.com");
   };
 
   return (
@@ -183,141 +238,264 @@ export default function Auth() {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold text-primary mb-8 text-center">
-            {authMode === "email" 
-              ? "Admin Login (Temporary)" 
-              : step === "phone" 
-                ? "Sign In / Sign Up" 
-                : step === "otp" 
-                  ? "Verify Code" 
-                  : "Complete Profile"}
+            <T zh="登录 / 注册" en="Sign In / Sign Up" />
           </h1>
 
           <Card className="p-6">
-            <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "phone" | "email")} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="phone">Phone Login</TabsTrigger>
-                <TabsTrigger value="email">Email Login (Temporary)</TabsTrigger>
+            <Tabs value={authTab} onValueChange={(v) => {
+              setAuthTab(v as "signin" | "signup" | "recover");
+              setUseOtp(false);
+              setOtpSent(false);
+              setOtp("");
+            }} className="mb-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="signin"><T zh="登录" en="Sign In" /></TabsTrigger>
+                <TabsTrigger value="signup"><T zh="注册" en="Sign Up" /></TabsTrigger>
+                <TabsTrigger value="recover"><T zh="找回密码" en="Recover" /></TabsTrigger>
               </TabsList>
+
+              {/* Sign In Tab */}
+              <TabsContent value="signin">
+                {!useOtp && !otpSent && (
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                      <PhoneInput
+                        countryCode={countryCode}
+                        phoneNumber={phoneNumber}
+                        onCountryCodeChange={setCountryCode}
+                        onPhoneNumberChange={setPhoneNumber}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="password"><T zh="密码" en="Password" /> *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="登录中..." en="Signing in..." /> : <T zh="登录" en="Sign In" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => setUseOtp(true)}
+                    >
+                      <T zh="使用验证码登录" en="Login with Verification Code" />
+                    </Button>
+                  </form>
+                )}
+
+                {useOtp && !otpSent && (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                      <PhoneInput
+                        countryCode={countryCode}
+                        phoneNumber={phoneNumber}
+                        onCountryCodeChange={setCountryCode}
+                        onPhoneNumberChange={setPhoneNumber}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="发送中..." en="Sending..." /> : <T zh="发送验证码" en="Send Verification Code" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => setUseOtp(false)}
+                    >
+                      <T zh="使用密码登录" en="Login with Password" />
+                    </Button>
+                  </form>
+                )}
+
+                {otpSent && (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="otp"><T zh="验证码" en="Verification Code" /></Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        maxLength={6}
+                        required
+                        autoFocus
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <T zh="已发送至" en="Sent to" /> {normalizePhone(phoneNumber, countryCode)}
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
+                      {loading ? <T zh="验证中..." en="Verifying..." /> : <T zh="验证" en="Verify" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setOtp("");
+                      }}
+                    >
+                      <T zh="重新输入手机号" en="Change Phone Number" />
+                    </Button>
+                  </form>
+                )}
+              </TabsContent>
+
+              {/* Sign Up Tab */}
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div>
+                    <Label htmlFor="full-name"><T zh="全名" en="Full Name" /> *</Label>
+                    <Input
+                      id="full-name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="张三"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                    <PhoneInput
+                      countryCode={countryCode}
+                      phoneNumber={phoneNumber}
+                      onCountryCodeChange={setCountryCode}
+                      onPhoneNumberChange={setPhoneNumber}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email-signup"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
+                    <Input
+                      id="email-signup"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@email.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password-signup"><T zh="密码" en="Password" /> *</Label>
+                    <Input
+                      id="password-signup"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? <T zh="注册中..." en="Signing up..." /> : <T zh="注册" en="Sign Up" />}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              {/* Recover Password Tab */}
+              <TabsContent value="recover">
+                {!otpSent && (
+                  <form onSubmit={handleRecoverPassword} className="space-y-4">
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                      <PhoneInput
+                        countryCode={countryCode}
+                        phoneNumber={phoneNumber}
+                        onCountryCodeChange={setCountryCode}
+                        onPhoneNumberChange={setPhoneNumber}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="发送中..." en="Sending..." /> : <T zh="获取验证码" en="Get Verification Code" />}
+                    </Button>
+                  </form>
+                )}
+
+                {otpSent && (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="otp-recover"><T zh="验证码" en="Verification Code" /></Label>
+                      <Input
+                        id="otp-recover"
+                        type="text"
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        maxLength={6}
+                        required
+                        autoFocus
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <T zh="已发送至" en="Sent to" /> {normalizePhone(phoneNumber, countryCode)}
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
+                      {loading ? <T zh="验证中..." en="Verifying..." /> : <T zh="验证并登录" en="Verify & Login" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setOtp("");
+                      }}
+                    >
+                      <T zh="重新输入手机号" en="Change Phone Number" />
+                    </Button>
+                  </form>
+                )}
+              </TabsContent>
             </Tabs>
 
-            {authMode === "email" && (
+            {/* Admin Email Login (Temporary) */}
+            <div className="border-t pt-6 mt-6">
+              <p className="text-sm text-muted-foreground mb-4 text-center">
+                <T zh="管理员邮箱登录（临时）" en="Admin Email Login (Temporary)" />
+              </p>
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="email-login">Email</Label>
+                  <Label htmlFor="email-login"><T zh="邮箱" en="Email" /></Label>
                   <Input
                     id="email-login"
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="your.email@example.com"
+                    placeholder="admin@jjemas.com"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password-login">Password</Label>
+                  <Label htmlFor="password-login"><T zh="密码" en="Password" /></Label>
                   <Input
                     id="password-login"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    value={emailPassword}
+                    onChange={(e) => setEmailPassword(e.target.value)}
+                    placeholder="••••••••"
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Logging in..." : "Login"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleQuickAdminLogin}
-                  disabled={loading}
-                >
-                  Quick Admin Login
+                <Button type="submit" className="w-full" disabled={loading} variant="outline">
+                  {loading ? <T zh="登录中..." en="Logging in..." /> : <T zh="邮箱登录" en="Email Login" />}
                 </Button>
               </form>
-            )}
-
-            {authMode === "phone" && step === "phone" && (
-              <form onSubmit={handleSendOTP} className="space-y-4">
-                <PhoneInput
-                  countryCode={countryCode}
-                  phoneNumber={phoneNumber}
-                  onCountryCodeChange={setCountryCode}
-                  onPhoneNumberChange={setPhoneNumber}
-                  label="Phone Number"
-                  required
-                />
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Verification Code (OTP)"}
-                </Button>
-              </form>
-            )}
-
-            {authMode === "phone" && step === "otp" && (
-              <form onSubmit={handleVerifyOTP} className="space-y-4">
-                <div>
-                  <Label htmlFor="otp">Verification Code</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength={6}
-                    required
-                    autoFocus
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Sent to {normalizePhone(phoneNumber, countryCode)}
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-                  {loading ? "Verifying..." : "Verify Code"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="w-full"
-                  onClick={() => setStep("phone")}
-                  disabled={loading}
-                >
-                  Change Phone Number
-                </Button>
-              </form>
-            )}
-
-            {authMode === "phone" && step === "details" && (
-              <form onSubmit={handleCompleteProfile} className="space-y-4">
-                <div>
-                  <Label htmlFor="full-name">Full Name *</Label>
-                  <Input
-                    id="full-name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email-optional">Email (Optional)</Label>
-                  <Input
-                    id="email-optional"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Optional - for order receipts and notifications
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating Account..." : "Complete Registration"}
-                </Button>
-              </form>
-            )}
+            </div>
           </Card>
         </div>
       </main>

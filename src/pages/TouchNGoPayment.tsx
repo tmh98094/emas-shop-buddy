@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload } from "lucide-react";
 import { T } from "@/components/T";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 function ReceiptPreview({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);

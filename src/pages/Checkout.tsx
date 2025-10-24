@@ -67,10 +67,20 @@ export default function Checkout() {
           .single();
         
         if (profile) {
-          // Parse phone number properly
-          const phoneMatch = profile.phone_number?.match(/^(\+\d+)(.+)$/);
-          const extractedCountryCode = phoneMatch?.[1] || "+60";
-          const extractedPhone = phoneMatch?.[2]?.replace(/\s/g, "") || "";
+          // Parse phone number properly - extract country code and format number
+          let extractedCountryCode = "+60";
+          let extractedPhone = "";
+          
+          if (profile.phone_number) {
+            const phoneMatch = profile.phone_number.match(/^(\+\d+)(.+)$/);
+            if (phoneMatch) {
+              extractedCountryCode = phoneMatch[1];
+              extractedPhone = phoneMatch[2].replace(/\s/g, "");
+            } else {
+              // Fallback if no country code found
+              extractedPhone = profile.phone_number.replace(/\s/g, "");
+            }
+          }
           
           setCountryCodePhone(extractedCountryCode);
           setFormData({

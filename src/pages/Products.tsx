@@ -251,7 +251,7 @@ export default function Products() {
           {/* Products Grid */}
           <div className="lg:col-span-3">
             {isLoading ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6 md:gap-8">
                   {[...Array(12)].map((_, i) => (
                     <Skeleton key={i} className="h-40 md:h-60" />
                   ))}
@@ -265,9 +265,9 @@ export default function Products() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6 md:gap-8">
                   {products.map((product) => (
-                    <div key={product.id} className="">
+                    <div key={product.id} className="transition-transform hover:scale-[1.02]">
                       <ProductCard
                         product={product}
                         imageUrl={product.product_images?.[0]?.image_url}
@@ -284,17 +284,17 @@ export default function Products() {
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                     >
-                      Previous
+                      <T zh="上一页" en="Previous" />
                     </Button>
                     <span className="text-sm text-muted-foreground">
-                      Page {currentPage} of {totalPages}
+                      <T zh="第" en="Page" /> {currentPage} <T zh="页，共" en="of" /> {totalPages} <T zh="页" en="" />
                     </span>
                     <Button
                       variant="outline"
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      <T zh="下一页" en="Next" />
                     </Button>
                   </div>
                 )}

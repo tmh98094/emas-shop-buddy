@@ -40,6 +40,18 @@ export default function Categories() {
     },
   });
 
+  const { data: content } = useQuery({
+    queryKey: ["content-pages", "categories_page_intro"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("content_pages")
+        .select("*")
+        .eq("key", "categories_page_intro")
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const handleCategoryClick = (categoryId: string) => {
     navigate(`/products?category=${categoryId}`);
   };
