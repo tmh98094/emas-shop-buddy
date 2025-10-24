@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReactQuill from "react-quill";
+import DOMPurify from "dompurify";
 import "react-quill/dist/quill.snow.css";
 
 interface ContentPage {
@@ -72,16 +73,32 @@ export default function ContentManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Sanitize HTML content before saving to prevent XSS attacks
+      const sanitizedContent = DOMPurify.sanitize(content.content, {
+        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 's', 'blockquote', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+      });
+
       const { error } = await supabase
         .from("content_pages")
         .update({
           title: content.title,
-          content: content.content,
+          content: sanitizedContent,
           updated_by: user.id,
         })
         .eq("key", key);
 
       if (error) throw error;
+
+      // Update local state with sanitized content
+      setContents((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          content: sanitizedContent,
+        },
+      }));
 
       toast({
         title: "Content saved",

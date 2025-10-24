@@ -1,14 +1,47 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
 });
 
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+interface CheckoutRequest {
+  orderId: string;
+  orderNumber: string;
+  amount: number;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+function validateRequest(body: any): CheckoutRequest {
+  if (!body.orderId || typeof body.orderId !== 'string') {
+    throw new Error('Invalid orderId');
+  }
+  if (!body.orderNumber || typeof body.orderNumber !== 'string' || !/^JJ-\d{5}$/.test(body.orderNumber)) {
+    throw new Error('Invalid orderNumber format');
+  }
+  if (!body.amount || typeof body.amount !== 'number' || body.amount <= 0 || body.amount > 100000) {
+    throw new Error('Invalid amount');
+  }
+  if (!body.successUrl || typeof body.successUrl !== 'string' || !body.successUrl.startsWith('http')) {
+    throw new Error('Invalid successUrl');
+  }
+  if (!body.cancelUrl || typeof body.cancelUrl !== 'string' || !body.cancelUrl.startsWith('http')) {
+    throw new Error('Invalid cancelUrl');
+  }
+  
+  return body as CheckoutRequest;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,7 +49,99 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, orderNumber, amount, successUrl, cancelUrl } = await req.json();
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: { Authorization: authHeader }
+      }
+    });
+
+    // Verify user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
+
+    // Parse and validate request body
+    const body = await req.json();
+    const validatedData = validateRequest(body);
+    const { orderId, orderNumber, amount, successUrl, cancelUrl } = validatedData;
+
+    console.log("Validating order ownership for user:", user.id, "order:", orderId);
+
+    // Verify order ownership
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id, user_id, order_number, total_amount')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      console.error('Order not found:', orderError);
+      return new Response(
+        JSON.stringify({ error: 'Order not found' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+        }
+      );
+    }
+
+    // Check ownership (user_id matches OR order is a guest order with matching phone)
+    if (order.user_id && order.user_id !== user.id) {
+      console.error('Order ownership verification failed');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized to access this order' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        }
+      );
+    }
+
+    // Verify order number matches
+    if (order.order_number !== orderNumber) {
+      console.error('Order number mismatch');
+      return new Response(
+        JSON.stringify({ error: 'Order number mismatch' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
+
+    // Verify amount matches (allow small rounding differences)
+    if (Math.abs(order.total_amount - amount) > 0.01) {
+      console.error('Amount mismatch:', order.total_amount, 'vs', amount);
+      return new Response(
+        JSON.stringify({ error: 'Amount mismatch' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
 
     console.log("Creating Stripe checkout session for order:", orderNumber);
 
@@ -41,6 +166,7 @@ serve(async (req) => {
       metadata: {
         orderId,
         orderNumber,
+        userId: user.id,
       },
     });
 
