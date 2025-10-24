@@ -17,9 +17,10 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [authTab, setAuthTab] = useState<"signin" | "signup" | "recover">("signin");
+  const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
   const [useOtp, setUseOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
   
   // Form states
   const [countryCode, setCountryCode] = useState("+60");
@@ -243,20 +244,20 @@ export default function Auth() {
 
           <Card className="p-6">
             <Tabs value={authTab} onValueChange={(v) => {
-              setAuthTab(v as "signin" | "signup" | "recover");
+              setAuthTab(v as "signin" | "signup");
               setUseOtp(false);
               setOtpSent(false);
               setOtp("");
+              setShowRecovery(false);
             }} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin"><T zh="登录" en="Sign In" /></TabsTrigger>
                 <TabsTrigger value="signup"><T zh="注册" en="Sign Up" /></TabsTrigger>
-                <TabsTrigger value="recover"><T zh="找回密码" en="Recover" /></TabsTrigger>
               </TabsList>
 
               {/* Sign In Tab */}
               <TabsContent value="signin">
-                {!useOtp && !otpSent && (
+                {!showRecovery && !useOtp && !otpSent && (
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div>
                       <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
@@ -278,6 +279,13 @@ export default function Auth() {
                         placeholder="••••••••"
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecovery(true)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                      >
+                        <T zh="忘记密码？" en="Forgot password?" />
+                      </button>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? <T zh="登录中..." en="Signing in..." /> : <T zh="登录" en="Sign In" />}
@@ -293,7 +301,7 @@ export default function Auth() {
                   </form>
                 )}
 
-                {useOtp && !otpSent && (
+                {!showRecovery && useOtp && !otpSent && (
                   <form onSubmit={handleSendOtp} className="space-y-4">
                     <div>
                       <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
@@ -319,7 +327,7 @@ export default function Auth() {
                   </form>
                 )}
 
-                {otpSent && (
+                {!showRecovery && otpSent && (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
                     <div>
                       <Label htmlFor="otp"><T zh="验证码" en="Verification Code" /></Label>
@@ -350,6 +358,72 @@ export default function Auth() {
                       }}
                     >
                       <T zh="重新输入手机号" en="Change Phone Number" />
+                    </Button>
+                  </form>
+                )}
+
+                {/* Password Recovery Flow */}
+                {showRecovery && !otpSent && (
+                  <form onSubmit={handleRecoverPassword} className="space-y-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      <T zh="输入您的手机号码以接收验证码" en="Enter your phone number to receive a verification code" />
+                    </p>
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                      <PhoneInput
+                        countryCode={countryCode}
+                        phoneNumber={phoneNumber}
+                        onCountryCodeChange={setCountryCode}
+                        onPhoneNumberChange={setPhoneNumber}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="发送中..." en="Sending..." /> : <T zh="获取验证码" en="Get Verification Code" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => setShowRecovery(false)}
+                    >
+                      <T zh="返回登录" en="Back to Sign In" />
+                    </Button>
+                  </form>
+                )}
+
+                {showRecovery && otpSent && (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="otp-recover"><T zh="验证码" en="Verification Code" /></Label>
+                      <Input
+                        id="otp-recover"
+                        type="text"
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        maxLength={6}
+                        required
+                        autoFocus
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <T zh="已发送至" en="Sent to" /> {normalizePhone(phoneNumber, countryCode)}
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
+                      {loading ? <T zh="验证中..." en="Verifying..." /> : <T zh="验证并登录" en="Verify & Login" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setOtp("");
+                        setShowRecovery(false);
+                      }}
+                    >
+                      <T zh="返回登录" en="Back to Sign In" />
                     </Button>
                   </form>
                 )}
@@ -406,61 +480,6 @@ export default function Auth() {
                 </form>
               </TabsContent>
 
-              {/* Recover Password Tab */}
-              <TabsContent value="recover">
-                {!otpSent && (
-                  <form onSubmit={handleRecoverPassword} className="space-y-4">
-                    <div>
-                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
-                      <PhoneInput
-                        countryCode={countryCode}
-                        phoneNumber={phoneNumber}
-                        onCountryCodeChange={setCountryCode}
-                        onPhoneNumberChange={setPhoneNumber}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? <T zh="发送中..." en="Sending..." /> : <T zh="获取验证码" en="Get Verification Code" />}
-                    </Button>
-                  </form>
-                )}
-
-                {otpSent && (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <div>
-                      <Label htmlFor="otp-recover"><T zh="验证码" en="Verification Code" /></Label>
-                      <Input
-                        id="otp-recover"
-                        type="text"
-                        placeholder="123456"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        maxLength={6}
-                        required
-                        autoFocus
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        <T zh="已发送至" en="Sent to" /> {normalizePhone(phoneNumber, countryCode)}
-                      </p>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-                      {loading ? <T zh="验证中..." en="Verifying..." /> : <T zh="验证并登录" en="Verify & Login" />}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="w-full"
-                      onClick={() => {
-                        setOtpSent(false);
-                        setOtp("");
-                      }}
-                    >
-                      <T zh="重新输入手机号" en="Change Phone Number" />
-                    </Button>
-                  </form>
-                )}
-              </TabsContent>
             </Tabs>
 
             {/* Admin Email Login (Temporary) */}
