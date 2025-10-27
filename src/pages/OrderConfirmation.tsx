@@ -110,25 +110,25 @@ export default function OrderConfirmation() {
             </div>
           </Card>
 
-          <Card className="p-8 text-left space-y-6">
+          <Card className="p-6 md:p-8 text-left space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-xl md:text-2xl font-bold mb-4">
                 <T zh="订单详情" en="Order Details" />
               </h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="space-y-3 text-sm md:text-base">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="订单号" en="Order Number" />:</span>
-                  <span className="font-semibold">{order.order_number}</span>
+                  <span className="font-semibold text-right">{order.order_number}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="总金额" en="Total Amount" />:</span>
                   <span className="font-semibold">RM {Number(order.total_amount).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="付款方式" en="Payment Method" />:</span>
-                  <span className="font-semibold capitalize">{order.payment_method.replace("_", " ")}</span>
+                  <span className="font-semibold capitalize text-right">{order.payment_method.replace("_", " ")}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="状态" en="Status" />:</span>
                   <span className="font-semibold capitalize">{order.order_status}</span>
                 </div>
@@ -137,12 +137,12 @@ export default function OrderConfirmation() {
 
             <div className="border-t pt-4">
               <div className="flex items-start gap-2 mb-3">
-                <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                <h3 className="font-semibold text-lg">
+                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <h3 className="font-semibold text-base md:text-lg">
                   <T zh="配送地址" en="Shipping Address" />
                 </h3>
               </div>
-              <div className="text-sm space-y-1 ml-7">
+              <div className="text-sm md:text-base space-y-1 ml-0 md:ml-7">
                 <p>{order.shipping_address_line1}</p>
                 {order.shipping_address_line2 && <p>{order.shipping_address_line2}</p>}
                 <p>{order.shipping_city}, {order.shipping_state} {order.shipping_postcode}</p>
@@ -151,34 +151,34 @@ export default function OrderConfirmation() {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3">
+              <h3 className="font-semibold mb-3 text-base md:text-lg">
                 <T zh="订购商品" en="Items Ordered" />
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {order.order_items?.map((item: any) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>{item.product_name} x {item.quantity}</span>
-                    <span>RM {parseFloat(item.subtotal).toFixed(2)}</span>
+                  <div key={item.id} className="flex justify-between gap-4 text-sm md:text-base">
+                    <span className="flex-1">{item.product_name} x {item.quantity}</span>
+                    <span className="font-semibold">RM {parseFloat(item.subtotal).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
             </div>
           </Card>
 
-          <div className="mt-8 flex gap-4 justify-center flex-wrap">
-            <Button asChild variant="outline">
+          <div className="mt-8 flex gap-3 justify-center flex-col md:flex-row">
+            <Button asChild variant="outline" className="h-11 md:h-10 touch-manipulation">
               <Link to="/">
                 <T zh="继续购物" en="Continue Shopping" />
               </Link>
             </Button>
             {user ? (
-              <Button asChild>
+              <Button asChild className="h-11 md:h-10 touch-manipulation">
                 <Link to="/dashboard">
                   <T zh="查看我的订单" en="View My Orders" />
                 </Link>
               </Button>
             ) : (
-              <Button asChild>
+              <Button asChild className="h-11 md:h-10 touch-manipulation">
                 <Link to="/order-tracking">
                   <T zh="跟踪订单" en="Track Order" />
                 </Link>

@@ -16,25 +16,49 @@ export const ProductCardSkeleton = () => (
 );
 
 export const ProductDetailSkeleton = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
     <div className="space-y-4">
-      <Skeleton className="w-full h-[500px]" />
-      <div className="flex gap-2">
-        <Skeleton className="w-20 h-20" />
-        <Skeleton className="w-20 h-20" />
-        <Skeleton className="w-20 h-20" />
-      </div>
+      <Skeleton className="w-full aspect-square" />
     </div>
-    <div className="space-y-6">
-      <Skeleton className="h-10 w-3/4" />
-      <Skeleton className="h-8 w-1/4" />
-      <Skeleton className="h-12 w-1/3" />
+    <div className="space-y-4 md:space-y-6">
+      <Skeleton className="h-8 md:h-10 w-3/4" />
+      <Skeleton className="h-6 md:h-8 w-1/4" />
+      <Skeleton className="h-10 md:h-12 w-1/3" />
       <div className="space-y-2">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
       </div>
-      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-11 md:h-12 w-full" />
+    </div>
+  </div>
+);
+
+export const DashboardSkeleton = () => (
+  <div className="grid gap-6 md:grid-cols-4">
+    <Card className="md:col-span-1 p-6">
+      <Skeleton className="h-6 w-3/4 mb-4" />
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </Card>
+    <div className="md:col-span-3 space-y-6">
+      <Card className="p-6">
+        <Skeleton className="h-8 w-1/2 mb-4" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </Card>
+      <Card className="p-6">
+        <Skeleton className="h-8 w-1/3 mb-4" />
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </Card>
     </div>
   </div>
 );

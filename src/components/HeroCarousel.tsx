@@ -52,7 +52,7 @@ export const HeroCarousel = () => {
       <CarouselContent>
         {slides.map((slide, index) => (
           <CarouselItem key={index}>
-            <div className="relative h-[400px] md:h-[500px] lg:h-[600px]">
+            <div className="relative h-[300px] md:h-[500px] lg:h-[600px]">
               <img
                 src={slide.image}
                 alt={slide.title}
@@ -62,15 +62,15 @@ export const HeroCarousel = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-transparent" />
               <div className="absolute inset-0 flex items-center">
                 <div className="container mx-auto px-4">
-                  <div className="max-w-2xl space-y-6">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
+                  <div className="max-w-2xl space-y-3 md:space-y-6">
+                    <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
                       <T zh={slide.title} en={slide.titleEn} />
                     </h1>
-                    <p className="text-lg md:text-xl text-primary drop-shadow-md font-medium">
+                    <p className="text-sm md:text-xl text-primary drop-shadow-md font-medium">
                       <T zh={slide.description} en={slide.descriptionEn} />
                     </p>
                     <Link to="/products">
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-gold-light font-semibold shadow-lg">
+                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-gold-light font-semibold shadow-lg h-11 md:h-12 text-sm md:text-base touch-manipulation">
                         <T zh="立即选购" en="Shop Now" />
                       </Button>
                     </Link>
@@ -81,8 +81,8 @@ export const HeroCarousel = () => {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="left-4 bg-navy/80 hover:bg-navy text-primary border-primary" />
-      <CarouselNext className="right-4 bg-navy/80 hover:bg-navy text-primary border-primary" />
+      <CarouselPrevious className="left-2 md:left-4 bg-navy/80 hover:bg-navy text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
+      <CarouselNext className="right-2 md:right-4 bg-navy/80 hover:bg-navy text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
     </Carousel>
   );
 };

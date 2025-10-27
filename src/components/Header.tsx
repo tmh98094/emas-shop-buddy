@@ -71,13 +71,14 @@ export const Header = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent>
-                <nav className="flex flex-col gap-4 mt-8">
+                <nav className="flex flex-col gap-2 mt-8">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg text-foreground hover:text-primary transition-colors font-medium"
+                      className="text-lg text-foreground hover:text-primary transition-colors font-medium py-3 px-4 -mx-4 rounded-md hover:bg-accent touch-manipulation"
+                      aria-label={`Navigate to ${item.en}`}
                     >
                       <T zh={item.name} en={item.en} />
                     </Link>

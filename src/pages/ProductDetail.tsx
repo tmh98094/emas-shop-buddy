@@ -15,8 +15,10 @@ import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Loader2 } from "lucide-react";
 import { T } from "@/components/T";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { ProductDetailSkeleton } from "@/components/LoadingSkeleton";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -59,7 +61,18 @@ export default function ProductDetail() {
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <GoldPriceBanner />
+        <Header />
+        <main className="container mx-auto px-4 py-12">
+          <ProductDetailSkeleton />
+        </main>
+      </div>
+    );
+  }
+  
   if (!product) return <div>Product not found</div>;
 
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
@@ -93,7 +106,7 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image Carousel */}
+          {/* Image Carousel - 1:1 Aspect Ratio */}
           <div>
             <Carousel className="w-full">
               <CarouselContent>
@@ -106,22 +119,28 @@ export default function ProductDetail() {
                         setShowZoom(true);
                       }}
                     >
-                      {img.media_type === 'video' ? (
-                        <video src={img.image_url} className="w-full h-[500px] object-cover" controls />
-                      ) : (
-                        <img 
-                          src={img.image_url} 
-                          alt={`${product.name} - Image ${index + 1}`} 
-                          className="w-full h-[500px] object-cover"
-                          loading="lazy"
-                        />
-                      )}
+                      <AspectRatio ratio={1}>
+                        {img.media_type === 'video' ? (
+                          <video 
+                            src={img.image_url} 
+                            className="w-full h-full object-cover" 
+                            controls 
+                          />
+                        ) : (
+                          <img 
+                            src={img.image_url} 
+                            alt={`${product.name} - Image ${index + 1}`} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                      </AspectRatio>
                     </Card>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="left-2 md:left-4 h-8 w-8 md:h-10 md:w-10" />
+              <CarouselNext className="right-2 md:right-4 h-8 w-8 md:h-10 md:w-10" />
             </Carousel>
             <ImageZoomModal
               images={product.product_images || []}
@@ -161,16 +180,20 @@ export default function ProductDetail() {
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="h-11 w-11 md:h-10 md:w-10"
+                  aria-label="Decrease quantity"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
-                <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+                <span className="text-xl md:text-lg font-semibold w-16 md:w-12 text-center">{quantity}</span>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  className="h-11 w-11 md:h-10 md:w-10"
+                  aria-label="Increase quantity"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </div>
             </div>
@@ -180,7 +203,8 @@ export default function ProductDetail() {
                 onClick={handleAddToCart}
                 disabled={product.stock <= 0}
                 size="lg"
-                className="w-full"
+                className="w-full h-12 text-base md:h-10"
+                aria-label={product.stock === 0 ? "Out of stock" : "Add to cart"}
               >
                 {product.stock === 0 ? (
                   <T zh="缺货" en="Out of Stock" />

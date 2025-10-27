@@ -65,18 +65,18 @@ export default function OrderTracking() {
       <GoldPriceBanner />
       <Header />
       
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold text-primary mb-8">Track Your Order</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-6 md:mb-8">Track Your Order</h1>
 
-          <Card className="p-6 mb-8">
+          <Card className="p-4 md:p-6 mb-6 md:mb-8">
             <form onSubmit={handleSearch}>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="phone">Enter Your Phone Number</Label>
+                  <Label htmlFor="phone" className="text-base">Enter Your Phone Number</Label>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -92,11 +92,11 @@ export default function OrderTracking() {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       required
-                      className="col-span-2"
+                      className="col-span-2 h-11"
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full h-11 touch-manipulation" disabled={loading}>
                   {loading ? "Searching..." : "Track Orders"}
                 </Button>
               </div>
@@ -105,36 +105,36 @@ export default function OrderTracking() {
 
           {orders.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold mb-4">Your Orders</h2>
+              <h2 className="text-xl md:text-2xl font-bold mb-4">Your Orders</h2>
               {orders.map((order) => (
-                <Card key={order.id} className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+                <Card key={order.id} className="p-4 md:p-6">
+                  <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-2">
                     <div>
-                      <h3 className="font-bold text-lg">{order.order_number}</h3>
+                      <h3 className="font-bold text-base md:text-lg">{order.order_number}</h3>
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge className={getStatusColor(order.order_status)}>
+                    <Badge className={`${getStatusColor(order.order_status)} w-fit`}>
                       {order.order_status}
                     </Badge>
                   </div>
 
                   <div className="space-y-2 mb-4">
                     {order.order_items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span>{item.product_name} x {item.quantity}</span>
-                        <span>RM {parseFloat(item.subtotal).toFixed(2)}</span>
+                      <div key={item.id} className="flex justify-between gap-4 text-sm md:text-base">
+                        <span className="flex-1">{item.product_name} x {item.quantity}</span>
+                        <span className="font-semibold">RM {parseFloat(item.subtotal).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t pt-4 flex justify-between font-bold">
+                  <div className="border-t pt-4 flex justify-between font-bold text-base md:text-lg">
                     <span>Total</span>
                     <span className="text-primary">RM {parseFloat(order.total_amount).toFixed(2)}</span>
                   </div>
 
-                  <div className="mt-4 text-sm space-y-1">
+                  <div className="mt-4 text-sm md:text-base space-y-2">
                     <p><strong>Payment:</strong> {order.payment_method.replace("_", " ")}</p>
                     <p><strong>Payment Status:</strong> {order.payment_status}</p>
                     {order.payment_method === 'touch_n_go' && order.touch_n_go_payments?.[0] && (
@@ -148,7 +148,7 @@ export default function OrderTracking() {
                       </p>
                     )}
                     {order.postage_delivery_id && (
-                      <p><strong>Tracking:</strong> {order.postage_delivery_id}</p>
+                      <p className="break-all"><strong>Tracking:</strong> {order.postage_delivery_id}</p>
                     )}
                   </div>
                 </Card>

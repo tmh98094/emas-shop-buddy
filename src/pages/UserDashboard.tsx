@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Package, MapPin, Settings, LogOut, User, Download } from "lucide-react";
 import { T } from "@/components/T";
 import { generateInvoicePDF, InvoiceData } from "@/lib/invoice-generator";
+import { Loader2 } from "lucide-react";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -89,6 +90,16 @@ export default function UserDashboard() {
     }
   };
 
+  const formatPhoneNumber = (phone: string) => {
+    if (!phone) return "Not set";
+    // Format phone number nicely (e.g., +60 12-345 6789)
+    const match = phone.match(/^(\+\d{2})(\d{2,3})(\d{4})(\d{4})$/);
+    if (match) {
+      return `${match[1]} ${match[2]}-${match[3]} ${match[4]}`;
+    }
+    return phone;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -96,7 +107,7 @@ export default function UserDashboard() {
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
-            <p>Loading...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         </div>
       </div>
@@ -156,11 +167,11 @@ export default function UserDashboard() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Phone</span>
-                    <span className="text-lg font-medium">{profile?.phone_number}</span>
+                    <span className="text-base md:text-lg font-medium">{formatPhoneNumber(profile?.phone_number)}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Email</span>
-                    <span className="text-lg font-medium">{profile?.email || "Not set"}</span>
+                    <span className="text-base md:text-lg font-medium break-all">{profile?.email || "Not set"}</span>
                   </div>
                 </div>
               </CardContent>
@@ -220,14 +231,15 @@ export default function UserDashboard() {
                           ))}
                         </div>
                         
-                        <div className="flex justify-between items-center mt-3 pt-3 border-t gap-2">
-                          <span className="font-semibold">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center mt-3 pt-3 border-t gap-3 md:gap-2">
+                          <span className="font-semibold text-base">
                             <T zh="总计" en="Total" />: RM {parseFloat(order.total_amount).toFixed(2)}
                           </span>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <Button
                               variant="outline"
                               size="sm"
+                              className="flex-1 md:flex-none h-10 md:h-9 touch-manipulation"
                               onClick={() => {
                                 const itemsTotal = order.order_items.reduce((sum: number, item: any) => 
                                   sum + parseFloat(item.subtotal), 0);
@@ -271,6 +283,7 @@ export default function UserDashboard() {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="flex-1 md:flex-none h-10 md:h-9 touch-manipulation"
                               onClick={() => navigate(`/order-confirmation/${order.id}`)}
                             >
                               <T zh="查看详情" en="View Details" />
