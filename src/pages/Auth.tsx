@@ -123,16 +123,23 @@ export default function Auth() {
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: normalizedPhone,
+      // Call custom generate-otp edge function
+      const { data, error } = await supabase.functions.invoke("generate-otp", {
+        body: {
+          phoneNumber: normalizedPhone,
+        },
       });
 
       if (error) throw error;
 
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to send OTP");
+      }
+
       setOtpSent(true);
       toast({
         title: "验证码已发送",
-        description: "请检查您的手机。",
+        description: "请检查您的手机。验证码5分钟内有效。",
       });
     } catch (error: any) {
       toast({
@@ -152,17 +159,39 @@ export default function Auth() {
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       
-      const { error } = await supabase.auth.verifyOtp({
-        phone: normalizedPhone,
-        token: otp,
-        type: 'sms',
+      // Call custom verify-otp edge function
+      const { data, error } = await supabase.functions.invoke("verify-otp", {
+        body: {
+          phoneNumber: normalizedPhone,
+          otpCode: otp,
+          fullName: fullName || "", // Use fullName if provided in signup flow
+        },
       });
 
       if (error) throw error;
 
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to verify OTP");
+      }
+
+      // Sign in with phone and temporary password (the OTP code)
+      if (data.tempPassword) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          phone: normalizedPhone,
+          password: data.tempPassword,
+        });
+
+        if (signInError) {
+          console.error("Auto sign-in error:", signInError);
+          throw signInError;
+        }
+      }
+
       toast({
         title: "登录成功！",
+        description: data.isNewUser ? "欢迎新用户！" : "欢迎回来！",
       });
+      
       navigate("/");
     } catch (error: any) {
       toast({
@@ -182,16 +211,23 @@ export default function Auth() {
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: normalizedPhone,
+      // Call custom generate-otp edge function
+      const { data, error } = await supabase.functions.invoke("generate-otp", {
+        body: {
+          phoneNumber: normalizedPhone,
+        },
       });
 
       if (error) throw error;
 
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to send OTP");
+      }
+
       setOtpSent(true);
       toast({
         title: "验证码已发送",
-        description: "请使用验证码登录并更改密码。",
+        description: "请使用验证码登录。验证码5分钟内有效。",
       });
     } catch (error: any) {
       toast({
