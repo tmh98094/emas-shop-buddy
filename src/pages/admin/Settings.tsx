@@ -103,6 +103,9 @@ export default function Settings() {
         .from('product-images')
         .getPublicUrl(fileName);
 
+      // Add cache-busting parameter to force browser reload
+      const cacheBustedUrl = `${publicUrl}?v=${Date.now()}`;
+
       const price916Parsed = Number(goldPrice916);
       const price999Parsed = Number(goldPrice999);
       const price916 = Number.isFinite(price916Parsed) ? price916Parsed : (settings?.goldPrices["916"] ?? 0);
@@ -111,13 +114,13 @@ export default function Settings() {
       const { error } = await supabase.rpc('upsert_gold_settings', {
         price_916: price916,
         price_999: price999,
-        qr_url: publicUrl,
+        qr_url: cacheBustedUrl,
         updated_by: user?.id ?? null,
       });
       if (error) throw error;
 
-      setQrCodeUrl(publicUrl);
-      setQrPreview(publicUrl);
+      setQrCodeUrl(cacheBustedUrl);
+      setQrPreview(cacheBustedUrl);
       setQrCodeFile(null);
     },
     onSuccess: () => {
