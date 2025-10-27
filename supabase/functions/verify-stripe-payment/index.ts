@@ -75,6 +75,9 @@ serve(async (req) => {
     }
 
     console.log("Found session:", matchingSession.id, "Status:", matchingSession.payment_status);
+    console.log("Payment intent:", matchingSession.payment_intent);
+    console.log("Amount total:", matchingSession.amount_total);
+    console.log("Currency:", matchingSession.currency);
 
     // Check if payment was successful
     if (matchingSession.payment_status === "paid") {
