@@ -17,8 +17,8 @@ export function SEOHead({
   canonical,
   type = "website",
 }: SEOHeadProps) {
-  const siteName = "Gold Jewelry Store";
-  const fullTitle = `${title} | ${siteName}`;
+  const siteName = "JJ Emas";
+  const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   const siteUrl = window.location.origin;
   const canonicalUrl = canonical || window.location.href;
 
@@ -40,6 +40,7 @@ export function SEOHead({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={`${siteUrl}${ogImage}`} />
       <meta property="og:site_name" content={siteName} />
+      <meta property="og:locale" content="en_MY" />
       
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
@@ -53,6 +54,34 @@ export function SEOHead({
       <meta name="language" content="English" />
       <meta name="revisit-after" content="7 days" />
       <meta name="author" content={siteName} />
+      <meta name="geo.region" content="MY" />
+      <meta name="geo.placename" content="Malaysia" />
+      
+      {/* Structured Data - Organization Schema */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "JewelryStore",
+          "name": "JJ Emas",
+          "description": "Malaysia & Singapore's Favorite Gold Jewelry Store offering 916 and 999 gold jewelry",
+          "url": siteUrl,
+          "logo": `${siteUrl}/logo.png`,
+          "image": `${siteUrl}${ogImage}`,
+          "priceRange": "$$",
+          "areaServed": [
+            {
+              "@type": "Country",
+              "name": "Malaysia"
+            },
+            {
+              "@type": "Country",
+              "name": "Singapore"
+            }
+          ],
+          "paymentAccepted": "Cash, Credit Card, Touch 'n Go",
+          "currenciesAccepted": "MYR, SGD"
+        })}
+      </script>
     </Helmet>
   );
 }
