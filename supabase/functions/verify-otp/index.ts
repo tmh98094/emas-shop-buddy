@@ -86,11 +86,12 @@ serve(async (req) => {
       .single();
 
     let userId = existingProfile?.id;
+    let isNewUser = false;
 
     if (!existingProfile) {
-      logStep("Creating new user");
+      logStep("No profile found, checking auth user");
       
-      // Create a new auth user with phone
+      // Try to create a new auth user with phone
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: phoneNumber,
         phone_confirm: true,
@@ -99,25 +100,53 @@ serve(async (req) => {
         },
       });
 
-      if (authError || !authData.user) {
-        logStep("Failed to create auth user", { error: authError });
-        throw new Error("Failed to create user account");
+      if (authError) {
+        // If user already exists in auth, try to find them
+        if (authError.message?.includes("phone_exists") || authError.message?.includes("already registered")) {
+          logStep("Auth user already exists, looking up by phone");
+          
+          // List users and find by phone
+          const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+          
+          if (listError) {
+            logStep("Failed to list users", { error: listError });
+            throw new Error("Failed to verify user account");
+          }
+          
+          const existingAuthUser = users.users.find(u => u.phone === phoneNumber);
+          
+          if (!existingAuthUser) {
+            logStep("Auth user not found after phone_exists error");
+            throw new Error("User verification failed");
+          }
+          
+          userId = existingAuthUser.id;
+          logStep("Found existing auth user", { userId });
+        } else {
+          logStep("Failed to create auth user", { error: authError });
+          throw new Error("Failed to create user account");
+        }
+      } else {
+        userId = authData.user.id;
+        isNewUser = true;
+        logStep("Auth user created", { userId });
       }
 
-      userId = authData.user.id;
-      logStep("Auth user created", { userId });
-
-      // Create profile
+      // Create or update profile
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
+        .upsert({
           id: userId,
           phone_number: phoneNumber,
           full_name: fullName || "",
+        }, {
+          onConflict: "id"
         });
 
       if (profileError) {
-        logStep("Failed to create profile", { error: profileError });
+        logStep("Failed to create/update profile", { error: profileError });
+      } else {
+        logStep("Profile created/updated", { userId });
       }
     } else {
       logStep("Existing user found", { userId });
@@ -141,7 +170,7 @@ serve(async (req) => {
         success: true,
         message: "OTP verified successfully",
         userId,
-        isNewUser: !existingProfile,
+        isNewUser: isNewUser || !existingProfile,
         tempPassword: otpCode, // Return OTP as temp password for frontend to auto-login
       }),
       {
