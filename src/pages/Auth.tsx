@@ -122,6 +122,7 @@ export default function Auth() {
 
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      console.log('Sending OTP to:', { original: phoneNumber, countryCode, normalized: normalizedPhone });
       
       // Call custom generate-otp edge function
       const { data, error } = await supabase.functions.invoke("generate-otp", {

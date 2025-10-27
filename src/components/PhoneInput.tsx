@@ -14,17 +14,18 @@ interface PhoneInputProps {
 }
 
 const formatPhoneNumber = (value: string, countryCode: string): string => {
-  // Remove all non-digits
+  // Remove all non-digits to get clean number
   const digits = value.replace(/\D/g, '');
   
-  // Format based on country code
+  // Format based on country code (display only - actual value is digits only)
   if (countryCode === '+60') {
-    // Malaysia: XX XXXX XXXX (max 10 digits)
+    // Malaysia: XX XXXX XXXX (10 digits) or 1X XXXX XXXX (11 digits for mobile)
     if (digits.length <= 2) return digits;
     if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
-    return `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6, 10)}`;
+    if (digits.length <= 10) return `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6, 10)}`;
+    return `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6, 11)}`;
   } else if (countryCode === '+65') {
-    // Singapore: XXXX XXXX (max 8 digits)
+    // Singapore: XXXX XXXX (8 digits)
     if (digits.length <= 4) return digits;
     return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
   }
@@ -66,7 +67,7 @@ export const PhoneInput = ({
         </Select>
         <Input
           type="tel"
-          placeholder={countryCode === '+60' ? "11 1122 3455" : "1234 1234"}
+          placeholder={countryCode === '+60' ? "12 3456 7890" : "1234 5678"}
           value={phoneNumber}
           onChange={handlePhoneInput}
           required={required}
@@ -78,9 +79,9 @@ export const PhoneInput = ({
       {error && <p className="text-xs text-destructive">{error}</p>}
       <p className="text-xs text-muted-foreground">
         {countryCode === '+60' 
-          ? 'Malaysia: XX XXXX XXXX (10 digits)' 
+          ? 'Malaysia: 10-11 digits (e.g., 12 3456 7890)' 
           : countryCode === '+65'
-          ? 'Singapore: XXXX XXXX (8 digits)'
+          ? 'Singapore: 8 digits (e.g., 1234 5678)'
           : 'Enter phone number'}
       </p>
     </div>

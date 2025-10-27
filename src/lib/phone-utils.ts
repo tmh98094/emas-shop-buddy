@@ -8,14 +8,14 @@ export const digitsOnly = (input: string) => (input || "").replace(/\D+/g, "");
 
 // Normalize to E.164-like string with leading +countryCode
 export function normalizePhone(input: string, countryCode: CountryCode = "+60"): string {
-  const cc = countryCode.replace(/[^\\d+]/g, "");
+  const cc = countryCode.replace(/[^\d+]/g, ""); // Remove everything except digits and +
   const digits = digitsOnly(input);
 
   // If input already starts with country code (with or without +), strip duplicate
   const ccNoPlus = cc.replace("+", "");
 
   if (digits.startsWith(ccNoPlus)) {
-    return `+${digits}`.replace(`++`, "+");
+    return `+${digits}`.replace(/\+{2,}/g, "+"); // Remove duplicate + signs
   }
 
   // Handle local formats starting with 0 (e.g., 01112345678 => +60 1112345678)
@@ -25,7 +25,7 @@ export function normalizePhone(input: string, countryCode: CountryCode = "+60"):
 
 // Generate common variants to improve matching against previously stored values
 export function generatePhoneVariants(input: string, countryCode: CountryCode = "+60"): string[] {
-  const cc = countryCode.replace(/[^\\d+]/g, "");
+  const cc = countryCode.replace(/[^\d+]/g, ""); // Remove everything except digits and +
   const ccNoPlus = cc.replace("+", "");
   const digits = digitsOnly(input);
 
