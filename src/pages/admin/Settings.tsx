@@ -92,11 +92,12 @@ export default function Settings() {
       }
 
       const fileExt = qrCodeFile.name.split('.').pop();
-      const fileName = `touch-n-go-qr.${fileExt}`;
+      const uniqueSuffix = Date.now();
+      const fileName = `touch-n-go-qr-${uniqueSuffix}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(fileName, qrCodeFile, { upsert: true });
+        .upload(fileName, qrCodeFile, { upsert: true, cacheControl: '1' });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
@@ -196,12 +197,14 @@ export default function Settings() {
                         type="button"
                         variant="destructive"
                         size="icon"
+                        aria-label="Remove selected QR image"
                         className="absolute -top-2 -right-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setQrCodeFile(null);
-                          setQrPreview(qrCodeUrl);
-                        }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setQrCodeFile(null);
+                            setQrPreview("");
+                          }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
