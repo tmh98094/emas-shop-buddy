@@ -49,37 +49,24 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
+    // Create Supabase client with service role for database access
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if user is authenticated (optional for guest checkout)
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error('Missing Authorization header');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: { Authorization: authHeader }
+    let user = null;
+    
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser(token);
+        user = authUser;
+        console.log("Authenticated user:", user?.id);
+      } catch (error) {
+        console.log("Auth token invalid or expired, processing as guest");
       }
-    });
-
-    // Verify user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      console.error('Authentication failed:', authError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        }
-      );
+    } else {
+      console.log("No auth header, processing as guest checkout");
     }
 
     // Parse and validate request body
@@ -87,9 +74,9 @@ serve(async (req) => {
     const validatedData = validateRequest(body);
     const { orderId, orderNumber, amount, successUrl, cancelUrl } = validatedData;
 
-    console.log("Validating order ownership for user:", user.id, "order:", orderId);
+    console.log("Processing checkout for order:", orderNumber, "User:", user?.id || "guest");
 
-    // Verify order ownership
+    // Verify order exists
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, user_id, order_number, total_amount')
@@ -107,8 +94,8 @@ serve(async (req) => {
       );
     }
 
-    // Check ownership (user_id matches OR order is a guest order with matching phone)
-    if (order.user_id && order.user_id !== user.id) {
+    // For authenticated users, verify ownership
+    if (user && order.user_id && order.user_id !== user.id) {
       console.error('Order ownership verification failed');
       return new Response(
         JSON.stringify({ error: 'Unauthorized to access this order' }),
@@ -166,7 +153,7 @@ serve(async (req) => {
       metadata: {
         orderId,
         orderNumber,
-        userId: user.id,
+        userId: user?.id || 'guest',
       },
     });
 
