@@ -59,10 +59,8 @@ export const PhoneInput = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="+60">{isMobile ? "+60" : "🇲🇾 +60"}</SelectItem>
-            <SelectItem value="+65">{isMobile ? "+65" : "🇸🇬 +65"}</SelectItem>
-            <SelectItem value="+86">{isMobile ? "+86" : "🇨🇳 +86"}</SelectItem>
-            <SelectItem value="+1">{isMobile ? "+1" : "🇺🇸 +1"}</SelectItem>
+            <SelectItem value="+60">+60</SelectItem>
+            <SelectItem value="+65">+65</SelectItem>
           </SelectContent>
         </Select>
         <Input

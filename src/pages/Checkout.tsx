@@ -72,13 +72,14 @@ export default function Checkout() {
           let extractedPhone = "";
           
           if (profile.phone_number) {
-            const phoneMatch = profile.phone_number.match(/^(\+\d+)(.+)$/);
+            // Try to match country code patterns
+            const phoneMatch = profile.phone_number.match(/^(\+\d{2,3})(.+)$/);
             if (phoneMatch) {
               extractedCountryCode = phoneMatch[1];
-              extractedPhone = phoneMatch[2].replace(/\s/g, "");
+              extractedPhone = phoneMatch[2].replace(/\D/g, "");
             } else {
-              // Fallback if no country code found
-              extractedPhone = profile.phone_number.replace(/\s/g, "");
+              // Fallback: assume +60 and extract all digits
+              extractedPhone = profile.phone_number.replace(/\D/g, "");
             }
           }
           
@@ -285,7 +286,13 @@ export default function Checkout() {
         if (sessionError) throw sessionError;
 
         if (sessionData?.url) {
-          window.location.href = sessionData.url;
+          // Open Stripe checkout in new tab
+          window.open(sessionData.url, '_blank');
+          // Show message to user
+          toast({
+            title: "Payment Window Opened",
+            description: "Please complete your payment in the new window. Do not close this page.",
+          });
         } else {
           throw new Error("Failed to create Stripe session");
         }

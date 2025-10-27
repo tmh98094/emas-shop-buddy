@@ -59,18 +59,18 @@ export default function UserProfile() {
         console.log("Raw phone from DB:", phone);
         
         if (phone) {
-          // Match country code (e.g., +60, +65) and remaining digits
-          const phoneMatch = phone.match(/^\+(\d+)(\d+)$/);
+          // Try to match country code patterns (+60, +65, etc.)
+          const phoneMatch = phone.match(/^(\+\d{2,3})(.+)$/);
           if (phoneMatch) {
-            const extractedCountryCode = `+${phoneMatch[1].slice(0, 2)}`; // Get first 2 digits for country code
-            const remainingDigits = phoneMatch[1].slice(2) + phoneMatch[2]; // Rest of the number
+            const extractedCountryCode = phoneMatch[1];
+            const remainingDigits = phoneMatch[2].replace(/\D/g, "");
             
             console.log("Parsed phone:", { countryCode: extractedCountryCode, digits: remainingDigits });
             
             setCountryCode(extractedCountryCode);
             setPhoneNumber(remainingDigits);
           } else {
-            // Fallback parsing
+            // Fallback: assume +60 and extract all digits
             setCountryCode("+60");
             setPhoneNumber(phone.replace(/\D/g, ""));
           }

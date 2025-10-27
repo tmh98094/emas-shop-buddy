@@ -23,6 +23,8 @@ export default function OrderTracking() {
     setLoading(true);
 
     try {
+      // Normalize the phone number first
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       const variants = generatePhoneVariants(phoneNumber, countryCode);
       const orFilter = variants.map((v) => `phone_number.eq.${v}`).join(",");
 
@@ -80,9 +82,8 @@ export default function OrderTracking() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="+60">Malaysia (+60)</SelectItem>
-                        <SelectItem value="+65">Singapore (+65)</SelectItem>
-                        <SelectItem value="+62">Indonesia (+62)</SelectItem>
+                        <SelectItem value="+60">+60</SelectItem>
+                        <SelectItem value="+65">+65</SelectItem>
                       </SelectContent>
                     </Select>
                     <Input

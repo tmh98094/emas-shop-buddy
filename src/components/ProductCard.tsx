@@ -83,11 +83,6 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
           <p className="text-base md:text-xl font-bold text-primary">
             RM {formatPrice(totalPrice)}
           </p>
-          {product.stock > 0 && product.stock <= 5 && (
-            <Badge variant="secondary" className="text-[10px] md:text-xs px-2 py-0.5">
-              <T zh="库存" en="Stock" />: {product.stock}
-            </Badge>
-          )}
         </div>
       </CardContent>
         <CardFooter className="p-3 md:p-4 pt-0">

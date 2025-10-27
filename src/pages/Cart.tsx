@@ -123,8 +123,8 @@ export default function Cart() {
                 
                 return (
                   <Card key={item.id} className="p-4 md:p-6">
-                    <div className="flex gap-4">
-                      <div className="w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
+                    <div className="flex gap-4 md:gap-6">
+                      <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0">
                         <img
                           src={product.product_images?.[0]?.image_url || "/placeholder.svg"}
                           alt={product.name}
@@ -132,47 +132,50 @@ export default function Cart() {
                           loading="lazy"
                         />
                       </div>
-                      <div className="flex-1 flex flex-col">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-base md:text-lg">{product.name}</h3>
+                      <div className="flex-1 flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 pr-2">
+                            <h3 className="font-semibold text-base md:text-lg mb-1">{product.name}</h3>
                             <p className="text-xs md:text-sm text-muted-foreground">{product.gold_type} Gold</p>
                           </div>
                           <Button
                             variant="destructive"
                             size="icon"
-                            className="h-9 w-9 md:h-8 md:w-8 flex-shrink-0 ml-2"
+                            className="h-9 w-9 flex-shrink-0"
                             onClick={() => removeItem(item.id)}
                             aria-label="Remove item"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="flex items-end justify-between mt-auto">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between mt-auto pt-2 border-t">
+                          <div className="flex items-center gap-3">
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-9 w-9 md:h-8 md:w-8"
+                              className="h-9 w-9"
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               aria-label="Decrease quantity"
                             >
                               <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="w-10 text-center font-medium text-base">{item.quantity}</span>
+                            <span className="w-12 text-center font-medium text-base">{item.quantity}</span>
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-9 w-9 md:h-8 md:w-8"
+                              className="h-9 w-9"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               aria-label="Increase quantity"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          <p className="text-primary font-bold text-lg">
-                            RM {itemPrice.toFixed(2)}
-                          </p>
+                          <div className="text-right ml-4">
+                            <p className="text-xs text-muted-foreground mb-1">Subtotal</p>
+                            <p className="text-primary font-bold text-lg md:text-xl">
+                              RM {itemPrice.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>

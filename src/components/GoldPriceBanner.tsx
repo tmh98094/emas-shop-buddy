@@ -32,24 +32,26 @@ export const GoldPriceBanner = () => {
   });
 
   return (
-    <div className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-md">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-center gap-8">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            <span className="font-semibold"><T zh="今日金价" en="Today's Gold Price" /></span>
+    <div className="bg-primary text-primary-foreground shadow-md">
+      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-8 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm md:text-base font-semibold whitespace-nowrap">
+              <T zh="今日金价" en="Today's Gold Price" />
+            </span>
           </div>
-          <div className="flex gap-6">
-            <div className="text-center">
-              <span className="text-sm opacity-90"><T zh="916金" en="916 Gold" /></span>
-              <p className="text-lg font-bold">
+          <div className="flex gap-3 sm:gap-4 md:gap-6">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] sm:text-xs opacity-90 whitespace-nowrap"><T zh="916金" en="916 Gold" /></span>
+              <p className="text-xs sm:text-sm md:text-base font-bold whitespace-nowrap">
                 RM {goldPrices?.["916"]?.toFixed(2) || "0.00"}/g
               </p>
             </div>
-            <div className="h-10 w-px bg-primary-foreground/20" />
-            <div className="text-center">
-              <span className="text-sm opacity-90"><T zh="999金" en="999 Gold" /></span>
-              <p className="text-lg font-bold">
+            <div className="h-8 sm:h-10 w-px bg-primary-foreground/20" />
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] sm:text-xs opacity-90 whitespace-nowrap"><T zh="999金" en="999 Gold" /></span>
+              <p className="text-xs sm:text-sm md:text-base font-bold whitespace-nowrap">
                 RM {goldPrices?.["999"]?.toFixed(2) || "0.00"}/g
               </p>
             </div>

@@ -475,7 +475,7 @@ export default function Auth() {
                       id="full-name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="张三"
+                      placeholder="e.g., John Doe"
                       required
                     />
                   </div>
