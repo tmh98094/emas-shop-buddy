@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.1";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,22 @@ const logStep = (step: string, details?: any) => {
   console.log(`[VERIFY-OTP] ${step}${detailsStr}`);
 };
 
+// Input validation schema
+const requestSchema = z.object({
+  phoneNumber: z.string()
+    .min(8, "Phone number too short")
+    .max(20, "Phone number too long")
+    .regex(/^\+[1-9]\d{7,19}$/, "Phone number must be in international format (e.g., +60123456789)"),
+  otpCode: z.string()
+    .length(6, "OTP must be exactly 6 digits")
+    .regex(/^\d{6}$/, "OTP must contain only digits"),
+  fullName: z.string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters")
+    .trim()
+    .optional(),
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,11 +36,25 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { phoneNumber, otpCode, fullName } = await req.json();
+    const body = await req.json();
     
-    if (!phoneNumber || !otpCode) {
-      throw new Error("Phone number and OTP code are required");
+    // Validate input
+    const validation = requestSchema.safeParse(body);
+    if (!validation.success) {
+      logStep("Validation failed", validation.error.issues);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid input: " + validation.error.issues.map(i => i.message).join(", "),
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
+
+    const { phoneNumber, otpCode, fullName } = validation.data;
 
     logStep("Received verification request", { phoneNumber, otpCode: "******" });
 

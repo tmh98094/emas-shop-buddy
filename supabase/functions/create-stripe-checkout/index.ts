@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -14,34 +15,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Input validation schema
-interface CheckoutRequest {
-  orderId: string;
-  orderNumber: string;
-  amount: number;
-  successUrl: string;
-  cancelUrl: string;
-}
-
-function validateRequest(body: any): CheckoutRequest {
-  if (!body.orderId || typeof body.orderId !== 'string') {
-    throw new Error('Invalid orderId');
-  }
-  if (!body.orderNumber || typeof body.orderNumber !== 'string' || !/^JJ-\d{5}$/.test(body.orderNumber)) {
-    throw new Error('Invalid orderNumber format');
-  }
-  if (!body.amount || typeof body.amount !== 'number' || body.amount <= 0 || body.amount > 100000) {
-    throw new Error('Invalid amount');
-  }
-  if (!body.successUrl || typeof body.successUrl !== 'string' || !body.successUrl.startsWith('http')) {
-    throw new Error('Invalid successUrl');
-  }
-  if (!body.cancelUrl || typeof body.cancelUrl !== 'string' || !body.cancelUrl.startsWith('http')) {
-    throw new Error('Invalid cancelUrl');
-  }
-  
-  return body as CheckoutRequest;
-}
+// Input validation schema using Zod
+const checkoutRequestSchema = z.object({
+  orderId: z.string().uuid("Order ID must be a valid UUID"),
+  orderNumber: z.string().regex(/^JJ-\d{5}$/, "Order number must match format JJ-XXXXX"),
+  amount: z.number()
+    .positive("Amount must be positive")
+    .max(1000000, "Amount exceeds maximum limit")
+    .multipleOf(0.01, "Amount must have at most 2 decimal places"),
+  successUrl: z.string().url("Success URL must be a valid URL"),
+  cancelUrl: z.string().url("Cancel URL must be a valid URL"),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -71,8 +55,22 @@ serve(async (req) => {
 
     // Parse and validate request body
     const body = await req.json();
-    const validatedData = validateRequest(body);
-    const { orderId, orderNumber, amount, successUrl, cancelUrl } = validatedData;
+    
+    const validation = checkoutRequestSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Validation failed:", validation.error.issues);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid input: " + validation.error.issues.map(i => i.message).join(", "),
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
+    
+    const { orderId, orderNumber, amount, successUrl, cancelUrl } = validation.data;
 
     console.log("Processing checkout for order:", orderNumber, "User:", user?.id || "guest");
 
