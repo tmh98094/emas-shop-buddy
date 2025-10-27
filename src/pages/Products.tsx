@@ -250,10 +250,10 @@ export default function Products() {
 
           {/* Products Grid */}
           <div className="lg:col-span-3">
-            {isLoading ? (
-                <div className="grid grid-cols-2 gap-6 md:gap-8">
+          {isLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {[...Array(12)].map((_, i) => (
-                    <Skeleton key={i} className="h-40 md:h-60" />
+                    <Skeleton key={i} className="h-64 md:h-80" />
                   ))}
               </div>
             ) : products.length === 0 ? (
@@ -265,7 +265,7 @@ export default function Products() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-6 md:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {products.map((product) => (
                     <div key={product.id} className="transition-transform hover:scale-[1.02]">
                       <ProductCard

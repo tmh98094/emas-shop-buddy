@@ -287,12 +287,18 @@ export default function Checkout() {
 
         if (sessionData?.url) {
           // Open Stripe checkout in new tab
-          window.open(sessionData.url, '_blank');
-          // Show message to user
+          const stripeWindow = window.open(sessionData.url, '_blank');
+          
+          // Redirect to order confirmation immediately
           toast({
-            title: "Payment Window Opened",
-            description: "Please complete your payment in the new window. Do not close this page.",
+            title: "Payment Processing",
+            description: "Complete your payment in the new window. You'll be redirected to your order page.",
           });
+          
+          // Redirect to order confirmation page after a short delay
+          setTimeout(() => {
+            navigate(`/order-confirmation/${orderId}`);
+          }, 2000);
         } else {
           throw new Error("Failed to create Stripe session");
         }
@@ -567,11 +573,18 @@ export default function Checkout() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-11 touch-manipulation"
                   size="lg"
                   disabled={loading || priceChangeDetected}
                 >
-                  {loading ? <T zh="处理中..." en="Processing..." /> : <T zh="下订单" en="Place Order" />}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      <T zh="处理中..." en="Processing..." />
+                    </>
+                  ) : (
+                    <T zh="下订单" en="Place Order" />
+                  )}
                 </Button>
               </Card>
             </div>

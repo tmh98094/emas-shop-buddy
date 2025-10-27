@@ -23,7 +23,7 @@ export const Header = () => {
   ];
 
   return (
-    <header className="bg-navy border-b border-navy-700 sticky top-[72px] z-40 shadow-lg">
+    <header className="bg-navy border-b border-navy-700 sticky top-[44px] md:top-[52px] z-40 shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-primary hover:text-gold-light transition-colors">

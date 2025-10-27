@@ -52,7 +52,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             *,
             product_images(*)
           )
-        `);
+        `)
+        .order('created_at', { ascending: true });
 
       if (user) {
         query = query.eq("user_id", user.id);
