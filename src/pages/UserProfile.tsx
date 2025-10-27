@@ -17,6 +17,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [countryCode, setCountryCode] = useState("+60");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [profile, setProfile] = useState({
@@ -35,6 +36,7 @@ export default function UserProfile() {
   }, []);
 
   const loadProfile = async () => {
+    setInitialLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -50,14 +52,29 @@ export default function UserProfile() {
 
       if (error) throw error;
       if (data) {
+        console.log("Loaded profile data:", data);
+        
         // Parse existing phone number for country code and number
         const phone = data.phone_number || "";
-        const phoneMatch = phone.match(/^(\+\d+)(.+)$/);
-        const extractedCountryCode = phoneMatch?.[1] || "+60";
-        const extractedPhone = phoneMatch?.[2]?.replace(/\s/g, "") || "";
+        console.log("Raw phone from DB:", phone);
         
-        setCountryCode(extractedCountryCode);
-        setPhoneNumber(extractedPhone);
+        if (phone) {
+          // Match country code (e.g., +60, +65) and remaining digits
+          const phoneMatch = phone.match(/^\+(\d+)(\d+)$/);
+          if (phoneMatch) {
+            const extractedCountryCode = `+${phoneMatch[1].slice(0, 2)}`; // Get first 2 digits for country code
+            const remainingDigits = phoneMatch[1].slice(2) + phoneMatch[2]; // Rest of the number
+            
+            console.log("Parsed phone:", { countryCode: extractedCountryCode, digits: remainingDigits });
+            
+            setCountryCode(extractedCountryCode);
+            setPhoneNumber(remainingDigits);
+          } else {
+            // Fallback parsing
+            setCountryCode("+60");
+            setPhoneNumber(phone.replace(/\D/g, ""));
+          }
+        }
         
         setProfile({
           full_name: data.full_name || "",
@@ -67,6 +84,13 @@ export default function UserProfile() {
       }
     } catch (error: any) {
       console.error("Error loading profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile data",
+        variant: "destructive",
+      });
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -165,115 +189,130 @@ export default function UserProfile() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="profile">Profile Information</TabsTrigger>
-            <TabsTrigger value="password">Change Password</TabsTrigger>
-          </TabsList>
+        {initialLoading ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading your profile...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile">Profile Information</TabsTrigger>
+              <TabsTrigger value="password">Change Password</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  Update your personal information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleProfileUpdate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name</Label>
-                    <Input
-                      id="full_name"
-                      value={profile.full_name}
-                      onChange={(e) =>
-                        setProfile({ ...profile, full_name: e.target.value })
-                      }
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Information</CardTitle>
+                  <CardDescription>
+                    Update your personal information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleProfileUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Full Name</Label>
+                      <Input
+                        id="full_name"
+                        value={profile.full_name}
+                        onChange={(e) =>
+                          setProfile({ ...profile, full_name: e.target.value })
+                        }
+                        disabled={loading}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email (Optional)</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile.email}
+                        onChange={(e) =>
+                          setProfile({ ...profile, email: e.target.value })
+                        }
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <PhoneInput
+                      countryCode={countryCode}
+                      phoneNumber={phoneNumber}
+                      onCountryCodeChange={setCountryCode}
+                      onPhoneNumberChange={setPhoneNumber}
+                      label="Phone Number"
                       required
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) =>
-                        setProfile({ ...profile, email: e.target.value })
-                      }
-                    />
-                  </div>
+                    <Button type="submit" disabled={loading} className="w-full">
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Update Profile
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  <PhoneInput
-                    countryCode={countryCode}
-                    phoneNumber={phoneNumber}
-                    onCountryCodeChange={setCountryCode}
-                    onPhoneNumberChange={setPhoneNumber}
-                    label="Phone Number"
-                    required
-                  />
+            <TabsContent value="password">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Change Password</CardTitle>
+                  <CardDescription>
+                    Update your password to keep your account secure
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            newPassword: e.target.value,
+                          })
+                        }
+                        disabled={loading}
+                        required
+                      />
+                    </div>
 
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Update Profile
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        disabled={loading}
+                        required
+                      />
+                    </div>
 
-          <TabsContent value="password">
-            <Card>
-              <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handlePasswordChange} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Change Password
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    <Button type="submit" disabled={loading} className="w-full">
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Change Password
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
