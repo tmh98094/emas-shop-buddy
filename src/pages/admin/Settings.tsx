@@ -126,6 +126,7 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["settings", "touch_n_go_qr"] });
       toast({ title: "QR code updated" });
     },
     onError: (error: any) => {
