@@ -286,19 +286,8 @@ export default function Checkout() {
         if (sessionError) throw sessionError;
 
         if (sessionData?.url) {
-          // Open Stripe checkout in new tab
-          const stripeWindow = window.open(sessionData.url, '_blank');
-          
-          // Redirect to order confirmation immediately
-          toast({
-            title: "Payment Processing",
-            description: "Complete your payment in the new window. You'll be redirected to your order page.",
-          });
-          
-          // Redirect to order confirmation page after a short delay
-          setTimeout(() => {
-            navigate(`/order-confirmation/${orderId}`);
-          }, 2000);
+          // Redirect to Stripe checkout in same window (important for return URL to work)
+          window.location.href = sessionData.url;
         } else {
           throw new Error("Failed to create Stripe session");
         }

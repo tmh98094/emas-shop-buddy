@@ -1,23 +1,27 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, MapPin } from "lucide-react";
+import { CheckCircle, Package, MapPin, Clock } from "lucide-react";
 import { T } from "@/components/T";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const [user, setUser] = useState<any>(null);
+  const [verifying, setVerifying] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  const { data: order, isLoading, error } = useQuery({
+  const { data: order, isLoading, error, refetch } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +36,77 @@ export default function OrderConfirmation() {
       return data;
     },
     enabled: !!orderId,
+    refetchInterval: (query) => {
+      return query.state.data?.payment_status === "pending" ? 3000 : false;
+    },
   });
+
+  // Verify payment status when page loads
+  useEffect(() => {
+    const verifyPayment = async () => {
+      if (!orderId) return;
+      
+      setVerifying(true);
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "verify-stripe-payment",
+          { body: { orderId } }
+        );
+
+        if (error) {
+          console.error("Verification error:", error);
+        } else if (data?.status === "completed") {
+          toast({
+            title: "Payment Confirmed",
+            description: "Your payment has been successfully verified.",
+          });
+          // Refetch order to update UI
+          queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+        }
+      } catch (error) {
+        console.error("Failed to verify payment:", error);
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    // Verify immediately when page loads
+    const timer = setTimeout(verifyPayment, 1000);
+    return () => clearTimeout(timer);
+  }, [orderId, toast, queryClient]);
+
+  // Manual refresh button for payment status
+  const handleRefreshStatus = async () => {
+    setVerifying(true);
+    try {
+      const { data } = await supabase.functions.invoke(
+        "verify-stripe-payment",
+        { body: { orderId } }
+      );
+
+      if (data?.status === "completed") {
+        toast({
+          title: "Payment Confirmed!",
+          description: "Your payment has been successfully verified.",
+        });
+      } else {
+        toast({
+          title: "Payment Pending",
+          description: "Payment verification is still in progress. Please wait a moment.",
+        });
+      }
+      
+      await refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to verify payment status.",
+        variant: "destructive",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -128,8 +202,36 @@ export default function OrderConfirmation() {
                   <span className="text-muted-foreground"><T zh="付款方式" en="Payment Method" />:</span>
                   <span className="font-semibold capitalize text-right">{order.payment_method.replace("_", " ")}</span>
                 </div>
+                <div className="flex justify-between gap-4 items-center">
+                  <span className="text-muted-foreground"><T zh="付款状态" en="Payment Status" />:</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold capitalize ${
+                      order.payment_status === "completed" ? "text-green-600" : "text-orange-600"
+                    }`}>
+                      {order.payment_status}
+                    </span>
+                    {order.payment_status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRefreshStatus}
+                        disabled={verifying}
+                        className="h-7 text-xs"
+                      >
+                        {verifying ? (
+                          <>
+                            <Clock className="h-3 w-3 mr-1 animate-spin" />
+                            <T zh="检查中..." en="Checking..." />
+                          </>
+                        ) : (
+                          <T zh="刷新状态" en="Refresh Status" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground"><T zh="状态" en="Status" />:</span>
+                  <span className="text-muted-foreground"><T zh="订单状态" en="Order Status" />:</span>
                   <span className="font-semibold capitalize">{order.order_status}</span>
                 </div>
               </div>
