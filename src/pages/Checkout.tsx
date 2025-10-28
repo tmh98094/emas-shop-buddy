@@ -39,6 +39,7 @@ export default function Checkout() {
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [creditCardEnabled, setCreditCardEnabled] = useState(true);
   const [formData, setFormData] = useState({
     full_name: "",
     phone_number: "",
@@ -119,6 +120,27 @@ export default function Checkout() {
       return prices;
     },
   });
+
+  // Check if credit card payment is enabled
+  useEffect(() => {
+    const checkCreditCardSetting = async () => {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "enable_credit_card")
+        .single();
+      
+      if (!error && data) {
+        const enabled = (data.value as any).enabled ?? true;
+        setCreditCardEnabled(enabled);
+        // If credit card is disabled and it's currently selected, switch to touch_n_go
+        if (!enabled && paymentMethod === "stripe_fpx") {
+          setPaymentMethod("touch_n_go");
+        }
+      }
+    };
+    checkCreditCardSetting();
+  }, []);
 
   const getShippingCost = () => {
     if (shippingRegion === "singapore") return 40;
@@ -509,12 +531,14 @@ export default function Checkout() {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4"><T zh="付款方式" en="Payment Method" /></h2>
                 <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2 p-4 border rounded">
-                    <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
-                    <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
-                      <T zh="FPX (在线银行通过 Stripe)" en="FPX (Online Banking via Stripe)" />
-                    </Label>
-                  </div>
+                  {creditCardEnabled && (
+                    <div className="flex items-center space-x-2 p-4 border rounded">
+                      <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
+                      <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
+                        <T zh="FPX (在线银行通过 Stripe)" en="FPX (Online Banking via Stripe)" />
+                      </Label>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2 p-4 border rounded">
                     <RadioGroupItem value="touch_n_go" id="touch_n_go" />
                     <Label htmlFor="touch_n_go" className="flex-1 cursor-pointer">

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -17,6 +18,7 @@ export default function Settings() {
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
   const [qrPreview, setQrPreview] = useState("");
   const [initialized, setInitialized] = useState(false);
+  const [enableCreditCard, setEnableCreditCard] = useState(true);
 
   const { data: settings } = useQuery({
     queryKey: ["admin-settings"],
@@ -24,10 +26,10 @@ export default function Settings() {
       const { data, error } = await supabase
         .from("settings")
         .select("key, value")
-        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr"]);
+        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card"]);
       if (error) throw error;
       
-      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "" };
+      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true };
       data?.forEach(item => {
         if (item.key === "gold_price_916") {
           result.goldPrices["916"] = (item.value as any).price;
@@ -35,6 +37,8 @@ export default function Settings() {
           result.goldPrices["999"] = (item.value as any).price;
         } else if (item.key === "touch_n_go_qr") {
           result.qrCode = (item.value as any).qr_code_url || "";
+        } else if (item.key === "enable_credit_card") {
+          result.enableCreditCard = (item.value as any).enabled ?? true;
         }
       });
       return result;
@@ -48,6 +52,7 @@ export default function Settings() {
       setGoldPrice999(settings.goldPrices["999"].toString());
       setQrCodeUrl(settings.qrCode);
       setQrPreview(settings.qrCode);
+      setEnableCreditCard(settings.enableCreditCard);
       setInitialized(true);
     }
   }, [settings, initialized]);
@@ -145,6 +150,30 @@ export default function Settings() {
     }
   };
 
+  const updateCreditCardSetting = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("settings")
+        .upsert({
+          key: "enable_credit_card",
+          value: { enabled },
+          updated_by: user?.id ?? null,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast({ title: "Credit card payment setting updated" });
+    },
+    onError: (error: any) => {
+      console.error('updateCreditCardSetting error', error);
+      toast({ title: "Error updating setting", description: error.message, variant: "destructive" });
+    },
+  });
+
   return (
     <div>
       <h1 className="text-4xl font-bold text-primary mb-8">Settings</h1>
@@ -232,6 +261,30 @@ export default function Settings() {
               <Button onClick={() => updateQrCode.mutate()} disabled={updateQrCode.isPending || !qrCodeFile}>
                 {updateQrCode.isPending ? "Saving..." : "Save QR Code"}
               </Button>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-2xl font-bold mb-6">Payment Settings</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="credit-card-toggle">Enable Credit Card Payment (FPX via Stripe)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow customers to pay using credit card through Stripe FPX
+                </p>
+              </div>
+              <Switch
+                id="credit-card-toggle"
+                checked={enableCreditCard}
+                onCheckedChange={(checked) => {
+                  setEnableCreditCard(checked);
+                  updateCreditCardSetting.mutate(checked);
+                }}
+                disabled={updateCreditCardSetting.isPending}
+              />
             </div>
           </div>
         </Card>
