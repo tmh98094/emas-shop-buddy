@@ -2,7 +2,8 @@ import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, MessageCircle, Phone, Clock } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
+import { T } from "@/components/T";
 
 export default function Contact() {
 
@@ -13,9 +14,14 @@ export default function Contact() {
 
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
+          <h1 className="text-4xl font-bold mb-4">
+            <T zh="联系我们" en="Contact Us" />
+          </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            <T 
+              zh="有任何疑问吗？我们很乐意听取您的意见。给我们发送消息，我们会尽快回复。"
+              en="Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible."
+            />
           </p>
         </div>
 
@@ -25,7 +31,7 @@ export default function Contact() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Phone className="h-5 w-5" />
-                Phone
+                <T zh="电话" en="Phone" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -52,10 +58,10 @@ export default function Contact() {
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                Chat with us
+                <T zh="与我们聊天" en="Chat with us" />
               </a>
               <p className="text-sm text-muted-foreground mt-2">
-                Quick response via WhatsApp
+                <T zh="通过WhatsApp快速响应" en="Quick response via WhatsApp" />
               </p>
             </CardContent>
           </Card>
@@ -64,7 +70,7 @@ export default function Contact() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Email
+                <T zh="电子邮件" en="Email" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -75,7 +81,7 @@ export default function Contact() {
                 info@jjemas.com
               </a>
               <p className="text-sm text-muted-foreground mt-2">
-                We'll respond within 24 hours
+                <T zh="我们将在24小时内回复" en="We'll respond within 24 hours" />
               </p>
             </CardContent>
           </Card>

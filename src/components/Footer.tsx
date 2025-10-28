@@ -130,10 +130,10 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4 text-primary"><T zh="支付方式" en="Payment Methods" /></h4>
             <div className="flex flex-wrap gap-2">
               <div className="bg-white px-3 py-1 rounded text-xs font-medium border border-border text-foreground">
-                Stripe
+                FPX
               </div>
               <div className="bg-white px-3 py-1 rounded text-xs font-medium border border-border text-foreground">
-                Touch N Go
+                Touch 'n Go
               </div>
             </div>
           </div>

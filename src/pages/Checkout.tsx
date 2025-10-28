@@ -244,6 +244,10 @@ export default function Checkout() {
       const sequence = (seq as number | null) ?? null;
       const orderNumber = sequence ? `JJ-${String(sequence).padStart(5, '0')}` : `JJ-${Date.now()}`;
 
+      // Ensure phone number is clean digits only before normalizing
+      const cleanPhoneNumber = formData.phone_number.replace(/\D/g, '');
+      const normalizedPhone = normalizePhone(cleanPhoneNumber, countryCodePhone);
+
       const { error: orderError } = await supabase
         .from("orders")
         .insert([{
@@ -251,7 +255,7 @@ export default function Checkout() {
           ...(user?.id && { user_id: user.id }),
           order_number: orderNumber,
           full_name: formData.full_name,
-          phone_number: normalizePhone(formData.phone_number, countryCodePhone),
+          phone_number: normalizedPhone,
           email: formData.email || null,
           notes: formData.notes || null,
           shipping_address_line1: formData.address_line1,
