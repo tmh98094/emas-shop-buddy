@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Rich text editor sizing */
+.quill-editor .ql-container {
+  min-height: 320px;
+}
+.quill-editor .ql-editor {
+  min-height: 260px;
+}
+
 @layer base {
   :root {
     /* Luxury Gold Jewelry Theme for JJ Emas */

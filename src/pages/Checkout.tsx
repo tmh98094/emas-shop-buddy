@@ -256,7 +256,7 @@ export default function Checkout() {
           shipping_postcode: formData.postcode,
           shipping_country: formData.country,
           total_amount: totalAmount,
-          payment_method: paymentMethod,
+          payment_method: paymentMethod === "stripe_card" || paymentMethod === "stripe_fpx" ? "stripe_fpx" : "touch_n_go",
           payment_status: "pending",
           order_status: "pending",
         }]);

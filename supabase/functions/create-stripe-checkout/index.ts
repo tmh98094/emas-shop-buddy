@@ -25,6 +25,7 @@ const checkoutRequestSchema = z.object({
     .multipleOf(0.01, "Amount must have at most 2 decimal places"),
   successUrl: z.string().url("Success URL must be a valid URL"),
   cancelUrl: z.string().url("Cancel URL must be a valid URL"),
+  paymentMethod: z.enum(["fpx", "card"]).optional(),
 });
 
 serve(async (req) => {
