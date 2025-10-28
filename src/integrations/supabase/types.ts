@@ -392,6 +392,63 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_orders: {
+        Row: {
+          balance_due: number
+          created_at: string
+          deposit_paid: number
+          final_payment_at: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          product_id: string
+          ready_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          balance_due: number
+          created_at?: string
+          deposit_paid: number
+          final_payment_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          product_id: string
+          ready_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          balance_due?: number
+          created_at?: string
+          deposit_paid?: number
+          final_payment_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          product_id?: string
+          ready_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_colors: {
         Row: {
           created_at: string
@@ -511,9 +568,11 @@ export type Database = {
           is_best_seller: boolean | null
           is_featured: boolean | null
           is_new_arrival: boolean | null
+          is_preorder: boolean | null
           labour_fee: number
           low_stock_threshold: number | null
           name: string
+          preorder_deposit: number | null
           slug: string
           stock: number
           sub_category_id: string | null
@@ -530,9 +589,11 @@ export type Database = {
           is_best_seller?: boolean | null
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
+          is_preorder?: boolean | null
           labour_fee?: number
           low_stock_threshold?: number | null
           name: string
+          preorder_deposit?: number | null
           slug: string
           stock?: number
           sub_category_id?: string | null
@@ -549,9 +610,11 @@ export type Database = {
           is_best_seller?: boolean | null
           is_featured?: boolean | null
           is_new_arrival?: boolean | null
+          is_preorder?: boolean | null
           labour_fee?: number
           low_stock_threshold?: number | null
           name?: string
+          preorder_deposit?: number | null
           slug?: string
           stock?: number
           sub_category_id?: string | null

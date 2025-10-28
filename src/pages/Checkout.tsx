@@ -78,6 +78,11 @@ export default function Checkout() {
             if (phoneMatch) {
               extractedCountryCode = phoneMatch[1];
               extractedPhone = phoneMatch[2].replace(/\D/g, "");
+            } else if (profile.phone_number.startsWith("+")) {
+              // Has + but couldn't parse normally, try to extract
+              const plusIndex = profile.phone_number.indexOf("+");
+              extractedCountryCode = profile.phone_number.substring(plusIndex, plusIndex + 3);
+              extractedPhone = profile.phone_number.substring(plusIndex + 3).replace(/\D/g, "");
             } else {
               // Fallback: assume +60 and extract all digits
               extractedPhone = profile.phone_number.replace(/\D/g, "");

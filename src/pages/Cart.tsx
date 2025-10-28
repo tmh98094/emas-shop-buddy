@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/price-utils";
+import { T } from "@/components/T";
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, refreshPrices, loading } = useCart();
@@ -83,20 +84,45 @@ export default function Cart() {
     );
   }
 
+  // Check for out of stock items
+  const outOfStockItems = items.filter(item => {
+    const product = item.product;
+    return !product || (product.stock ?? 0) < item.quantity;
+  });
+
+  const hasOutOfStock = outOfStockItems.length > 0;
+
   return (
     <div className="min-h-screen">
       <GoldPriceBanner />
       <Header />
       
       <main className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-primary mb-8">Shopping Cart</h1>
+        <h1 className="text-4xl font-bold text-primary mb-8"><T zh="购物车" en="Shopping Cart" /></h1>
+
+        {hasOutOfStock && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertTitle><T zh="商品缺货" en="Items Out of Stock" /></AlertTitle>
+            <AlertDescription>
+              <T zh="以下商品已缺货或库存不足：" en="The following items are out of stock or have insufficient quantity:" />
+              <ul className="list-disc ml-6 mt-2">
+                {outOfStockItems.map(item => (
+                  <li key={item.id}>
+                    {item.product.name} - <T zh="需要" en="Need" /> {item.quantity}, <T zh="可用" en="Available" /> {item.product.stock ?? 0}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {priceChangeDetected && (
           <Alert variant="default" className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
             <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <AlertTitle className="text-amber-900 dark:text-amber-100">Gold Price Changed</AlertTitle>
+            <AlertTitle className="text-amber-900 dark:text-amber-100"><T zh="黄金价格变动" en="Gold Price Changed" /></AlertTitle>
             <AlertDescription className="text-amber-800 dark:text-amber-200">
-              The gold price has changed since you added items to your cart. Click "Refresh Prices" to update your cart with current prices.
+              <T zh="自您将商品添加到购物车以来，黄金价格已发生变化。点击『刷新价格』以更新当前价格。" en="The gold price has changed since you added items to your cart. Click 'Refresh Prices' to update your cart with current prices." />
               <Button 
                 onClick={refreshPrices} 
                 variant="outline" 
@@ -104,7 +130,7 @@ export default function Cart() {
                 className="ml-4 border-amber-600 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Prices
+                <T zh="刷新价格" en="Refresh Prices" />
               </Button>
             </AlertDescription>
           </Alert>
@@ -112,8 +138,8 @@ export default function Cart() {
 
         {items.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">Your cart is empty</p>
-            <Button onClick={() => navigate("/products")}>Continue Shopping</Button>
+            <p className="text-muted-foreground mb-4"><T zh="您的购物车是空的" en="Your cart is empty" /></p>
+            <Button onClick={() => navigate("/products")}><T zh="继续购物" en="Continue Shopping" /></Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -172,10 +198,13 @@ export default function Cart() {
                             </Button>
                           </div>
                           <div className="text-right ml-4">
-                            <p className="text-xs text-muted-foreground mb-1">Subtotal</p>
+                            <p className="text-xs text-muted-foreground mb-1"><T zh="小计" en="Subtotal" /></p>
                             <p className="text-primary font-bold text-lg md:text-xl">
                               RM {formatPrice(itemPrice)}
                             </p>
+                            {item.product && (item.product.stock ?? 0) < item.quantity && (
+                              <p className="text-xs text-destructive mt-1"><T zh="库存不足" en="Out of Stock" /></p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -187,18 +216,18 @@ export default function Cart() {
 
             <div>
               <Card className="p-6 sticky top-4 md:top-32">
-                <h2 className="text-xl md:text-2xl font-bold mb-4">Order Summary</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4"><T zh="订单摘要" en="Order Summary" /></h2>
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-base">
-                    <span>Subtotal</span>
+                    <span><T zh="小计" en="Subtotal" /></span>
                     <span className="font-semibold">RM {formatPrice(totalAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Shipping</span>
-                    <span className="text-muted-foreground">Calculated at checkout</span>
+                    <span><T zh="运费" en="Shipping" /></span>
+                    <span className="text-muted-foreground"><T zh="结账时计算" en="Calculated at checkout" /></span>
                   </div>
                   <div className="border-t pt-3 flex justify-between font-bold text-lg md:text-xl">
-                    <span>Total</span>
+                    <span><T zh="总计" en="Total" /></span>
                     <span className="text-primary">RM {formatPrice(totalAmount)}</span>
                   </div>
                 </div>
@@ -206,10 +235,16 @@ export default function Cart() {
                   className="w-full h-12 text-base"
                   size="lg"
                   onClick={() => navigate("/checkout")}
+                  disabled={hasOutOfStock}
                   aria-label="Proceed to checkout"
                 >
-                  Proceed to Checkout
+                  <T zh="前往结账" en="Proceed to Checkout" />
                 </Button>
+                {hasOutOfStock && (
+                  <p className="text-xs text-destructive text-center mt-2">
+                    <T zh="请移除缺货商品后再继续" en="Please remove out of stock items to continue" />
+                  </p>
+                )}
               </Card>
             </div>
           </div>

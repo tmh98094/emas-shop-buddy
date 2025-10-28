@@ -12,6 +12,7 @@ import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Loader2 } from "lucide-react";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
+import { T } from "@/components/T";
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -68,6 +69,10 @@ export default function UserProfile() {
             if (match) {
               extractedCode = match[1];
               digits = match[2].replace(/\D/g, "");
+            } else if (phone.length >= 4) {
+              // Fallback: take first 3 chars as country code if starts with +
+              extractedCode = phone.substring(0, 3);
+              digits = phone.substring(3).replace(/\D/g, "");
             } else {
               digits = phone.slice(1).replace(/\D/g, "");
             }
@@ -120,8 +125,8 @@ export default function UserProfile() {
       if (error) throw error;
 
       toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+        title: "个人资料已更新",
+        description: "您的个人资料已成功更新。",
       });
     } catch (error: any) {
       toast({
@@ -139,8 +144,8 @@ export default function UserProfile() {
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-        title: "Error",
-        description: "New passwords do not match",
+        title: "错误",
+        description: "新密码不匹配",
         variant: "destructive",
       });
       return;
@@ -148,8 +153,8 @@ export default function UserProfile() {
 
     if (passwordData.newPassword.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: "错误",
+        description: "密码必须至少6个字符",
         variant: "destructive",
       });
       return;
@@ -165,8 +170,8 @@ export default function UserProfile() {
       if (error) throw error;
 
       toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully.",
+        title: "密码已更新",
+        description: "您的密码已成功更改。",
       });
 
       setPasswordData({
@@ -191,36 +196,36 @@ export default function UserProfile() {
       <Header />
       
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+        <h1 className="text-3xl font-bold mb-6"><T zh="我的个人资料" en="My Profile" /></h1>
 
         {initialLoading ? (
           <Card>
             <CardContent className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading your profile...</p>
+                <p className="text-muted-foreground"><T zh="正在加载您的个人资料..." en="Loading your profile..." /></p>
               </div>
             </CardContent>
           </Card>
         ) : (
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Profile Information</TabsTrigger>
-              <TabsTrigger value="password">Change Password</TabsTrigger>
+              <TabsTrigger value="profile"><T zh="个人资料信息" en="Profile Information" /></TabsTrigger>
+              <TabsTrigger value="password"><T zh="更改密码" en="Change Password" /></TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile Information</CardTitle>
+                  <CardTitle><T zh="个人资料信息" en="Profile Information" /></CardTitle>
                   <CardDescription>
-                    Update your personal information
+                    <T zh="更新您的个人信息" en="Update your personal information" />
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleProfileUpdate} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name</Label>
+                      <Label htmlFor="full_name"><T zh="全名" en="Full Name" /></Label>
                       <Input
                         id="full_name"
                         value={profile.full_name}
@@ -233,7 +238,7 @@ export default function UserProfile() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email (Optional)</Label>
+                      <Label htmlFor="email"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
                       <Input
                         id="email"
                         type="email"
@@ -256,7 +261,7 @@ export default function UserProfile() {
 
                     <Button type="submit" disabled={loading} className="w-full">
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Update Profile
+                      <T zh="更新个人资料" en="Update Profile" />
                     </Button>
                   </form>
                 </CardContent>
@@ -266,15 +271,15 @@ export default function UserProfile() {
             <TabsContent value="password">
               <Card>
                 <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
+                  <CardTitle><T zh="更改密码" en="Change Password" /></CardTitle>
                   <CardDescription>
-                    Update your password to keep your account secure
+                    <T zh="更新您的密码以保护您的帐户安全" en="Update your password to keep your account secure" />
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handlePasswordChange} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
+                      <Label htmlFor="newPassword"><T zh="新密码" en="New Password" /></Label>
                       <Input
                         id="newPassword"
                         type="password"
@@ -291,7 +296,7 @@ export default function UserProfile() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Label htmlFor="confirmPassword"><T zh="确认新密码" en="Confirm New Password" /></Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -309,7 +314,7 @@ export default function UserProfile() {
 
                     <Button type="submit" disabled={loading} className="w-full">
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Change Password
+                      <T zh="更改密码" en="Change Password" />
                     </Button>
                   </form>
                 </CardContent>
