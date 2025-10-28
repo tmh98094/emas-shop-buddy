@@ -19,6 +19,9 @@ export default function Settings() {
   const [qrPreview, setQrPreview] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [enableCreditCard, setEnableCreditCard] = useState(true);
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("We'll be back soon.");
+  const [maintenanceWhatsapp, setMaintenanceWhatsapp] = useState("+60122379178");
 
   const { data: settings } = useQuery({
     queryKey: ["admin-settings"],
@@ -26,10 +29,10 @@ export default function Settings() {
       const { data, error } = await supabase
         .from("settings")
         .select("key, value")
-        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card"]);
+        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card", "site_maintenance"]);
       if (error) throw error;
       
-      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true };
+      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true, maintenance: { enabled: false, message: "We'll be back soon.", whatsapp: "+60122379178" } };
       data?.forEach(item => {
         if (item.key === "gold_price_916") {
           result.goldPrices["916"] = (item.value as any).price;
@@ -39,6 +42,12 @@ export default function Settings() {
           result.qrCode = (item.value as any).qr_code_url || "";
         } else if (item.key === "enable_credit_card") {
           result.enableCreditCard = (item.value as any).enabled ?? true;
+        } else if (item.key === "site_maintenance") {
+          result.maintenance = {
+            enabled: (item.value as any).enabled ?? false,
+            message: (item.value as any).message || "We'll be back soon.",
+            whatsapp: (item.value as any).whatsapp || "+60122379178",
+          };
         }
       });
       return result;
@@ -53,6 +62,9 @@ export default function Settings() {
       setQrCodeUrl(settings.qrCode);
       setQrPreview(settings.qrCode);
       setEnableCreditCard(settings.enableCreditCard);
+      setMaintenanceEnabled(settings.maintenance.enabled);
+      setMaintenanceMessage(settings.maintenance.message);
+      setMaintenanceWhatsapp(settings.maintenance.whatsapp);
       setInitialized(true);
     }
   }, [settings, initialized]);
@@ -271,9 +283,9 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="credit-card-toggle">Enable Credit Card Payment (FPX via Stripe)</Label>
+         <Label htmlFor="credit-card-toggle">Enable Credit Card Payment (Stripe)</Label>
                 <p className="text-sm text-muted-foreground">
-                  Allow customers to pay using credit card through Stripe FPX
+                  Toggle to allow credit card payments via Stripe. FPX and Touch 'n Go are always available.
                 </p>
               </div>
               <Switch
@@ -290,6 +302,70 @@ export default function Settings() {
         </Card>
 
       </div>
+
+      <Card className="p-6 mt-6">
+        <h2 className="text-2xl font-bold mb-6">Emergency Maintenance</h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="maintenance-toggle">Enable Maintenance Mode</Label>
+              <p className="text-sm text-muted-foreground">
+                Temporarily disable the storefront and show a maintenance screen to customers. Admin panel remains accessible.
+              </p>
+            </div>
+            <Switch
+              id="maintenance-toggle"
+              checked={maintenanceEnabled}
+              onCheckedChange={async (checked) => {
+                setMaintenanceEnabled(checked);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  const { error } = await supabase.from('settings').upsert({
+                    key: 'site_maintenance',
+                    value: { enabled: checked, message: maintenanceMessage, whatsapp: maintenanceWhatsapp },
+                    updated_by: user?.id ?? null,
+                  });
+                  if (error) throw error;
+                  queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
+                  toast({ title: checked ? 'Maintenance Enabled' : 'Maintenance Disabled' });
+                } catch (e: any) {
+                  toast({ title: 'Error updating maintenance', description: e.message, variant: 'destructive' });
+                }
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="maintenance-message">Message</Label>
+              <Input id="maintenance-message" value={maintenanceMessage} onChange={(e) => setMaintenanceMessage(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="maintenance-whatsapp">WhatsApp Number</Label>
+              <Input id="maintenance-whatsapp" value={maintenanceWhatsapp} onChange={(e) => setMaintenanceWhatsapp(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={async () => {
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  const { error } = await supabase.from('settings').upsert({
+                    key: 'site_maintenance',
+                    value: { enabled: maintenanceEnabled, message: maintenanceMessage, whatsapp: maintenanceWhatsapp },
+                    updated_by: user?.id ?? null,
+                  });
+                  if (error) throw error;
+                  toast({ title: 'Maintenance settings saved' });
+                } catch (e: any) {
+                  toast({ title: 'Error saving', description: e.message, variant: 'destructive' });
+                }
+              }}
+            >
+              Save Maintenance Settings
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

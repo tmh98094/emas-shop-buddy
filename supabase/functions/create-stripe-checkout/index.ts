@@ -70,9 +70,9 @@ serve(async (req) => {
       );
     }
     
-    const { orderId, orderNumber, amount, successUrl, cancelUrl } = validation.data;
+    const { orderId, orderNumber, amount, successUrl, cancelUrl, paymentMethod } = validation.data;
 
-    console.log("Processing checkout for order:", orderNumber, "User:", user?.id || "guest");
+    console.log("Processing checkout for order:", orderNumber, "User:", user?.id || "guest", "Method:", paymentMethod || 'fpx');
 
     // Verify order exists
     const { data: order, error: orderError } = await supabase
@@ -130,8 +130,10 @@ serve(async (req) => {
 
     console.log("Creating Stripe checkout session for order:", orderNumber);
 
+    const method = paymentMethod === 'card' ? 'card' : 'fpx';
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["fpx"],
+      payment_method_types: [method],
       line_items: [
         {
           price_data: {
@@ -140,7 +142,7 @@ serve(async (req) => {
               name: `Order ${orderNumber}`,
               description: "Gold jewelry purchase",
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
@@ -152,6 +154,7 @@ serve(async (req) => {
         orderId,
         orderNumber,
         userId: user?.id || 'guest',
+        method,
       },
     });
 

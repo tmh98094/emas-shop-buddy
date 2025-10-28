@@ -37,7 +37,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "touch_n_go">("stripe_fpx");
+  const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "stripe_card" | "touch_n_go">("stripe_fpx");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [creditCardEnabled, setCreditCardEnabled] = useState(true);
   const [formData, setFormData] = useState({
@@ -65,7 +65,7 @@ export default function Checkout() {
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
         
         if (profile) {
           // Parse phone number properly - extract country code and format number
@@ -133,9 +133,9 @@ export default function Checkout() {
       if (!error && data) {
         const enabled = (data.value as any).enabled ?? true;
         setCreditCardEnabled(enabled);
-        // If credit card is disabled and it's currently selected, switch to touch_n_go
-        if (!enabled && paymentMethod === "stripe_fpx") {
-          setPaymentMethod("touch_n_go");
+        // If credit card is disabled and it's currently selected, switch to FPX
+        if (!enabled && paymentMethod === "stripe_card") {
+          setPaymentMethod("stripe_fpx");
         }
       }
     };
@@ -212,6 +212,23 @@ export default function Checkout() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Validate stock before creating order
+      const productIds = items.map(i => i.product_id);
+      const { data: latestProducts, error: latestError } = await supabase
+        .from('products')
+        .select('id, name, stock')
+        .in('id', productIds);
+      if (latestError) throw latestError;
+      const outOfStock = items.filter(i => {
+        const p = latestProducts?.find(lp => lp.id === i.product_id);
+        return !p || (p.stock ?? 0) < i.quantity;
+      });
+      if (outOfStock.length > 0) {
+        const names = outOfStock.map(i => i.product.name).join(', ');
+        throw new Error(`Some items are out of stock or insufficient quantity: ${names}. Please adjust your cart.`);
+      }
+
       const totalAmount = calculateTotal();
 
       const orderId = crypto.randomUUID();
@@ -301,6 +318,7 @@ export default function Checkout() {
               amount: totalAmount,
               successUrl: `${window.location.origin}/order-confirmation/${orderId}`,
               cancelUrl: `${window.location.origin}/checkout`,
+              paymentMethod: paymentMethod === 'stripe_card' ? 'card' : 'fpx',
             },
           }
         );
@@ -531,15 +549,21 @@ export default function Checkout() {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4"><T zh="付款方式" en="Payment Method" /></h2>
                 <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                  <div className="flex items-center space-x-2 p-4 border rounded">
+                    <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
+                    <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
+                      <T zh="FPX（通过 Stripe）" en="FPX (via Stripe)" />
+                    </Label>
+                  </div>
                   {creditCardEnabled && (
-                    <div className="flex items-center space-x-2 p-4 border rounded">
-                      <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
-                      <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
-                        <T zh="FPX (在线银行通过 Stripe)" en="FPX (Online Banking via Stripe)" />
+                    <div className="flex items-center space-x-2 p-4 border rounded mt-2">
+                      <RadioGroupItem value="stripe_card" id="stripe_card" />
+                      <Label htmlFor="stripe_card" className="flex-1 cursor-pointer">
+                        <T zh="信用卡（通过 Stripe）" en="Credit Card (via Stripe)" />
                       </Label>
                     </div>
                   )}
-                  <div className="flex items-center space-x-2 p-4 border rounded">
+                  <div className="flex items-center space-x-2 p-4 border rounded mt-2">
                     <RadioGroupItem value="touch_n_go" id="touch_n_go" />
                     <Label htmlFor="touch_n_go" className="flex-1 cursor-pointer">
                       Touch 'n Go e-Wallet

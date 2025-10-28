@@ -190,7 +190,7 @@ export default function ContentManagement() {
                         ["clean"],
                       ],
                     }}
-                    className="bg-background"
+                    className="bg-background quill-editor"
                   />
                 </div>
 

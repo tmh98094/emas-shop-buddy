@@ -45,6 +45,7 @@ import AdminAnalytics from "./pages/admin/Analytics";
 import AdminContent from "./pages/admin/Content";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
+import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -102,6 +103,7 @@ const App = () => {
     
     return (
       <>
+        <MaintenanceOverlay isAdminRoute={isAdminRoute} />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />

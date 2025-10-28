@@ -22,10 +22,10 @@ const requestSchema = z.object({
     .length(6, "OTP must be exactly 6 digits")
     .regex(/^\d{6}$/, "OTP must contain only digits"),
   fullName: z.string()
-    .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters")
     .trim()
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 });
 
 serve(async (req) => {

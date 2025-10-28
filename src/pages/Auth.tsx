@@ -165,7 +165,7 @@ export default function Auth() {
         body: {
           phoneNumber: normalizedPhone,
           otpCode: otp,
-          fullName: fullName || "", // Use fullName if provided in signup flow
+          ...(fullName ? { fullName } : {}),
         },
       });
 
