@@ -89,13 +89,13 @@ export default function Orders() {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold text-primary mb-8">Orders</h1>
+      <h1 className="text-4xl font-bold text-primary mb-8">订单管理</h1>
 
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by order number, customer name, or phone..."
+            placeholder="按订单号、客户姓名或手机号搜索..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
@@ -104,17 +104,18 @@ export default function Orders() {
       </div>
 
       <Card>
-        <Table>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>订单号</TableHead>
+              <TableHead>客户</TableHead>
+              <TableHead>手机号</TableHead>
+              <TableHead>总计</TableHead>
+              <TableHead>付款方式</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>日期</TableHead>
+              <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -136,12 +137,13 @@ export default function Orders() {
                 <TableCell>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/orders/${order.id}`}>View</Link>
+                      <Link to={`/admin/orders/${order.id}`}>查看</Link>
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleExportInvoice(order)}
+                      title="导出发票"
                     >
                       <FileText className="h-4 w-4" />
                     </Button>
@@ -151,6 +153,7 @@ export default function Orders() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
     </div>
   );

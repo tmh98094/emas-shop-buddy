@@ -130,7 +130,7 @@ export default function PreOrders() {
   const getStatusBadge = (status: string) => {
     const styles = {
       pending: "bg-amber-100 text-amber-800 border-amber-300",
-      ready_for_payment: "bg-blue-100 text-blue-800 border-blue-300",
+      ready_for_payment: "bg-amber-100 text-amber-800 border-amber-300",
       completed: "bg-green-100 text-green-800 border-green-300",
       cancelled: "bg-red-100 text-red-800 border-red-300",
     };
@@ -152,7 +152,7 @@ export default function PreOrders() {
   const getStatusIcon = (status: string) => {
     const icons = {
       pending: <Clock className="h-5 w-5 text-amber-500" />,
-      ready_for_payment: <Package className="h-5 w-5 text-blue-500" />,
+      ready_for_payment: <Package className="h-5 w-5 text-amber-500" />,
       completed: <CheckCircle2 className="h-5 w-5 text-green-500" />,
       cancelled: <XCircle className="h-5 w-5 text-red-500" />,
     };

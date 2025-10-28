@@ -475,7 +475,7 @@ export default function Auth() {
                       id="full-name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g., John Doe"
+                      placeholder="例如：张三"
                       required
                     />
                   </div>
@@ -495,8 +495,8 @@ export default function Auth() {
                       id="email-signup"
                       type="email"
                       value={email}
+                      placeholder="例如：example@email.com"
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@email.com"
                     />
                   </div>
                   <div>

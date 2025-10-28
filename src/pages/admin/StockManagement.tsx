@@ -45,6 +45,12 @@ export default function StockManagement() {
 
   const updateStockMutation = useMutation({
     mutationFn: async () => {
+      // Validate all stock values are non-negative
+      const invalidStocks = Object.entries(stockUpdates).filter(([_, stock]) => stock < 0);
+      if (invalidStocks.length > 0) {
+        throw new Error("库存数量不能为负数");
+      }
+      
       const updates = Object.entries(stockUpdates).map(([id, stock]) => 
         supabase.from("products").update({ stock }).eq("id", id)
       );
@@ -54,14 +60,14 @@ export default function StockManagement() {
       queryClient.invalidateQueries({ queryKey: ["admin-stock-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setStockUpdates({});
-      toast({ title: "Stock updated successfully" });
+      toast({ title: "库存更新成功" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "错误", description: error.message, variant: "destructive" });
     },
   });
 
-  if (categoriesLoading || productsLoading) return <div>Loading...</div>;
+  if (categoriesLoading || productsLoading) return <div>加载中...</div>;
 
   // Group products by category
   const productsByCategory = categories?.reduce((acc, category) => {
@@ -76,7 +82,7 @@ export default function StockManagement() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl md:text-4xl font-bold text-primary mb-8">Stock Management</h1>
+      <h1 className="text-2xl md:text-4xl font-bold text-primary mb-8">库存管理</h1>
 
       <Accordion type="multiple" className="space-y-4">
         {categories?.map((category) => {
@@ -93,16 +99,16 @@ export default function StockManagement() {
                     </div>
                     <div className="flex gap-2">
                       {lowStockCount > 0 && (
-                        <Badge variant="destructive">{lowStockCount} low stock</Badge>
+                        <Badge variant="destructive">{lowStockCount} 低库存</Badge>
                       )}
-                      <Badge variant="secondary">{categoryProducts.length} total</Badge>
+                      <Badge variant="secondary">{categoryProducts.length} 总计</Badge>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="px-6 pb-4">
                     {categoryProducts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4">No products in this category</p>
+                      <p className="text-sm text-muted-foreground py-4">此分类暂无产品</p>
                     ) : (
                       <div className="space-y-4">
                         {categoryProducts.map((product) => (
@@ -110,21 +116,25 @@ export default function StockManagement() {
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate">{product.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                Current Stock: {product.stock} | Gold Type: {product.gold_type}
+                                当前库存：{product.stock} | 黄金类型：{product.gold_type}
                               </p>
                               {product.stock <= (product.low_stock_threshold || 10) && (
-                                <Badge variant="destructive" className="mt-1">Low Stock Alert</Badge>
+                                <Badge variant="destructive" className="mt-1">低库存提醒</Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                               <Input
                                 type="number"
-                                placeholder="New stock"
+                                placeholder="新库存数量"
+                                min={0}
                                 value={stockUpdates[product.id] ?? ""}
-                                onChange={(e) => setStockUpdates({
-                                  ...stockUpdates,
-                                  [product.id]: parseInt(e.target.value) || 0
-                                })}
+                                onChange={(e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  setStockUpdates({
+                                    ...stockUpdates,
+                                    [product.id]: val
+                                  });
+                                }}
                                 className="w-full sm:w-32"
                               />
                             </div>
@@ -146,13 +156,13 @@ export default function StockManagement() {
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-3">
                     {uncategorizedLowStock > 0 && <AlertTriangle className="h-5 w-5 text-amber-600" />}
-                    <span className="text-lg font-semibold">Uncategorized</span>
+                    <span className="text-lg font-semibold">未分类</span>
                   </div>
                   <div className="flex gap-2">
                     {uncategorizedLowStock > 0 && (
-                      <Badge variant="destructive">{uncategorizedLowStock} low stock</Badge>
+                      <Badge variant="destructive">{uncategorizedLowStock} 低库存</Badge>
                     )}
-                    <Badge variant="secondary">{uncategorizedProducts.length} total</Badge>
+                    <Badge variant="secondary">{uncategorizedProducts.length} 总计</Badge>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -164,21 +174,25 @@ export default function StockManagement() {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">{product.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            Current Stock: {product.stock} | Gold Type: {product.gold_type}
+                            当前库存：{product.stock} | 黄金类型：{product.gold_type}
                           </p>
                           {product.stock <= (product.low_stock_threshold || 10) && (
-                            <Badge variant="destructive" className="mt-1">Low Stock Alert</Badge>
+                            <Badge variant="destructive" className="mt-1">低库存提醒</Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                           <Input
                             type="number"
-                            placeholder="New stock"
+                            placeholder="新库存数量"
+                            min={0}
                             value={stockUpdates[product.id] ?? ""}
-                            onChange={(e) => setStockUpdates({
-                              ...stockUpdates,
-                              [product.id]: parseInt(e.target.value) || 0
-                            })}
+                            onChange={(e) => {
+                              const val = Math.max(0, parseInt(e.target.value) || 0);
+                              setStockUpdates({
+                                ...stockUpdates,
+                                [product.id]: val
+                              });
+                            }}
                             className="w-full sm:w-32"
                           />
                         </div>
@@ -198,7 +212,7 @@ export default function StockManagement() {
           disabled={Object.keys(stockUpdates).length === 0 || updateStockMutation.isPending}
           size="lg"
         >
-          {updateStockMutation.isPending ? "Updating..." : "Update All Stock"}
+          {updateStockMutation.isPending ? "更新中..." : "更新所有库存"}
         </Button>
       </div>
     </div>

@@ -136,10 +136,10 @@ export default function Customers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Customers</h1>
+        <h1 className="text-3xl font-bold">客户管理</h1>
         <Button onClick={handleExportCSV}>
           <Download className="mr-2 h-4 w-4" />
-          Export CSV
+          导出 CSV
         </Button>
       </div>
 
@@ -148,7 +148,7 @@ export default function Customers() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, email, or phone..."
+              placeholder="按姓名、邮箱或手机号搜索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -157,17 +157,18 @@ export default function Customers() {
         </div>
 
         {isLoading ? (
-          <div>Loading...</div>
+          <div>加载中...</div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead className="text-right">Total Orders</TableHead>
-                <TableHead className="text-right">Total Spent</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead>姓名</TableHead>
+                <TableHead>邮箱</TableHead>
+                <TableHead>手机号</TableHead>
+                <TableHead className="text-right">总订单数</TableHead>
+                <TableHead className="text-right">总消费</TableHead>
+                <TableHead>加入时间</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -176,7 +177,7 @@ export default function Customers() {
                   <TableCell className="font-medium">
                     {customer.full_name || "-"}
                     {customer.is_guest && (
-                      <Badge variant="outline" className="ml-2 text-xs">Guest</Badge>
+                      <Badge variant="outline" className="ml-2 text-xs">访客</Badge>
                     )}
                   </TableCell>
                   <TableCell>{customer.email || "-"}</TableCell>
@@ -188,6 +189,7 @@ export default function Customers() {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </Card>
     </div>

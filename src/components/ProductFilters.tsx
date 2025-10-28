@@ -45,10 +45,10 @@ export const ProductFilters = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Filters</h3>
+        <h3 className="text-lg font-semibold">筛选</h3>
         <Button variant="ghost" size="sm" onClick={onClearAll}>
           <X className="h-4 w-4 mr-1" />
-          Clear All
+          清除全部
         </Button>
       </div>
 
@@ -56,16 +56,16 @@ export const ProductFilters = ({
 
       {/* Sort By */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">Sort By</Label>
+        <Label className="text-sm font-semibold">排序方式</Label>
         <Select value={sortBy} onValueChange={onSortChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Select order" />
+            <SelectValue placeholder="选择排序" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            <SelectItem value="best-seller">Best Seller</SelectItem>
+            <SelectItem value="newest">最新上架</SelectItem>
+            <SelectItem value="price-asc">价格：低到高</SelectItem>
+            <SelectItem value="price-desc">价格：高到低</SelectItem>
+            <SelectItem value="best-seller">畅销商品</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -74,7 +74,7 @@ export const ProductFilters = ({
 
       {/* Categories */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">Categories</Label>
+        <Label className="text-sm font-semibold">分类</Label>
         <div className="space-y-2">
           {categories.map((category) => (
             <div key={category.id} className="flex items-center space-x-2">
@@ -98,7 +98,7 @@ export const ProductFilters = ({
 
       {/* Gold Type */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">Gold Type</Label>
+        <Label className="text-sm font-semibold">黄金类型</Label>
         <div className="space-y-2">
           {["916", "999"].map((type) => (
             <div key={type} className="flex items-center space-x-2">
@@ -108,7 +108,7 @@ export const ProductFilters = ({
                 onCheckedChange={() => onGoldTypeChange(type)}
               />
               <label htmlFor={`gold-${type}`} className="text-sm cursor-pointer">
-                {type} Gold
+                {type} 黄金
               </label>
             </div>
           ))}
@@ -119,11 +119,11 @@ export const ProductFilters = ({
 
       {/* Price Range */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">Price Range (RM)</Label>
+        <Label className="text-sm font-semibold">价格区间 (RM)</Label>
         <div className="flex gap-2 items-center">
           <Input
             type="number"
-            placeholder="Min"
+            placeholder="最小"
             value={priceRange[0]}
             onChange={(e) => {
               const val = parseInt(e.target.value) || 0;
@@ -131,10 +131,10 @@ export const ProductFilters = ({
             }}
             className="w-24"
           />
-          <span className="text-muted-foreground">to</span>
+          <span className="text-muted-foreground">至</span>
           <Input
             type="number"
-            placeholder="Max"
+            placeholder="最大"
             value={priceRange[1]}
             onChange={(e) => {
               const val = parseInt(e.target.value) || maxPrice;
@@ -144,7 +144,7 @@ export const ProductFilters = ({
           />
         </div>
         <div className="text-xs text-muted-foreground">
-          Current: RM {priceRange[0]} - RM {priceRange[1]}
+          当前：RM {priceRange[0]} - RM {priceRange[1]}
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export const ProductFilters = ({
 
       {/* Stock Status */}
       <div className="space-y-3">
-        <Label className="text-sm font-semibold">Stock Status</Label>
+        <Label className="text-sm font-semibold">库存状态</Label>
         <div className="flex items-center space-x-2">
           <Checkbox
             id="in-stock"
@@ -160,7 +160,7 @@ export const ProductFilters = ({
             onCheckedChange={onStockFilterChange}
           />
           <label htmlFor="in-stock" className="text-sm cursor-pointer">
-            In Stock Only
+            仅显示有货
           </label>
         </div>
       </div>

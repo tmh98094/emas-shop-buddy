@@ -162,19 +162,19 @@ export default function ContentManagement() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor={`title-${item.key}`}>Title</Label>
+                  <Label htmlFor={`title-${item.key}`}>标题</Label>
                   <Input
                     id={`title-${item.key}`}
                     value={contents[item.key]?.title || ""}
                     onChange={(e) =>
                       handleContentChange(item.key, "title", e.target.value)
                     }
-                    placeholder="Page title"
+                    placeholder="页面标题"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`content-${item.key}`}>Content</Label>
+                  <Label htmlFor={`content-${item.key}`}>内容</Label>
                   <ReactQuill
                     theme="snow"
                     value={contents[item.key]?.content || ""}
@@ -202,12 +202,12 @@ export default function ContentManagement() {
                   {saving === item.key ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      保存中...
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Save Changes
+                      保存更改
                     </>
                   )}
                 </Button>

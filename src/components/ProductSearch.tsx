@@ -12,7 +12,7 @@ export const ProductSearch = ({ value, onChange }: ProductSearchProps) => {
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
-        placeholder="Search products..."
+        placeholder="搜索产品..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="pl-9"

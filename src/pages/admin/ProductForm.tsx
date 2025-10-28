@@ -287,10 +287,10 @@ export default function ProductForm() {
 
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">分类</Label>
               <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value, sub_category_id: "" })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="选择分类" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories?.map((cat) => (
@@ -301,10 +301,10 @@ export default function ProductForm() {
             </div>
 
             <div>
-              <Label htmlFor="sub_category">Sub-Category</Label>
+              <Label htmlFor="sub_category">子分类</Label>
               <Select value={formData.sub_category_id} onValueChange={(value) => setFormData({ ...formData, sub_category_id: value })} disabled={!formData.category_id}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select sub-category" />
+                  <SelectValue placeholder="选择子分类" />
                 </SelectTrigger>
                 <SelectContent>
                   {subCategories?.map((subCat) => (

@@ -56,7 +56,7 @@ export const PhoneInput = ({
       <div className="flex gap-2">
         <Select value={countryCode} onValueChange={onCountryCodeChange}>
           <SelectTrigger className={isMobile ? "w-20" : "w-32"}>
-            <SelectValue />
+            <SelectValue placeholder="+60" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="+60">+60</SelectItem>
@@ -77,10 +77,10 @@ export const PhoneInput = ({
       {error && <p className="text-xs text-destructive">{error}</p>}
       <p className="text-xs text-muted-foreground">
         {countryCode === '+60' 
-          ? 'Malaysia: 10-11 digits (e.g., 12 3456 7890)' 
+          ? '马来西亚：10-11位数字（例如：12 3456 7890）' 
           : countryCode === '+65'
-          ? 'Singapore: 8 digits (e.g., 1234 5678)'
-          : 'Enter phone number'}
+          ? '新加坡：8位数字（例如：1234 5678）'
+          : '输入手机号码'}
       </p>
     </div>
   );
