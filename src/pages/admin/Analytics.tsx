@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Package, AlertTriangle, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function AdminAnalytics() {
   const { data: salesData } = useQuery({
@@ -122,7 +123,7 @@ export default function AdminAnalytics() {
             <div>
               <div className="text-sm text-muted-foreground">Total Revenue</div>
               <div className="text-2xl font-bold">
-                RM {salesData?.monthly.reduce((sum, m) => sum + m.amount, 0).toFixed(2) || 0}
+                RM {formatPrice(salesData?.monthly.reduce((sum, m) => sum + m.amount, 0) || 0)}
               </div>
             </div>
           </div>
@@ -230,7 +231,7 @@ export default function AdminAnalytics() {
                     <div className="text-sm text-muted-foreground">{product.quantity} units sold</div>
                   </div>
                 </div>
-                <div className="font-bold text-primary">RM {product.revenue.toFixed(2)}</div>
+                <div className="font-bold text-primary">RM {formatPrice(product.revenue)}</div>
               </div>
             ))}
           </div>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, TrendingUp } from "lucide-react";
 import { T } from "./T";
+import { formatPrice } from "@/lib/price-utils";
 
 export function SearchAutocomplete() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,7 +129,7 @@ export function SearchAutocomplete() {
                   <div className="font-medium text-sm">{product.name}</div>
                   {product.cached_current_price && (
                     <div className="text-xs text-muted-foreground">
-                      RM {Number(product.cached_current_price).toFixed(2)}
+                      RM {formatPrice(Number(product.cached_current_price))}
                     </div>
                   )}
                 </button>

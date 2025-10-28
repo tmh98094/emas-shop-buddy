@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { FileText, Search } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/invoice-generator";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,7 +123,7 @@ export default function Orders() {
                 <TableCell className="font-medium">{order.order_number}</TableCell>
                 <TableCell>{order.full_name}</TableCell>
                 <TableCell>{order.phone_number}</TableCell>
-                <TableCell>RM {Number(order.total_amount).toFixed(2)}</TableCell>
+                <TableCell>RM {formatPrice(Number(order.total_amount))}</TableCell>
                 <TableCell className="capitalize">
                   {order.payment_method.replace("_", " ")}
                 </TableCell>

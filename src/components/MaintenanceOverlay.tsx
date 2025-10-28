@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) {
+  const isAuthRoute = window.location.pathname.startsWith('/auth');
+  
   const { data } = useQuery({
     queryKey: ["settings", "site_maintenance"],
     queryFn: async () => {
@@ -16,7 +18,7 @@ export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) 
     staleTime: 60_000,
   });
 
-  const enabled = data?.enabled && !isAdminRoute;
+  const enabled = data?.enabled && !isAdminRoute && !isAuthRoute;
   const message = data?.message || "We're performing urgent maintenance. We'll be back shortly.";
   const whatsapp = data?.whatsapp || "+60122379178";
 

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function CustomerDetail() {
   const { customerId } = useParams();
@@ -101,7 +102,7 @@ export default function CustomerDetail() {
 
         <Card className="p-6">
           <h3 className="font-semibold mb-2">Total Spent</h3>
-          <div className="text-3xl font-bold text-primary">RM {totalSpent.toFixed(2)}</div>
+          <div className="text-3xl font-bold text-primary">RM {formatPrice(totalSpent)}</div>
         </Card>
       </div>
 
@@ -124,7 +125,7 @@ export default function CustomerDetail() {
                 <TableCell className="font-medium">{order.order_number}</TableCell>
                 <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>{order.order_items?.length || 0} items</TableCell>
-                <TableCell>RM {Number(order.total_amount).toFixed(2)}</TableCell>
+                <TableCell>RM {formatPrice(Number(order.total_amount))}</TableCell>
                 <TableCell>
                   <Badge>{order.order_status}</Badge>
                 </TableCell>

@@ -9,6 +9,7 @@ import { CheckCircle, Package, MapPin, Clock } from "lucide-react";
 import { T } from "@/components/T";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function OrderConfirmation() {
   const { orderId } = useParams();
@@ -196,7 +197,7 @@ export default function OrderConfirmation() {
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="总金额" en="Total Amount" />:</span>
-                  <span className="font-semibold">RM {Number(order.total_amount).toFixed(2)}</span>
+                  <span className="font-semibold">RM {formatPrice(Number(order.total_amount))}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground"><T zh="付款方式" en="Payment Method" />:</span>
@@ -260,7 +261,7 @@ export default function OrderConfirmation() {
                 {order.order_items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between gap-4 text-sm md:text-base">
                     <span className="flex-1">{item.product_name} x {item.quantity}</span>
-                    <span className="font-semibold">RM {parseFloat(item.subtotal).toFixed(2)}</span>
+                    <span className="font-semibold">RM {formatPrice(parseFloat(item.subtotal))}</span>
                   </div>
                 ))}
               </div>

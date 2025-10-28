@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { DollarSign, Package, ShoppingCart, Users } from "lucide-react";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function Dashboard() {
   const { data: stats } = useQuery({
@@ -30,7 +31,7 @@ export default function Dashboard() {
   const statCards = [
     {
       title: "Total Revenue",
-      value: `RM ${stats?.totalRevenue.toFixed(2) || "0.00"}`,
+      value: `RM ${formatPrice(stats?.totalRevenue || 0)}`,
       icon: DollarSign,
       color: "text-green-500",
     },

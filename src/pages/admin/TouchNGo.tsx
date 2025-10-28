@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/lib/price-utils";
 import {
   Table,
   TableBody,
@@ -102,7 +103,7 @@ export default function TouchNGo() {
                 <TableRow key={payment.id}>
                   <TableCell className="font-medium">{order?.order_number}</TableCell>
                   <TableCell>{order?.full_name}</TableCell>
-                  <TableCell>RM {parseFloat(order?.total_amount).toFixed(2)}</TableCell>
+                  <TableCell>RM {formatPrice(parseFloat(order?.total_amount))}</TableCell>
                   <TableCell>
                     <Button
                       variant="link"

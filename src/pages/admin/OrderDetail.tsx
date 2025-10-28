@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { formatPrice } from "@/lib/price-utils";
 
 type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 type PaymentStatus = "pending" | "completed" | "failed";
@@ -86,7 +87,7 @@ export default function OrderDetail() {
           <h2 className="text-xl font-semibold mb-4">Order Details</h2>
           <div className="space-y-2">
             <div><strong>Order Date:</strong> {new Date(order.created_at).toLocaleDateString()}</div>
-            <div><strong>Total Amount:</strong> RM {Number(order.total_amount).toFixed(2)}</div>
+            <div><strong>Total Amount:</strong> RM {formatPrice(Number(order.total_amount))}</div>
             <div><strong>Payment Method:</strong> {order.payment_method.replace("_", " ").toUpperCase()}</div>
           </div>
         </Card>
@@ -110,7 +111,7 @@ export default function OrderDetail() {
                     <div className="text-sm">Color: {item.color_name}</div>
                   )}
                 </div>
-                <div className="font-semibold">RM {parseFloat(item.subtotal).toFixed(2)}</div>
+                <div className="font-semibold">RM {formatPrice(parseFloat(item.subtotal))}</div>
               </div>
             </div>
           ))}

@@ -13,6 +13,7 @@ import { Package, MapPin, Settings, LogOut, User, Download } from "lucide-react"
 import { T } from "@/components/T";
 import { generateInvoicePDF, InvoiceData } from "@/lib/invoice-generator";
 import { Loader2 } from "lucide-react";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -233,7 +234,7 @@ export default function UserDashboard() {
                         
                         <div className="flex flex-col md:flex-row justify-between md:items-center mt-3 pt-3 border-t gap-3 md:gap-2">
                           <span className="font-semibold text-base">
-                            <T zh="总计" en="Total" />: RM {parseFloat(order.total_amount).toFixed(2)}
+                            <T zh="总计" en="Total" />: RM {formatPrice(parseFloat(order.total_amount))}
                           </span>
                           <div className="flex gap-2 flex-wrap">
                             <Button

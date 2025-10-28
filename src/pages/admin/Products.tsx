@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function Products() {
   const navigate = useNavigate();
@@ -124,7 +125,7 @@ export default function Products() {
                                   <TableCell className="font-medium">{product.name}</TableCell>
                                   <TableCell className="hidden sm:table-cell">{product.gold_type}</TableCell>
                                   <TableCell className="hidden md:table-cell">{product.weight_grams}g</TableCell>
-                                  <TableCell className="hidden lg:table-cell">RM {Number(product.labour_fee).toFixed(2)}</TableCell>
+                                  <TableCell className="hidden lg:table-cell">RM {formatPrice(Number(product.labour_fee))}</TableCell>
                                   <TableCell>
                                     <Badge variant={product.stock <= (product.low_stock_threshold || 10) ? "destructive" : "default"}>
                                       {product.stock}
@@ -200,7 +201,7 @@ export default function Products() {
                               <TableCell className="font-medium">{product.name}</TableCell>
                               <TableCell className="hidden sm:table-cell">{product.gold_type}</TableCell>
                               <TableCell className="hidden md:table-cell">{product.weight_grams}g</TableCell>
-                              <TableCell className="hidden lg:table-cell">RM {Number(product.labour_fee).toFixed(2)}</TableCell>
+                              <TableCell className="hidden lg:table-cell">RM {formatPrice(Number(product.labour_fee))}</TableCell>
                               <TableCell>
                                 <Badge variant={product.stock <= (product.low_stock_threshold || 10) ? "destructive" : "default"}>
                                   {product.stock}

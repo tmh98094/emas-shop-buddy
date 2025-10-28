@@ -17,10 +17,13 @@ export const calculatePrice = (
 };
 
 /**
- * Format price for display with exactly 2 decimal places
+ * Format price for display with exactly 2 decimal places and comma separators
  */
 export const formatPrice = (price: number): string => {
-  return price.toFixed(2);
+  return price.toLocaleString('en-MY', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
 };
 
 /**

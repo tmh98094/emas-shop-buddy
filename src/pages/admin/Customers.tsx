@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Search, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,7 +115,7 @@ export default function Customers() {
         `"${customer.email || ''}"`,
         `"${customer.phone_number || ''}"`,
         customer.total_orders,
-        customer.total_spent.toFixed(2),
+        formatPrice(customer.total_spent),
         new Date(customer.created_at).toLocaleDateString(),
       ].join(","))
     ].join("\n");
@@ -181,7 +182,7 @@ export default function Customers() {
                   <TableCell>{customer.email || "-"}</TableCell>
                   <TableCell>{customer.phone_number}</TableCell>
                   <TableCell className="text-right">{customer.total_orders}</TableCell>
-                  <TableCell className="text-right">RM {customer.total_spent.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">RM {formatPrice(customer.total_spent)}</TableCell>
                   <TableCell>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}

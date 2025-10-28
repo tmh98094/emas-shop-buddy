@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { generatePhoneVariants, normalizePhone, formatDisplayPhone } from "@/lib/phone-utils";
 import { T } from "@/components/T";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function OrderTracking() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -147,14 +148,14 @@ export default function OrderTracking() {
                     {order.order_items?.map((item: any) => (
                       <div key={item.id} className="flex justify-between gap-4 text-sm md:text-base">
                         <span className="flex-1">{item.product_name} x {item.quantity}</span>
-                        <span className="font-semibold">RM {parseFloat(item.subtotal).toFixed(2)}</span>
+                        <span className="font-semibold">RM {formatPrice(parseFloat(item.subtotal))}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="border-t pt-4 flex justify-between font-bold text-base md:text-lg">
                     <span><T zh="总计" en="Total" /></span>
-                    <span className="text-primary">RM {parseFloat(order.total_amount).toFixed(2)}</span>
+                    <span className="text-primary">RM {formatPrice(parseFloat(order.total_amount))}</span>
                   </div>
 
                   <div className="mt-4 text-sm md:text-base space-y-2">

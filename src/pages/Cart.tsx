@@ -13,6 +13,7 @@ import { checkPriceChange, getTimeSinceLocked } from "@/lib/price-staleness";
 import { useState, useEffect } from "react";
 import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Loader2 } from "lucide-react";
+import { formatPrice } from "@/lib/price-utils";
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, refreshPrices, loading } = useCart();
@@ -173,7 +174,7 @@ export default function Cart() {
                           <div className="text-right ml-4">
                             <p className="text-xs text-muted-foreground mb-1">Subtotal</p>
                             <p className="text-primary font-bold text-lg md:text-xl">
-                              RM {itemPrice.toFixed(2)}
+                              RM {formatPrice(itemPrice)}
                             </p>
                           </div>
                         </div>
@@ -190,7 +191,7 @@ export default function Cart() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-base">
                     <span>Subtotal</span>
-                    <span className="font-semibold">RM {totalAmount.toFixed(2)}</span>
+                    <span className="font-semibold">RM {formatPrice(totalAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Shipping</span>
@@ -198,7 +199,7 @@ export default function Cart() {
                   </div>
                   <div className="border-t pt-3 flex justify-between font-bold text-lg md:text-xl">
                     <span>Total</span>
-                    <span className="text-primary">RM {totalAmount.toFixed(2)}</span>
+                    <span className="text-primary">RM {formatPrice(totalAmount)}</span>
                   </div>
                 </div>
                 <Button
