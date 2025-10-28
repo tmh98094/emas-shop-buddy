@@ -15,7 +15,7 @@ import Autoplay from "embla-carousel-autoplay";
 export const HeroCarousel = () => {
   const [api, setApi] = useState<CarouselApi>();
   const autoplayPlugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 5000, stopOnInteraction: false })
   );
 
   const slides = [
@@ -24,21 +24,24 @@ export const HeroCarousel = () => {
       titleEn: "Exquisite 916 Gold Jewelry",
       description: "匠心独运，打造永恒优雅",
       descriptionEn: "Timeless elegance crafted to perfection",
-      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80",
+      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80&fm=webp&auto=format 1200w",
     },
     {
       title: "纯999黄金系列",
       titleEn: "Pure 999 Gold Collection",
       description: "为鉴赏家提供最高纯度",
       descriptionEn: "Highest purity for discerning collectors",
-      image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80",
+      image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80&fm=webp&auto=format 1200w",
     },
     {
       title: "婚礼珠宝系列",
       titleEn: "Wedding Collection",
       description: "用我们的独家设计庆祝您的特别时刻",
       descriptionEn: "Celebrate your special moments with our exclusive designs",
-      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80&fm=webp&auto=format 1200w",
     },
   ];
 
@@ -55,9 +58,15 @@ export const HeroCarousel = () => {
             <div className="relative h-[300px] md:h-[500px] lg:h-[600px]">
               <img
                 src={slide.image}
+                srcSet={slide.srcset}
+                sizes="100vw"
                 alt={slide.title}
                 className="absolute inset-0 w-full h-full object-cover"
-                fetchPriority={index === 0 ? "high" : undefined}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "low"}
+                decoding="async"
+                width="1200"
+                height="600"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-transparent" />
               <div className="absolute inset-0 flex items-center">

@@ -60,10 +60,13 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
       <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img
-            src={imageUrl || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80"}
+            src={imageUrl || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"}
             alt={product.name}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
+            decoding="async"
+            width="400"
+            height="400"
           />
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

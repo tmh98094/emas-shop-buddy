@@ -66,6 +66,9 @@ export const CategorySection = () => {
                         alt={category.name}
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        decoding="async"
+                        width="400"
+                        height="400"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

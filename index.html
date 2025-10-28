@@ -8,11 +8,16 @@
     <meta name="keywords" content="JJ Emas, gold jewelry Malaysia, gold jewelry Singapore, 916 gold, 999 gold, gold necklace, gold ring, gold bracelet, gold earrings, emas Malaysia, kedai emas">
     <meta name="author" content="JJ Emas" />
 
-    <!-- Preload LCP image for performance -->
-    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80" fetchpriority="high">
+    <!-- DNS Prefetch for faster external resource loading -->
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     
-    <!-- Preconnect to Supabase API to reduce network latency -->
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
     <link rel="preconnect" href="https://oscgxbtukrppycrchvdl.supabase.co" crossorigin>
+    
+    <!-- Preload LCP image for performance -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp" fetchpriority="high" imagesrcset="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp 400w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp 800w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80&fm=webp 1200w" imagesizes="100vw">
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
