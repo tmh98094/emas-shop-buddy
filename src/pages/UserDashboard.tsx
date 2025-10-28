@@ -81,7 +81,7 @@ export default function UserDashboard() {
       case "completed":
         return "bg-green-500";
       case "processing":
-        return "bg-blue-500";
+        return "bg-primary";
       case "pending":
         return "bg-yellow-500";
       case "cancelled":

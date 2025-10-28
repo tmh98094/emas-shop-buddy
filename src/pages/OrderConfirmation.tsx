@@ -151,9 +151,9 @@ export default function OrderConfirmation() {
             <p className="font-semibold">{order.phone_number}</p>
           </div>
 
-          <Card className="p-6 mb-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <Card className="p-6 mb-6 bg-muted border-border">
             <div className="flex items-start gap-4">
-              <Package className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1" />
+              <Package className="h-6 w-6 text-primary mt-1" />
               <div>
                 <h3 className="font-semibold text-lg mb-3">
                   <T zh="如何跟踪您的订单" en="How to Track Your Order" />
@@ -174,7 +174,7 @@ export default function OrderConfirmation() {
                       />
                     </p>
                   )}
-                  <p className="font-semibold text-blue-700 dark:text-blue-300">
+                  <p className="font-semibold text-primary">
                     <T 
                       zh="团队在包装完您的金饰后，会透过Whatsapp联系您，并附上运输的Tracking ID" 
                       en="Our team will contact you via WhatsApp after packaging your jewelry and provide the shipping Tracking ID" 

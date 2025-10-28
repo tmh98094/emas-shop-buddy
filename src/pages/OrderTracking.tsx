@@ -58,7 +58,7 @@ export default function OrderTracking() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed": return "bg-green-500";
-      case "processing": return "bg-blue-500";
+      case "processing": return "bg-primary";
       case "pending": return "bg-yellow-500";
       case "cancelled": return "bg-red-500";
       default: return "bg-gray-500";

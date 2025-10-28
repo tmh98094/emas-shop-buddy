@@ -143,8 +143,8 @@ export default function AdminAnalytics() {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Package className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-muted rounded-full">
+              <Package className="h-6 w-6 text-primary" />
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Products Sold</div>

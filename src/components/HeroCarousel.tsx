@@ -68,7 +68,7 @@ export const HeroCarousel = () => {
                 width="1200"
                 height="600"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
               <div className="absolute inset-0 flex items-center">
                 <div className="container mx-auto px-4">
                   <div className="max-w-2xl space-y-3 md:space-y-6">
@@ -90,8 +90,8 @@ export const HeroCarousel = () => {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="left-2 md:left-4 bg-navy/80 hover:bg-navy text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
-      <CarouselNext className="right-2 md:right-4 bg-navy/80 hover:bg-navy text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
+      <CarouselPrevious className="left-2 md:left-4 bg-secondary/80 hover:bg-secondary text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
+      <CarouselNext className="right-2 md:right-4 bg-secondary/80 hover:bg-secondary text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
     </Carousel>
   );
 };

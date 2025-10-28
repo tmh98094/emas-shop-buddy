@@ -76,9 +76,9 @@ export default function Notifications() {
       </div>
 
       {unreadCount > 0 && (
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-muted border-border">
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-blue-600" />
+            <Bell className="h-5 w-5 text-primary" />
             <span className="font-semibold">
               <T 
                 zh={`您有 ${unreadCount} 条未读通知`} 
@@ -102,7 +102,7 @@ export default function Notifications() {
             <Card
               key={notification.id}
               className={`p-4 transition-colors ${
-                !notification.is_read ? "bg-blue-50 border-blue-200" : ""
+                !notification.is_read ? "bg-muted border-border" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-4">

@@ -12,30 +12,32 @@
 
 @layer base {
   :root {
-    /* Premium Warm Beige Theme for JJ Emas */
-    --background: 37 30% 87%;
-    --foreground: 25 20% 20%;
+    /* Clean 4-Color System: White, Warm Beige, Rich Gold, Deep Brown */
+    
+    /* White - Main background & cards */
+    --background: 0 0% 100%;
+    --foreground: 25 25% 18%;
     
     --card: 0 0% 100%;
-    --card-foreground: 25 20% 20%;
+    --card-foreground: 25 25% 18%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 25 20% 20%;
+    --popover-foreground: 25 25% 18%;
     
-    /* Primary: Elegant Muted Gold */
-    --primary: 38 65% 55%;
+    /* Rich Gold (#C9A55C) - Primary accent */
+    --primary: 40 47% 56%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary: Warm Beige */
+    /* Warm Beige (#e8e2d5) - Headers, footers, sidebars */
     --secondary: 37 30% 87%;
-    --secondary-foreground: 25 20% 20%;
+    --secondary-foreground: 25 25% 18%;
     
-    /* Muted: Light Beige */
-    --muted: 38 25% 92%;
-    --muted-foreground: 25 15% 40%;
+    /* Light Beige - Subtle backgrounds */
+    --muted: 37 30% 87%;
+    --muted-foreground: 25 20% 45%;
     
-    /* Accent: Rich Gold */
-    --accent: 40 70% 50%;
+    /* Gold accent variations */
+    --accent: 40 47% 56%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -43,67 +45,25 @@
     
     --border: 35 20% 80%;
     --input: 0 0% 100%;
-    --ring: 38 65% 55%;
+    --ring: 40 47% 56%;
     
     --radius: 0.5rem;
     
-    /* Custom design tokens */
-    --gold: 38 65% 55%;
-    --gold-light: 42 70% 65%;
-    --gold-dark: 35 60% 40%;
+    /* Custom tokens for direct reference */
+    --gold: 40 47% 56%;
+    --gold-light: 42 50% 65%;
+    --gold-dark: 38 45% 45%;
     --cream: 37 30% 87%;
-    --brown: 25 20% 20%;
-    --navy: 37 30% 87%;
-    --navy-foreground: 25 20% 20%;
+    --brown: 25 25% 18%;
 
     --sidebar-background: 37 30% 87%;
-    --sidebar-foreground: 25 20% 20%;
-    --sidebar-primary: 38 65% 55%;
+    --sidebar-foreground: 25 25% 18%;
+    --sidebar-primary: 40 47% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 38 25% 92%;
-    --sidebar-accent-foreground: 25 20% 20%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 25 25% 18%;
     --sidebar-border: 35 20% 80%;
-    --sidebar-ring: 38 65% 55%;
-  }
-
-  .dark {
-    /* Dark Mode - Premium Warm Theme */
-    --background: 25 15% 12%;
-    --foreground: 37 20% 90%;
-    
-    --card: 25 15% 15%;
-    --card-foreground: 37 20% 90%;
-    
-    --popover: 25 15% 15%;
-    --popover-foreground: 37 20% 90%;
-    
-    --primary: 38 65% 55%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 25 15% 20%;
-    --secondary-foreground: 37 20% 90%;
-    
-    --muted: 25 15% 20%;
-    --muted-foreground: 35 12% 60%;
-    
-    --accent: 40 70% 50%;
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 37 20% 90%;
-    
-    --border: 25 15% 25%;
-    --input: 25 15% 20%;
-    --ring: 38 65% 55%;
-
-    --sidebar-background: 25 15% 12%;
-    --sidebar-foreground: 37 20% 90%;
-    --sidebar-primary: 38 65% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 15% 20%;
-    --sidebar-accent-foreground: 37 20% 90%;
-    --sidebar-border: 25 15% 25%;
-    --sidebar-ring: 38 65% 55%;
+    --sidebar-ring: 40 47% 56%;
   }
 }
 
@@ -113,20 +73,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(38, 25%, 90%) 100%);
   }
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(42, 70%, 60%) 100%);
-  }
-  
-  .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38, 75%, 55%) 100%);
-  }
-  
-  .gradient-subtle {
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(38, 25%, 92%) 100%);
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(42, 50%, 60%) 100%);
   }
 }

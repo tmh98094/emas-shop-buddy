@@ -23,7 +23,7 @@ export const Header = () => {
   ];
 
   return (
-    <header className="bg-navy border-b border-navy-700 sticky top-[44px] md:top-[52px] z-40 shadow-lg">
+    <header className="bg-secondary border-b border-border sticky top-[44px] md:top-[52px] z-40 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-primary hover:text-gold-light transition-colors">
@@ -36,7 +36,7 @@ export const Header = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className="text-navy-foreground hover:text-primary transition-colors font-medium"
+                className="text-foreground hover:text-primary transition-colors font-medium"
               >
                 <T zh={item.name} en={item.en} />
               </Link>
@@ -48,7 +48,7 @@ export const Header = () => {
             <LanguageToggle />
 
             <Link to="/cart">
-              <Button variant="ghost" size="icon" className="relative text-navy-foreground hover:text-primary hover:bg-navy-800">
+              <Button variant="ghost" size="icon" className="relative text-foreground hover:text-primary hover:bg-secondary/60">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center font-semibold">
@@ -58,7 +58,7 @@ export const Header = () => {
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon" className="text-navy-foreground hover:text-primary hover:bg-navy-800">
+              <Button variant="ghost" size="icon" className="text-foreground hover:text-primary hover:bg-secondary/60">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
@@ -66,7 +66,7 @@ export const Header = () => {
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-navy-foreground hover:text-primary hover:bg-navy-800">
+                <Button variant="ghost" size="icon" className="text-foreground hover:text-primary hover:bg-secondary/60">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

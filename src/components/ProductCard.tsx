@@ -75,9 +75,9 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
           )}
         </div>
       <CardContent className="p-3 md:p-4 space-y-2 flex-1 flex flex-col">
-        <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{product.name}</h3>
+        <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] text-foreground">{product.name}</h3>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="px-2 py-1 bg-accent/10 text-accent-foreground rounded text-xs">
+          <span className="px-2 py-1 bg-secondary text-foreground rounded text-xs">
             {product.gold_type}
           </span>
           <span className="text-xs">{product.weight_grams}g</span>

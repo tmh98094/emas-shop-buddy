@@ -10,7 +10,7 @@ export const LanguageToggle = () => {
       variant="ghost"
       size="sm"
       onClick={toggleLanguage}
-      className="gap-2 text-navy-foreground hover:text-primary transition-colors"
+      className="gap-2 text-foreground hover:text-primary transition-colors"
       aria-label="Toggle language"
     >
       <Globe className="h-4 w-4" />

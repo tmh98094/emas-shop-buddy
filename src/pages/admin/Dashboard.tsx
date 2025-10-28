@@ -39,7 +39,7 @@ export default function Dashboard() {
       title: "Total Orders",
       value: stats?.totalOrders || 0,
       icon: ShoppingCart,
-      color: "text-blue-500",
+      color: "text-primary",
     },
     {
       title: "Total Products",

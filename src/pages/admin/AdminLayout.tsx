@@ -42,7 +42,7 @@ export default function AdminLayout() {
               className={`w-full justify-start ${
                 isActive 
                   ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                  : "text-navy-foreground hover:text-primary hover:bg-navy-800"
+                  : "text-foreground hover:text-primary hover:bg-secondary/60"
               }`}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -53,7 +53,7 @@ export default function AdminLayout() {
       })}
       <Button
         variant="ghost"
-        className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-navy-800"
+        className="w-full justify-start text-destructive hover:text-destructive hover:bg-secondary/60"
         onClick={handleLogout}
       >
         <LogOut className="h-4 w-4 mr-2" />
@@ -65,15 +65,15 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-navy border-b border-navy-700 p-4 flex items-center justify-between">
+      <header className="md:hidden bg-secondary border-b border-border p-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-primary">
+            <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="bg-navy w-64 p-0">
+          <SheetContent side="left" className="bg-secondary w-64 p-0">
             <div className="p-6">
               <h2 className="text-2xl font-bold text-primary">Menu</h2>
             </div>
@@ -85,7 +85,7 @@ export default function AdminLayout() {
       </header>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block md:w-64 bg-navy border-r border-navy-700">
+      <aside className="hidden md:block md:w-64 bg-secondary border-r border-border">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
         </div>
@@ -95,7 +95,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+      <main className="flex-1 p-4 md:p-8 overflow-auto bg-white">
         <Outlet />
       </main>
     </div>
