@@ -172,6 +172,8 @@ export default function Settings() {
           key: "enable_credit_card",
           value: { enabled },
           updated_by: user?.id ?? null,
+        }, {
+          onConflict: 'key'
         });
 
       if (error) throw error;
@@ -182,7 +184,11 @@ export default function Settings() {
     },
     onError: (error: any) => {
       console.error('updateCreditCardSetting error', error);
-      toast({ title: "Error updating setting", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Error updating setting", 
+        description: "Unknown error, please try again later or reach out via WhatsApp.", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -324,12 +330,19 @@ export default function Settings() {
                     key: 'site_maintenance',
                     value: { enabled: checked, message: maintenanceMessage, whatsapp: maintenanceWhatsapp },
                     updated_by: user?.id ?? null,
+                  }, {
+                    onConflict: 'key'
                   });
                   if (error) throw error;
                   queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
                   toast({ title: checked ? 'Maintenance Enabled' : 'Maintenance Disabled' });
                 } catch (e: any) {
-                  toast({ title: 'Error updating maintenance', description: e.message, variant: 'destructive' });
+                  console.error('Maintenance toggle error', e);
+                  toast({ 
+                    title: 'Error updating maintenance', 
+                    description: 'Unknown error, please try again later or reach out via WhatsApp.', 
+                    variant: 'destructive' 
+                  });
                 }
               }}
             />
@@ -353,11 +366,18 @@ export default function Settings() {
                     key: 'site_maintenance',
                     value: { enabled: maintenanceEnabled, message: maintenanceMessage, whatsapp: maintenanceWhatsapp },
                     updated_by: user?.id ?? null,
+                  }, {
+                    onConflict: 'key'
                   });
                   if (error) throw error;
                   toast({ title: 'Maintenance settings saved' });
                 } catch (e: any) {
-                  toast({ title: 'Error saving', description: e.message, variant: 'destructive' });
+                  console.error('Maintenance save error', e);
+                  toast({ 
+                    title: 'Error saving', 
+                    description: 'Unknown error, please try again later or reach out via WhatsApp.', 
+                    variant: 'destructive' 
+                  });
                 }
               }}
             >
