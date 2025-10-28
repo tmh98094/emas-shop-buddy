@@ -56,24 +56,28 @@ export default function UserProfile() {
         
         // Parse existing phone number for country code and number
         const phone = data.phone_number || "";
-        console.log("Raw phone from DB:", phone);
         
         if (phone) {
-          // Try to match country code patterns (+60, +65, etc.)
-          const phoneMatch = phone.match(/^(\+\d{2,3})(.+)$/);
-          if (phoneMatch) {
-            const extractedCountryCode = phoneMatch[1];
-            const remainingDigits = phoneMatch[2].replace(/\D/g, "");
-            
-            console.log("Parsed phone:", { countryCode: extractedCountryCode, digits: remainingDigits });
-            
-            setCountryCode(extractedCountryCode);
-            setPhoneNumber(remainingDigits);
+          // Extract country code and remaining digits
+          let extractedCode = "+60"; // default
+          let digits = "";
+          
+          if (phone.startsWith("+")) {
+            // Try to extract +60, +65, +66, etc (2-3 digit country codes)
+            const match = phone.match(/^(\+\d{2,3})(.*)/);
+            if (match) {
+              extractedCode = match[1];
+              digits = match[2].replace(/\D/g, "");
+            } else {
+              digits = phone.slice(1).replace(/\D/g, "");
+            }
           } else {
-            // Fallback: assume +60 and extract all digits
-            setCountryCode("+60");
-            setPhoneNumber(phone.replace(/\D/g, ""));
+            // No + prefix, extract all digits
+            digits = phone.replace(/\D/g, "");
           }
+          
+          setCountryCode(extractedCode);
+          setPhoneNumber(digits);
         }
         
         setProfile({
