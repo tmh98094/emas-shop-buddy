@@ -16,6 +16,7 @@ export default function AdminLayout() {
     { name: "产品", href: "/admin/products", icon: Package, en: "Products" },
     { name: "分类", href: "/admin/categories", icon: Package, en: "Categories" },
     { name: "订单", href: "/admin/orders", icon: ShoppingCart, en: "Orders" },
+    { name: "预订", href: "/admin/pre-orders", icon: ShoppingCart, en: "Pre-orders" },
     { name: "客户", href: "/admin/customers", icon: Users, en: "Customers" },
     { name: "分析", href: "/admin/analytics", icon: LayoutDashboard, en: "Analytics" },
     { name: "库存", href: "/admin/stock", icon: AlertTriangle, en: "Stock" },

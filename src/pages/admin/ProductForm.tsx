@@ -33,6 +33,8 @@ export default function ProductForm() {
     is_featured: false,
     is_best_seller: false,
     is_new_arrival: false,
+    is_preorder: false,
+    preorder_deposit: "100.00",
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -103,6 +105,8 @@ export default function ProductForm() {
         is_featured: product.is_featured || false,
         is_best_seller: product.is_best_seller || false,
         is_new_arrival: product.is_new_arrival || false,
+        is_preorder: product.is_preorder || false,
+        preorder_deposit: product.preorder_deposit?.toString() || "100.00",
       });
       setExistingImages(product.product_images || []);
       const thumbnail = product.product_images?.find((img: any) => img.is_thumbnail);
@@ -126,6 +130,8 @@ export default function ProductForm() {
         is_featured: formData.is_featured,
         is_best_seller: formData.is_best_seller,
         is_new_arrival: formData.is_new_arrival,
+        is_preorder: formData.is_preorder,
+        preorder_deposit: formData.is_preorder ? parseFloat(formData.preorder_deposit) : null,
       };
 
       let productId = id;
@@ -363,14 +369,14 @@ export default function ProductForm() {
             </div>
           </div>
 
-          <div className="flex gap-4 mt-4">
+          <div className="flex gap-4 mt-4 flex-wrap">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="featured"
                 checked={formData.is_featured}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked as boolean })}
               />
-              <Label htmlFor="featured">Featured</Label>
+              <Label htmlFor="featured">精选</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -378,7 +384,7 @@ export default function ProductForm() {
                 checked={formData.is_best_seller}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_best_seller: checked as boolean })}
               />
-              <Label htmlFor="bestseller">Best Seller</Label>
+              <Label htmlFor="bestseller">畅销</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -386,9 +392,31 @@ export default function ProductForm() {
                 checked={formData.is_new_arrival}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_new_arrival: checked as boolean })}
               />
-              <Label htmlFor="newarrival">New Arrival</Label>
+              <Label htmlFor="newarrival">新品</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="preorder"
+                checked={formData.is_preorder}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_preorder: checked as boolean })}
+              />
+              <Label htmlFor="preorder">预订</Label>
             </div>
           </div>
+
+          {formData.is_preorder && (
+            <div className="mt-4">
+              <Label htmlFor="preorder_deposit">预订定金 (RM)</Label>
+              <Input
+                id="preorder_deposit"
+                type="number"
+                step="0.01"
+                value={formData.preorder_deposit}
+                onChange={(e) => setFormData({ ...formData, preorder_deposit: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">预订商品客户需支付的定金金额</p>
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">

@@ -29,9 +29,9 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SEOHead 
-        title="JJ Emas - Malaysia & Singapore's Favorite Gold Jewelry Store"
-        description="Discover exquisite 916 and 999 gold jewelry at JJ Emas. Malaysia & Singapore's trusted gold jewelry store offering necklaces, rings, bracelets, and earrings with competitive pricing and authentic quality."
-        keywords="JJ Emas, gold jewelry Malaysia, gold jewelry Singapore, 916 gold, 999 gold, gold necklace, gold ring, gold bracelet, gold earrings, emas Malaysia, kedai emas, Malaysian gold jewelry, Singapore gold jewelry"
+        title="JJ Emas - 马来西亚与新加坡最受欢迎的黄金珠宝店"
+        description="在JJ Emas探索精致的916和999黄金珠宝。马来西亚与新加坡信赖的黄金珠宝店，提供项链、戒指、手镯和耳环，价格竞争力强，品质保证。"
+        keywords="JJ Emas, 马来西亚黄金珠宝, 新加坡黄金珠宝, 916黄金, 999黄金, 黄金项链, 黄金戒指, 黄金手镯, 黄金耳环, emas Malaysia, kedai emas"
       />
       <GoldPriceBanner />
       <Header />
@@ -44,7 +44,7 @@ const Index = () => {
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="Featured Collection" filter="featured" />
+          <ProductSection title="精选系列" filter="featured" />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
@@ -52,11 +52,11 @@ const Index = () => {
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="Best Sellers" filter="best_seller" />
+          <ProductSection title="畅销商品" filter="best_seller" />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="New Arrivals" filter="new_arrival" />
+          <ProductSection title="新品上架" filter="new_arrival" />
         </Suspense>
       </main>
       

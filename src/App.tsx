@@ -43,6 +43,7 @@ import AdminNotifications from "./pages/admin/Notifications";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminContent from "./pages/admin/Content";
+import PreOrders from "./pages/admin/PreOrders";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
@@ -134,6 +135,7 @@ const App = () => {
             <Route path="categories" element={<Categories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="pre-orders" element={<PreOrders />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="customers/:customerId" element={<CustomerDetail />} />
             <Route path="analytics" element={<AdminAnalytics />} />
