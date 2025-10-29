@@ -66,16 +66,6 @@ export default function Products() {
     },
   });
 
-  if (categoriesLoading || productsLoading) return <div>Loading...</div>;
-
-  // Group products by category
-  const productsByCategory = categories?.reduce((acc, category) => {
-    acc[category.id] = products?.filter(p => p.category_id === category.id) || [];
-    return acc;
-  }, {} as Record<string, any[]>);
-
-  const uncategorizedProducts = products?.filter(p => !p.category_id) || [];
-
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: string) => {
       // Delete product images from storage
@@ -108,6 +98,16 @@ export default function Products() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  if (categoriesLoading || productsLoading) return <div>Loading...</div>;
+
+  // Group products by category
+  const productsByCategory = categories?.reduce((acc, category) => {
+    acc[category.id] = products?.filter(p => p.category_id === category.id) || [];
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  const uncategorizedProducts = products?.filter(p => !p.category_id) || [];
 
   return (
     <div className="space-y-6">
