@@ -89,16 +89,16 @@ export default function Orders() {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold text-primary mb-8">订单管理</h1>
+      <h1 className="text-2xl md:text-4xl font-bold text-primary mb-6">订单管理</h1>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="按订单号、客户姓名或手机号搜索..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9"
+            className="pl-8 md:pl-9 text-sm h-9"
           />
         </div>
       </div>
@@ -108,15 +108,15 @@ export default function Orders() {
           <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>订单号</TableHead>
-              <TableHead>客户</TableHead>
-              <TableHead>手机号</TableHead>
-              <TableHead>总计</TableHead>
-              <TableHead>付款方式</TableHead>
-              <TableHead>付款状态</TableHead>
-              <TableHead>订单状态</TableHead>
-              <TableHead>日期</TableHead>
-              <TableHead>操作</TableHead>
+              <TableHead className="text-xs">订单号</TableHead>
+              <TableHead className="text-xs">客户</TableHead>
+              <TableHead className="hidden md:table-cell text-xs">手机号</TableHead>
+              <TableHead className="text-xs">总计</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs">付款方式</TableHead>
+              <TableHead className="text-xs">付款状态</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs">订单状态</TableHead>
+              <TableHead className="hidden md:table-cell text-xs">日期</TableHead>
+              <TableHead className="text-xs">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,25 +137,25 @@ export default function Orders() {
               
               return (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.order_number}</TableCell>
-                  <TableCell>{order.full_name}</TableCell>
-                  <TableCell>{order.phone_number}</TableCell>
-                  <TableCell>RM {formatPrice(Number(order.total_amount))}</TableCell>
-                  <TableCell className="capitalize">
+                  <TableCell className="font-medium text-xs">{order.order_number}</TableCell>
+                  <TableCell className="text-xs">{order.full_name}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">{order.phone_number}</TableCell>
+                  <TableCell className="text-xs">RM {formatPrice(Number(order.total_amount))}</TableCell>
+                  <TableCell className="hidden sm:table-cell capitalize text-xs">
                     {order.payment_method.replace("_", " ")}
                   </TableCell>
                   <TableCell>
                     {getPaymentStatusBadge(order.payment_status)}
                   </TableCell>
-                  <TableCell>
-                    <Badge>{order.order_status}</Badge>
+                  <TableCell className="hidden lg:table-cell">
+                    <Badge className="text-xs">{order.order_status}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">
                     {new Date(order.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" asChild>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" asChild className="text-xs h-8 px-2">
                         <Link to={`/admin/orders/${order.id}`}>查看</Link>
                       </Button>
                       <Button 
@@ -163,8 +163,9 @@ export default function Orders() {
                         size="sm"
                         onClick={() => handleExportInvoice(order)}
                         title="导出发票"
+                        className="h-8 w-8 p-0"
                       >
-                        <FileText className="h-4 w-4" />
+                        <FileText className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </TableCell>

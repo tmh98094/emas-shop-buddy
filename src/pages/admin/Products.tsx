@@ -111,10 +111,10 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-2xl md:text-4xl font-bold text-primary">Products</h1>
-        <Button onClick={() => navigate("/admin/products/new")} size="sm" className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <h1 className="text-xl md:text-3xl font-bold text-primary">Products</h1>
+        <Button onClick={() => navigate("/admin/products/new")} size="sm" className="w-full sm:w-auto text-sm h-9">
+          <Plus className="h-4 w-4 mr-1" />
           Add Product
         </Button>
       </div>
@@ -136,17 +136,17 @@ export default function Products() {
                     {categoryProducts.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-4">No products in this category</p>
                     ) : (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto -mx-6">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-16">Image</TableHead>
-                              <TableHead>Name</TableHead>
-                              <TableHead className="hidden sm:table-cell">Gold Type</TableHead>
-                              <TableHead className="hidden md:table-cell">Weight</TableHead>
-                              <TableHead className="hidden lg:table-cell">Labour Fee</TableHead>
-                              <TableHead>Stock</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
+                              <TableHead className="w-12 text-xs">Image</TableHead>
+                              <TableHead className="text-xs">Name</TableHead>
+                              <TableHead className="hidden sm:table-cell text-xs">Type</TableHead>
+                              <TableHead className="hidden md:table-cell text-xs">Weight</TableHead>
+                              <TableHead className="hidden lg:table-cell text-xs">Labour</TableHead>
+                              <TableHead className="text-xs">Stock</TableHead>
+                              <TableHead className="text-right text-xs">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -156,43 +156,44 @@ export default function Products() {
                               
                               return (
                                 <TableRow key={product.id}>
-                                  <TableCell>
-                                    {thumbnailImage ? (
-                                      <img 
-                                        src={thumbnailImage} 
-                                        alt={product.name}
-                                        className="w-12 h-12 object-cover rounded"
-                                      />
-                                    ) : (
-                                      <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center">
-                                        💍
-                                      </div>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="font-medium">{product.name}</TableCell>
-                                  <TableCell className="hidden sm:table-cell">{product.gold_type}</TableCell>
-                                  <TableCell className="hidden md:table-cell">{product.weight_grams}g</TableCell>
-                                  <TableCell className="hidden lg:table-cell">RM {formatPrice(Number(product.labour_fee))}</TableCell>
+                                   <TableCell>
+                                     {thumbnailImage ? (
+                                       <img 
+                                         src={thumbnailImage} 
+                                         alt={product.name}
+                                         className="w-10 h-10 object-cover rounded"
+                                       />
+                                     ) : (
+                                       <div className="w-10 h-10 bg-secondary rounded flex items-center justify-center text-xs">
+                                         💍
+                                       </div>
+                                     )}
+                                   </TableCell>
+                                   <TableCell className="font-medium text-xs md:text-sm">{product.name}</TableCell>
+                                   <TableCell className="hidden sm:table-cell text-xs">{product.gold_type}</TableCell>
+                                   <TableCell className="hidden md:table-cell text-xs">{product.weight_grams}g</TableCell>
+                                   <TableCell className="hidden lg:table-cell text-xs">RM {formatPrice(Number(product.labour_fee))}</TableCell>
                                   <TableCell>
                                     <Badge variant={product.stock <= (product.low_stock_threshold || 10) ? "destructive" : "default"}>
                                       {product.stock}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell>
-                                    <div className="flex gap-2 justify-end">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={() => navigate(`/admin/products/${product.id}`)}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="sm">
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                          </Button>
-                                        </AlertDialogTrigger>
+                                   <TableCell>
+                                     <div className="flex gap-1 justify-end">
+                                       <Button 
+                                         variant="ghost" 
+                                         size="sm" 
+                                         onClick={() => navigate(`/admin/products/${product.id}`)}
+                                         className="text-xs h-8 px-2"
+                                       >
+                                         Edit
+                                       </Button>
+                                       <AlertDialog>
+                                         <AlertDialogTrigger asChild>
+                                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                           </Button>
+                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                           <AlertDialogHeader>
                                             <AlertDialogTitle>Delete Product</AlertDialogTitle>

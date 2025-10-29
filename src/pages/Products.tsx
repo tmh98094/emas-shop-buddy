@@ -72,10 +72,8 @@ export default function Products() {
         query = query.gt("stock", 0);
       }
 
-      // Price filter server-side when possible
-      query = query
-        .gte("cached_current_price", priceRange[0])
-        .lte("cached_current_price", priceRange[1]);
+      // Price filter - include NULL prices OR prices in range
+      query = query.or(`cached_current_price.is.null,and(cached_current_price.gte.${priceRange[0]},cached_current_price.lte.${priceRange[1]})`);
 
       // Apply search
       if (searchQuery) {

@@ -214,7 +214,7 @@ export default function ProductForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (saveMutation.isPending) return; // Prevent duplicate submissions
+    if (saveMutation.isPending) return;
     saveMutation.mutate();
   };
 
@@ -270,14 +270,14 @@ export default function ProductForm() {
   }
 
   return (
-    <div className="p-4 md:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">{isEdit ? "Edit Product" : "Add New Product"}</h1>
+    <div className="p-2 md:p-6 lg:p-8">
+      <h1 className="text-xl md:text-2xl font-bold mb-4">{isEdit ? "Edit Product" : "Add New Product"}</h1>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Card className="p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3">Basic Information</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div>
               <Label htmlFor="name">Product Name *</Label>
               <Input
@@ -298,17 +298,18 @@ export default function ProductForm() {
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-3 md:mt-4">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
+              rows={3}
+              className="text-sm"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-3 md:mt-4">
             <div>
               <Label htmlFor="category">分类</Label>
               <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value, sub_category_id: "" })}>
@@ -339,10 +340,10 @@ export default function ProductForm() {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Pricing & Stock</h2>
+        <Card className="p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3">Pricing & Stock</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div>
               <Label htmlFor="gold_type">Gold Type *</Label>
               <Select value={formData.gold_type} onValueChange={(value: "916" | "999") => setFormData({ ...formData, gold_type: value })}>
@@ -392,14 +393,14 @@ export default function ProductForm() {
             </div>
           </div>
 
-          <div className="flex gap-4 mt-4 flex-wrap">
+          <div className="flex flex-wrap gap-3 md:gap-4 mt-3 md:mt-4">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="featured"
                 checked={formData.is_featured}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked as boolean })}
               />
-              <Label htmlFor="featured">精选</Label>
+              <Label htmlFor="featured" className="text-sm">精选</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -407,7 +408,7 @@ export default function ProductForm() {
                 checked={formData.is_best_seller}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_best_seller: checked as boolean })}
               />
-              <Label htmlFor="bestseller">畅销</Label>
+              <Label htmlFor="bestseller" className="text-sm">畅销</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -415,7 +416,7 @@ export default function ProductForm() {
                 checked={formData.is_new_arrival}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_new_arrival: checked as boolean })}
               />
-              <Label htmlFor="newarrival">新品</Label>
+              <Label htmlFor="newarrival" className="text-sm">新品</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -423,12 +424,12 @@ export default function ProductForm() {
                 checked={formData.is_preorder}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_preorder: checked as boolean })}
               />
-              <Label htmlFor="preorder">预订</Label>
+              <Label htmlFor="preorder" className="text-sm">预订</Label>
             </div>
           </div>
 
           {formData.is_preorder && (
-            <div className="mt-4">
+            <div className="mt-3 md:mt-4">
               <Label htmlFor="preorder_deposit">预订定金 (RM)</Label>
               <Input
                 id="preorder_deposit"
@@ -436,16 +437,17 @@ export default function ProductForm() {
                 step="0.01"
                 value={formData.preorder_deposit}
                 onChange={(e) => setFormData({ ...formData, preorder_deposit: e.target.value })}
+                className="text-sm"
               />
               <p className="text-xs text-muted-foreground mt-1">预订商品客户需支付的定金金额</p>
             </div>
           )}
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Media</h2>
+        <Card className="p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3">Media</h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-3 md:mb-4">
             {existingImages.map((img) => (
               <div key={img.id} className="relative border rounded-lg p-2 bg-card">
                 {img.media_type === 'video' ? (
@@ -511,9 +513,9 @@ export default function ProductForm() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="images" className="cursor-pointer">
-                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary transition-colors">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-2 font-medium">Click to upload and crop images (1:1 ratio)</p>
+                <div className="border-2 border-dashed rounded p-4 md:p-8 text-center hover:border-primary transition-colors">
+                  <Upload className="mx-auto h-8 md:h-12 w-8 md:w-12 text-muted-foreground" />
+                  <p className="mt-2 text-sm md:text-base font-medium">Click to upload and crop images (1:1 ratio)</p>
                   <p className="text-xs text-muted-foreground mt-1">Select multiple images - you can adjust crop for each</p>
                 </div>
                 <Input
@@ -529,9 +531,9 @@ export default function ProductForm() {
 
             <div>
               <Label htmlFor="videos" className="cursor-pointer">
-                <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-2">Click to upload videos</p>
+                <div className="border-2 border-dashed rounded p-4 md:p-8 text-center hover:border-primary">
+                  <Upload className="mx-auto h-8 md:h-12 w-8 md:w-12 text-muted-foreground" />
+                  <p className="mt-2 text-sm md:text-base">Click to upload videos</p>
                 </div>
                 <Input
                   id="videos"
@@ -542,17 +544,17 @@ export default function ProductForm() {
                   onChange={(e) => setVideos(Array.from(e.target.files || []))}
                 />
               </Label>
-              {videos.length > 0 && <p className="mt-2">{videos.length} new video(s) selected</p>}
+              {videos.length > 0 && <p className="mt-2 text-sm">{videos.length} new video(s) selected</p>}
             </div>
           </div>
         </Card>
 
-        <div className="flex gap-4">
-          <Button type="submit" disabled={saveMutation.isPending}>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button type="submit" disabled={saveMutation.isPending} className="w-full sm:w-auto">
             {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEdit ? "Update Product" : "Create Product"}
           </Button>
-          <Button type="button" variant="outline" onClick={() => navigate("/admin/products")}>
+          <Button type="button" variant="outline" onClick={() => navigate("/admin/products")} className="w-full sm:w-auto">
             Cancel
           </Button>
         </div>

@@ -66,12 +66,12 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-secondary border-b border-border p-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
+      <header className="md:hidden bg-secondary border-b border-border p-2 flex items-center justify-between">
+        <h1 className="text-base font-bold text-primary">JJ Emas <T zh="管理" en="Admin" /></h1>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
-              <Menu className="h-6 w-6" />
+            <Button variant="ghost" size="icon" className="text-foreground hover:text-primary h-9 w-9">
+              <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="bg-secondary w-64 p-0">
@@ -96,7 +96,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-3 md:p-6 lg:p-8 overflow-auto bg-white">
+      <main className="flex-1 p-2 md:p-6 lg:p-8 overflow-auto bg-white">
         <Outlet />
       </main>
     </div>

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 
@@ -77,6 +77,7 @@ export const ImageCropper = ({ image, onCropComplete, onClose, open }: ImageCrop
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crop Image (1:1)</DialogTitle>
+          <DialogDescription>Adjust the image to a square aspect ratio (1:1) for optimal display.</DialogDescription>
         </DialogHeader>
         <div className="relative h-64 md:h-96 w-full">
           <Cropper

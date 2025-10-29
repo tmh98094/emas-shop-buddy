@@ -72,22 +72,22 @@ export default function OrderDetail() {
   if (!order) return <div>Order not found</div>;
 
   return (
-    <div className="p-4 md:p-8">
-      <h1 className="text-xl md:text-3xl font-bold mb-6">Order #{order.order_number}</h1>
+    <div className="p-2 md:p-6">
+      <h1 className="text-lg md:text-2xl font-bold mb-4">Order #{order.order_number}</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
-          <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="p-4 md:p-6">
+          <h2 className="text-base md:text-lg font-semibold mb-3">Customer Information</h2>
+          <div className="space-y-1.5 text-sm">
             <div><strong>Name:</strong> {order.full_name}</div>
             <div><strong>Phone:</strong> {order.phone_number}</div>
             <div><strong>Email:</strong> {order.email || "N/A"}</div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Order Details</h2>
-          <div className="space-y-2">
+        <Card className="p-4 md:p-6">
+          <h2 className="text-base md:text-lg font-semibold mb-3">Order Details</h2>
+          <div className="space-y-1.5 text-sm">
             <div><strong>Order Date:</strong> {new Date(order.created_at).toLocaleDateString()}</div>
             <div><strong>Total Amount:</strong> RM {formatPrice(Number(order.total_amount))}</div>
             <div><strong>Payment Method:</strong> {order.payment_method.replace("_", " ").toUpperCase()}</div>
@@ -95,38 +95,38 @@ export default function OrderDetail() {
         </Card>
       </div>
 
-      <Card className="p-6 mt-6">
-        <h2 className="text-xl font-semibold mb-4">Order Items</h2>
-        <div className="space-y-4">
+      <Card className="p-4 md:p-6 mt-4">
+        <h2 className="text-base md:text-lg font-semibold mb-3">Order Items</h2>
+        <div className="space-y-3">
           {order.order_items?.map((item: any) => (
-            <div key={item.id} className="border-b pb-4">
-              <div className="flex justify-between">
-                <div>
-                  <div className="font-semibold">{item.product_name}</div>
-                  <div className="text-sm text-muted-foreground">
+            <div key={item.id} className="border-b pb-3">
+              <div className="flex justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{item.product_name}</div>
+                  <div className="text-xs text-muted-foreground">
                     {item.gold_type} • {item.weight_grams}g • Qty: {item.quantity}
                   </div>
                   {item.variant_name && (
-                    <div className="text-sm">{item.variant_name}: {item.variant_value}</div>
+                    <div className="text-xs">{item.variant_name}: {item.variant_value}</div>
                   )}
                   {item.color_name && (
-                    <div className="text-sm">Color: {item.color_name}</div>
+                    <div className="text-xs">Color: {item.color_name}</div>
                   )}
                 </div>
-                <div className="font-semibold">RM {formatPrice(parseFloat(item.subtotal))}</div>
+                <div className="font-semibold text-sm whitespace-nowrap">RM {formatPrice(parseFloat(item.subtotal))}</div>
               </div>
             </div>
           ))}
         </div>
       </Card>
 
-      <Card className="p-6 mt-6">
-        <h2 className="text-xl font-semibold mb-4">Update Status</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card className="p-4 md:p-6 mt-4">
+        <h2 className="text-base md:text-lg font-semibold mb-3">Update Status</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className="block text-sm font-medium mb-2">Order Status</label>
+            <label className="block text-xs md:text-sm font-medium mb-1.5">Order Status</label>
             <Select value={orderStatus} onValueChange={(value: OrderStatus) => setOrderStatus(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -138,9 +138,9 @@ export default function OrderDetail() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Payment Status</label>
+            <label className="block text-xs md:text-sm font-medium mb-1.5">Payment Status</label>
             <Select value={paymentStatus} onValueChange={(value: PaymentStatus) => setPaymentStatus(value)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -151,24 +151,25 @@ export default function OrderDetail() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="postage">Postage Delivery ID</Label>
+            <Label htmlFor="postage" className="text-xs md:text-sm">Postage Delivery ID</Label>
             <Input
               id="postage"
               value={postageDeliveryId}
               onChange={(e) => setPostageDeliveryId(e.target.value)}
               placeholder="Enter tracking number"
+              className="h-9 text-sm"
             />
           </div>
         </div>
-        <Button className="mt-4" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
+        <Button className="mt-3 w-full md:w-auto text-sm h-9" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
           Update Order
         </Button>
       </Card>
 
       {order.notes && (
-        <Card className="p-6 mt-6">
-          <h2 className="text-xl font-semibold mb-4">Notes</h2>
-          <p>{order.notes}</p>
+        <Card className="p-4 md:p-6 mt-4">
+          <h2 className="text-base md:text-lg font-semibold mb-3">Notes</h2>
+          <p className="text-sm">{order.notes}</p>
         </Card>
       )}
     </div>

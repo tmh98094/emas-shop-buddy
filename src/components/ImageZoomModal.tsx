@@ -1,6 +1,7 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface ImageZoomModalProps {
   images: Array<{ image_url: string; media_type?: string }>;
@@ -17,6 +18,10 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl w-[95vw] h-[85vh] md:h-[90vh] p-0">
+        <VisuallyHidden>
+          <DialogTitle>Product Image Gallery</DialogTitle>
+          <DialogDescription>View product images and videos in fullscreen. Use arrow buttons to navigate.</DialogDescription>
+        </VisuallyHidden>
         <div className="relative w-full h-full bg-black/95 flex items-center justify-center">
           <Button
             variant="ghost"
