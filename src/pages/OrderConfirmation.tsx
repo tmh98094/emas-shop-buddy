@@ -169,7 +169,7 @@ export default function OrderConfirmation() {
                   ) : (
                     <p>
                       <T 
-                        zh="作为访客，您可以使用您的手机号码在线查看订单状态。前往订单跟踪页面输入您的电话号码。" 
+                        zh="作为访客，您可以使用您的手机号码在线查看订单状态。前往[查询订单]页面输入您的电话号码。" 
                         en="As a guest, you can check your order status online using your mobile number. Go to Order Tracking and enter your phone number." 
                       />
                     </p>
