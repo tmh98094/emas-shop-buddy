@@ -1,9 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Accordion,
   AccordionContent,
@@ -23,6 +35,8 @@ import { formatPrice } from "@/lib/price-utils";
 
 export default function Products() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["admin-categories"],
@@ -62,6 +76,39 @@ export default function Products() {
 
   const uncategorizedProducts = products?.filter(p => !p.category_id) || [];
 
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      // Delete product images from storage
+      const { data: images } = await supabase
+        .from("product_images")
+        .select("image_url")
+        .eq("product_id", productId);
+      
+      if (images) {
+        for (const img of images) {
+          const path = img.image_url.split("/product-images/")[1];
+          if (path) {
+            await supabase.storage.from("product-images").remove([path]);
+          }
+        }
+      }
+      
+      // Delete product images records
+      await supabase.from("product_images").delete().eq("product_id", productId);
+      
+      // Delete product
+      const { error } = await supabase.from("products").delete().eq("id", productId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Product deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -99,7 +146,7 @@ export default function Products() {
                               <TableHead className="hidden md:table-cell">Weight</TableHead>
                               <TableHead className="hidden lg:table-cell">Labour Fee</TableHead>
                               <TableHead>Stock</TableHead>
-                              <TableHead>Actions</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -132,13 +179,39 @@ export default function Products() {
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      onClick={() => navigate(`/admin/products/${product.id}`)}
-                                    >
-                                      Edit
-                                    </Button>
+                                    <div className="flex gap-2 justify-end">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => navigate(`/admin/products/${product.id}`)}
+                                      >
+                                        Edit
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="sm">
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => deleteProductMutation.mutate(product.id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -175,7 +248,7 @@ export default function Products() {
                           <TableHead className="hidden md:table-cell">Weight</TableHead>
                           <TableHead className="hidden lg:table-cell">Labour Fee</TableHead>
                           <TableHead>Stock</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -208,13 +281,39 @@ export default function Products() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => navigate(`/admin/products/${product.id}`)}
-                                >
-                                  Edit
-                                </Button>
+                                <div className="flex gap-2 justify-end">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => navigate(`/admin/products/${product.id}`)}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteProductMutation.mutate(product.id)}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </TableCell>
                             </TableRow>
                           );

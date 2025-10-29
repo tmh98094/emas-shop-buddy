@@ -168,10 +168,10 @@ export default function PreOrders() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-0">
       <div>
-        <h2 className="text-3xl font-bold">预订管理</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold">预订管理</h2>
+        <p className="text-sm md:text-base text-muted-foreground">
           管理客户预订和订金支付
         </p>
       </div>
@@ -183,15 +183,15 @@ export default function PreOrders() {
           </Card>
         ) : (
           preOrders?.map((preOrder: any) => (
-            <Card key={preOrder.id} className="p-6">
-              <div className="flex items-start justify-between mb-4">
+            <Card key={preOrder.id} className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
                 <div className="flex items-center gap-3">
                   {getStatusIcon(preOrder.status)}
                   <div>
-                    <h3 className="font-semibold text-lg">
+                    <h3 className="font-semibold text-base md:text-lg">
                       {preOrder.orders?.order_number}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
                       {preOrder.products?.name}
                     </p>
                   </div>
@@ -199,42 +199,42 @@ export default function PreOrders() {
                 {getStatusBadge(preOrder.status)}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">客户信息</p>
-                  <p className="font-medium">{preOrder.orders?.full_name}</p>
-                  <p className="text-sm">{preOrder.orders?.phone_number}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">客户信息</p>
+                  <p className="font-medium text-sm md:text-base">{preOrder.orders?.full_name}</p>
+                  <p className="text-xs md:text-sm">{preOrder.orders?.phone_number}</p>
                   {preOrder.orders?.email && (
-                    <p className="text-sm">{preOrder.orders?.email}</p>
+                    <p className="text-xs md:text-sm">{preOrder.orders?.email}</p>
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">产品详情</p>
-                  <p className="text-sm">
+                  <p className="text-xs md:text-sm text-muted-foreground">产品详情</p>
+                  <p className="text-xs md:text-sm">
                     黄金类型: {preOrder.products?.gold_type}
                   </p>
-                  <p className="text-sm">
+                  <p className="text-xs md:text-sm">
                     重量: {preOrder.products?.weight_grams}g
                   </p>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4 mb-4 p-4 bg-muted rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4 p-3 md:p-4 bg-muted rounded-lg">
                 <div>
-                  <p className="text-sm text-muted-foreground">已支付订金</p>
-                  <p className="font-bold text-primary">
+                  <p className="text-xs md:text-sm text-muted-foreground">已支付订金</p>
+                  <p className="font-bold text-sm md:text-base text-primary">
                     RM {formatPrice(preOrder.deposit_paid)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">剩余余额</p>
-                  <p className="font-bold">
+                  <p className="text-xs md:text-sm text-muted-foreground">剩余余额</p>
+                  <p className="font-bold text-sm md:text-base">
                     RM {formatPrice(preOrder.balance_due)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">创建时间</p>
-                  <p className="text-sm">
+                <div className="col-span-2 md:col-span-1">
+                  <p className="text-xs md:text-sm text-muted-foreground">创建时间</p>
+                  <p className="text-xs md:text-sm">
                     {new Date(preOrder.created_at).toLocaleDateString("zh-CN")}
                   </p>
                 </div>
@@ -253,6 +253,7 @@ export default function PreOrders() {
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
+                        size="sm"
                         onClick={() => {
                           setSelectedPreOrder(preOrder);
                           setNotes(preOrder.notes || "");
@@ -307,11 +308,11 @@ export default function PreOrders() {
 
                 {preOrder.status === "ready_for_payment" && (
                   <>
-                    <Button onClick={() => handleMarkAsCompleted(preOrder)}>
+                    <Button size="sm" onClick={() => handleMarkAsCompleted(preOrder)}>
                       标记为已完成
                     </Button>
                     {preOrder.ready_at && (
-                      <p className="text-sm text-muted-foreground self-center">
+                      <p className="text-xs md:text-sm text-muted-foreground self-center">
                         准备时间:{" "}
                         {new Date(preOrder.ready_at).toLocaleDateString("zh-CN")}
                       </p>
@@ -320,7 +321,7 @@ export default function PreOrders() {
                 )}
 
                 {preOrder.status === "completed" && preOrder.final_payment_at && (
-                  <p className="text-sm text-muted-foreground self-center">
+                  <p className="text-xs md:text-sm text-muted-foreground self-center">
                     完成时间:{" "}
                     {new Date(preOrder.final_payment_at).toLocaleDateString("zh-CN")}
                   </p>
@@ -328,6 +329,7 @@ export default function PreOrders() {
 
                 {preOrder.status !== "cancelled" && preOrder.status !== "completed" && (
                   <Button
+                    size="sm"
                     variant="destructive"
                     onClick={() => handleCancel(preOrder)}
                   >

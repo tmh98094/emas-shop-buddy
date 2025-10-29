@@ -214,6 +214,7 @@ export default function ProductForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveMutation.isPending) return; // Prevent duplicate submissions
     saveMutation.mutate();
   };
 

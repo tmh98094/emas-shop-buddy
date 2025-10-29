@@ -145,6 +145,10 @@ export default function Checkout() {
   }, []);
 
   const getShippingCost = () => {
+    // Check if all items are pre-orders
+    const allPreOrders = items.every(item => item.product?.is_preorder);
+    if (allPreOrders) return 0;
+    
     if (shippingRegion === "singapore") return 40;
     if (shippingRegion === "east_malaysia") return 15;
     return 10; // west_malaysia
@@ -318,6 +322,33 @@ export default function Checkout() {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // Create pre-order records for pre-order items
+      const preOrderRecords = items
+        .filter(item => item.product?.is_preorder)
+        .map(item => {
+          const product = item.product;
+          const depositPaid = product.preorder_deposit ? parseFloat(product.preorder_deposit.toString()) * item.quantity : 100 * item.quantity;
+          const goldPrice = item.gold_price_snapshot || goldPrices?.[product.gold_type as "916" | "999"] || 0;
+          const totalPrice = calculateItemTotal(goldPrice, parseFloat(product.weight_grams as string), parseFloat(product.labour_fee as string), item.quantity);
+          const balanceDue = totalPrice - depositPaid;
+          
+          return {
+            order_id: orderId,
+            product_id: item.product_id,
+            deposit_paid: depositPaid,
+            balance_due: balanceDue,
+            status: "pending",
+          };
+        });
+      
+      if (preOrderRecords.length > 0) {
+        const { error: preOrderError } = await supabase
+          .from("pre_orders")
+          .insert(preOrderRecords);
+        
+        if (preOrderError) throw preOrderError;
+      }
 
       await clearCart();
 

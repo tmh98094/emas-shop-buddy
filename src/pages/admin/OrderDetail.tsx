@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatPrice } from "@/lib/price-utils";
 
 type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
@@ -37,12 +37,14 @@ export default function OrderDetail() {
     },
   });
 
-  // Set initial status when order loads
-  if (order && orderStatus === "pending" && order.order_status !== orderStatus) {
-    setOrderStatus(order.order_status as OrderStatus);
-    setPaymentStatus(order.payment_status as PaymentStatus);
-    setPostageDeliveryId(order.postage_delivery_id || "");
-  }
+  // Set initial status when order loads - use useEffect to avoid infinite loops
+  useEffect(() => {
+    if (order) {
+      setOrderStatus(order.order_status as OrderStatus);
+      setPaymentStatus(order.payment_status as PaymentStatus);
+      setPostageDeliveryId(order.postage_delivery_id || "");
+    }
+  }, [order]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -70,10 +72,10 @@ export default function OrderDetail() {
   if (!order) return <div>Order not found</div>;
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Order #{order.order_number}</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-xl md:text-3xl font-bold mb-6">Order #{order.order_number}</h1>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
           <div className="space-y-2">
@@ -120,7 +122,7 @@ export default function OrderDetail() {
 
       <Card className="p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4">Update Status</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Order Status</label>
             <Select value={orderStatus} onValueChange={(value: OrderStatus) => setOrderStatus(value)}>

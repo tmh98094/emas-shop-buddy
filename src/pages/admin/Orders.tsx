@@ -113,44 +113,64 @@ export default function Orders() {
               <TableHead>手机号</TableHead>
               <TableHead>总计</TableHead>
               <TableHead>付款方式</TableHead>
-              <TableHead>状态</TableHead>
+              <TableHead>付款状态</TableHead>
+              <TableHead>订单状态</TableHead>
               <TableHead>日期</TableHead>
               <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders?.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.order_number}</TableCell>
-                <TableCell>{order.full_name}</TableCell>
-                <TableCell>{order.phone_number}</TableCell>
-                <TableCell>RM {formatPrice(Number(order.total_amount))}</TableCell>
-                <TableCell className="capitalize">
-                  {order.payment_method.replace("_", " ")}
-                </TableCell>
-                <TableCell>
-                  <Badge>{order.order_status}</Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(order.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/orders/${order.id}`}>查看</Link>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleExportInvoice(order)}
-                      title="导出发票"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {orders?.map((order) => {
+              const getPaymentStatusBadge = (status: string) => {
+                const variants: Record<string, "default" | "secondary" | "destructive"> = {
+                  pending: "secondary",
+                  completed: "default",
+                  failed: "destructive"
+                };
+                const colors: Record<string, string> = {
+                  pending: "bg-amber-100 text-amber-800 border-amber-300",
+                  completed: "bg-green-100 text-green-800 border-green-300",
+                  failed: "bg-red-100 text-red-800 border-red-300"
+                };
+                return <Badge className={colors[status] || ""}>{status}</Badge>;
+              };
+              
+              return (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">{order.order_number}</TableCell>
+                  <TableCell>{order.full_name}</TableCell>
+                  <TableCell>{order.phone_number}</TableCell>
+                  <TableCell>RM {formatPrice(Number(order.total_amount))}</TableCell>
+                  <TableCell className="capitalize">
+                    {order.payment_method.replace("_", " ")}
+                  </TableCell>
+                  <TableCell>
+                    {getPaymentStatusBadge(order.payment_status)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge>{order.order_status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/admin/orders/${order.id}`}>查看</Link>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleExportInvoice(order)}
+                        title="导出发票"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         </div>
