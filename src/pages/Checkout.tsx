@@ -73,18 +73,15 @@ export default function Checkout() {
           let extractedPhone = "";
           
           if (profile.phone_number) {
-            // Try to match country code patterns
-            const phoneMatch = profile.phone_number.match(/^(\+\d{2,3})(.+)$/);
+            // Use strict regex to match E.164 format: +CC followed by national number
+            const phoneMatch = profile.phone_number.match(/^\+(\d{1,3})(\d+)$/);
             if (phoneMatch) {
-              extractedCountryCode = phoneMatch[1];
-              extractedPhone = phoneMatch[2].replace(/\D/g, "");
-            } else if (profile.phone_number.startsWith("+")) {
-              // Has + but couldn't parse normally, try to extract
-              const plusIndex = profile.phone_number.indexOf("+");
-              extractedCountryCode = profile.phone_number.substring(plusIndex, plusIndex + 3);
-              extractedPhone = profile.phone_number.substring(plusIndex + 3).replace(/\D/g, "");
+              const cc = `+${phoneMatch[1]}`;
+              // Only accept +60 or +65, fallback to +60 otherwise
+              extractedCountryCode = (cc === "+60" || cc === "+65") ? cc : "+60";
+              extractedPhone = phoneMatch[2];
             } else {
-              // Fallback: assume +60 and extract all digits
+              // Fallback: extract all digits and assume +60
               extractedPhone = profile.phone_number.replace(/\D/g, "");
             }
           }
@@ -244,9 +241,12 @@ export default function Checkout() {
       const sequence = (seq as number | null) ?? null;
       const orderNumber = sequence ? `JJ-${String(sequence).padStart(5, '0')}` : `JJ-${Date.now()}`;
 
-      // Ensure phone number is clean digits only before normalizing
+      // Ensure country code is strictly +60 or +65
+      const validCountryCode = (countryCodePhone === "+60" || countryCodePhone === "+65") ? countryCodePhone : "+60";
+      
+      // Clean phone number and normalize with valid country code
       const cleanPhoneNumber = formData.phone_number.replace(/\D/g, '');
-      const normalizedPhone = normalizePhone(cleanPhoneNumber, countryCodePhone);
+      const normalizedPhone = normalizePhone(cleanPhoneNumber, validCountryCode);
 
       const { error: orderError } = await supabase
         .from("orders")

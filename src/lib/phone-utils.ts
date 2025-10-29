@@ -11,16 +11,25 @@ export function normalizePhone(input: string, countryCode: CountryCode = "+60"):
   const cc = countryCode.replace(/[^\d+]/g, ""); // Remove everything except digits and +
   const digits = digitsOnly(input);
 
-  // If input already starts with country code (with or without +), strip duplicate
-  const ccNoPlus = cc.replace("+", "");
-
-  if (digits.startsWith(ccNoPlus)) {
-    return `+${digits}`.replace(/\+{2,}/g, "+"); // Remove duplicate + signs
+  // Trust embedded country codes: if digits start with 60 or 65, use them directly
+  if (digits.startsWith("60") || digits.startsWith("65")) {
+    return `+${digits}`;
   }
 
+  const ccNoPlus = cc.replace("+", "");
+
   // Handle local formats starting with 0 (e.g., 01112345678 => +60 1112345678)
-  const local = digits.startsWith("0") ? digits.slice(1) : digits;
-  return `${cc}${local}`;
+  if (digits.startsWith("0")) {
+    return `${cc}${digits.slice(1)}`;
+  }
+
+  // For Malaysian numbers: if 9-11 digits starting with "1" (e.g., 1111229611) and cc is +60
+  if (cc === "+60" && digits.length >= 9 && digits.length <= 11 && digits.startsWith("1")) {
+    return `${cc}${digits}`;
+  }
+
+  // Default: prepend country code
+  return `${cc}${digits}`;
 }
 
 // Generate common variants to improve matching against previously stored values
@@ -41,8 +50,11 @@ export function generatePhoneVariants(input: string, countryCode: CountryCode = 
     local = `0${digits}`;
   }
 
+  // Add variant with + prefix and raw digits to catch wrongly stored numbers (e.g., +1111229611)
+  const plusDigits = `+${digits}`;
+
   // Unique list
-  const set = new Set([normalized, noPlus, local, digits]);
+  const set = new Set([normalized, noPlus, local, digits, plusDigits]);
   return Array.from(set).filter(Boolean);
 }
 

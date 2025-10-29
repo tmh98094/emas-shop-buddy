@@ -29,7 +29,13 @@ export default function OrderTracking() {
       // Normalize the phone number first
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
       const variants = generatePhoneVariants(phoneNumber, countryCode);
-      const orFilter = variants.map((v) => `phone_number.eq.${v}`).join(",");
+      
+      // Add extra variant to catch wrongly stored numbers with just +digits
+      const digitsOnly = phoneNumber.replace(/\D/g, '');
+      const plusDigitsVariant = `+${digitsOnly}`;
+      const allVariants = [...new Set([...variants, plusDigitsVariant])];
+      
+      const orFilter = allVariants.map((v) => `phone_number.eq.${v}`).join(",");
 
       const { data, error } = await supabase
         .from("orders")
