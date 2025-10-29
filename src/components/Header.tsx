@@ -77,7 +77,7 @@ export const Header = () => {
                       key={item.name}
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg text-foreground hover:text-primary transition-colors font-medium py-3 px-4 -mx-4 rounded-md hover:bg-accent touch-manipulation"
+                      className="text-lg text-foreground hover:text-primary hover:bg-primary/10 transition-colors font-medium py-3 px-4 -mx-4 rounded-md touch-manipulation"
                       aria-label={`Navigate to ${item.en}`}
                     >
                       <T zh={item.name} en={item.en} />

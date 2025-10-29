@@ -33,7 +33,7 @@ export const ProductSection = ({ title, filter }: ProductSectionProps) => {
         query = query.eq("is_new_arrival", true);
       }
 
-      query = query.limit(8);
+      query = query.limit(20);
 
       const { data, error } = await query;
       if (error) throw error;

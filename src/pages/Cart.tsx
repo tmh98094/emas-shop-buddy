@@ -39,13 +39,19 @@ export default function Cart() {
   });
 
   const calculateItemPrice = (item: any) => {
+    const product = item.product;
+    
+    // For pre-order items, use deposit amount
+    if (product?.is_preorder && product?.preorder_deposit) {
+      return Math.round(product.preorder_deposit * item.quantity * 100) / 100;
+    }
+    
     // Use locked price if available (Phase 1: Price Locking)
     if (item.calculated_price) {
       return Math.round(item.calculated_price * item.quantity * 100) / 100;
     }
     
     // Fallback to dynamic calculation for old cart items
-    const product = item.product;
     if (!product || !goldPrices) return 0;
     const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
     return Math.round((goldPrice * parseFloat(product.weight_grams) + parseFloat(product.labour_fee)) * item.quantity * 100) / 100;
@@ -147,6 +153,7 @@ export default function Cart() {
               {items.map((item) => {
                 const product = item.product;
                 const itemPrice = calculateItemPrice(item);
+                const isPreorder = product?.is_preorder;
                 
                 return (
                   <Card key={item.id} className="p-4 md:p-6">
@@ -158,12 +165,22 @@ export default function Cart() {
                           className="w-full h-full object-cover rounded"
                           loading="lazy"
                         />
+                        {isPreorder && (
+                          <div className="mt-1 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 px-2 py-1 rounded text-center font-medium">
+                            <T zh="预购" en="Pre-order" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 flex flex-col gap-3">
                         <div className="flex justify-between items-start">
                           <div className="flex-1 pr-2">
                             <h3 className="font-semibold text-base md:text-lg mb-1">{product.name}</h3>
                             <p className="text-xs md:text-sm text-muted-foreground">{product.gold_type} Gold</p>
+                            {isPreorder && (
+                              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                <T zh="定金：RM" en="Deposit: RM" /> {formatPrice(product.preorder_deposit || 100)}
+                              </p>
+                            )}
                           </div>
                           <Button
                             variant="destructive"
@@ -198,7 +215,9 @@ export default function Cart() {
                             </Button>
                           </div>
                           <div className="text-right ml-4">
-                            <p className="text-xs text-muted-foreground mb-1"><T zh="小计" en="Subtotal" /></p>
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {isPreorder ? <T zh="定金小计" en="Deposit Subtotal" /> : <T zh="小计" en="Subtotal" />}
+                            </p>
                             <p className="text-primary font-bold text-lg md:text-xl">
                               RM {formatPrice(itemPrice)}
                             </p>
@@ -217,6 +236,16 @@ export default function Cart() {
             <div>
               <Card className="p-6 sticky top-4 md:top-32">
                 <h2 className="text-xl md:text-2xl font-bold mb-4"><T zh="订单摘要" en="Order Summary" /></h2>
+                {items.some(item => item.product?.is_preorder) && (
+                  <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                    <AlertDescription className="text-sm text-amber-900 dark:text-amber-100">
+                      <T 
+                        zh="此订单包含预购商品。您只需支付定金，商品到货后客服会通过 WhatsApp 联系您支付余款。" 
+                        en="This order contains pre-order items. You only pay the deposit now. Our team will contact you via WhatsApp for the balance when items arrive." 
+                      />
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-base">
                     <span><T zh="小计" en="Subtotal" /></span>

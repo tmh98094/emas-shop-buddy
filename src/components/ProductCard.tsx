@@ -19,6 +19,8 @@ interface ProductCardProps {
     labour_fee: number;
     stock: number;
     description?: string;
+    is_preorder?: boolean | null;
+    preorder_deposit?: number | null;
   };
   imageUrl?: string;
 }
@@ -55,6 +57,17 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
     await addItem(product.id, 1);
   };
 
+  const handleWhatsAppContact = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const phoneNumber = "60122379178";
+    const message = encodeURIComponent(
+      `Hi! I'm interested in the product "${product.name}" which is currently out of stock. Can you let me know when it will be available?\n\nProduct link: ${window.location.origin}/product/${product.slug}`
+    );
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
     <Link to={`/product/${product.slug}`}>
       <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
@@ -89,16 +102,37 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
         </div>
       </CardContent>
         <CardFooter className="p-3 md:p-4 pt-0">
-          <Button 
-            className="w-full text-xs md:text-sm h-9 md:h-10 touch-manipulation" 
-            size="sm"
-            disabled={product.stock === 0}
-            onClick={handleAddToCart}
-            aria-label={`Add ${product.name} to cart`}
-          >
-            <ShoppingCart className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-            <T zh="加入购物车" en="Add to Cart" />
-          </Button>
+          {product.stock === 0 ? (
+            <Button 
+              className="w-full text-xs md:text-sm h-9 md:h-10 touch-manipulation" 
+              size="sm"
+              onClick={handleWhatsAppContact}
+              aria-label={`Contact WhatsApp about ${product.name}`}
+            >
+              <ShoppingCart className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <T zh="联系 WhatsApp" en="Contact WhatsApp" />
+            </Button>
+          ) : product.is_preorder ? (
+            <Button 
+              className="w-full text-xs md:text-sm h-9 md:h-10 touch-manipulation bg-amber-600 hover:bg-amber-700" 
+              size="sm"
+              onClick={handleAddToCart}
+              aria-label={`Pre-order ${product.name}`}
+            >
+              <ShoppingCart className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <T zh="预购" en="Pre-order" />
+            </Button>
+          ) : (
+            <Button 
+              className="w-full text-xs md:text-sm h-9 md:h-10 touch-manipulation" 
+              size="sm"
+              onClick={handleAddToCart}
+              aria-label={`Add ${product.name} to cart`}
+            >
+              <ShoppingCart className="mr-1 md:mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <T zh="加入购物车" en="Add to Cart" />
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </Link>

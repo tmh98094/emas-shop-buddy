@@ -43,6 +43,8 @@ export default function ProductForm() {
   const [thumbnailId, setThumbnailId] = useState<string>("");
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>("");
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -218,19 +220,39 @@ export default function ProductForm() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
+      const filesArray = Array.from(files);
+      setPendingImages(filesArray);
+      setCurrentImageIndex(0);
+      
+      // Start with first image
       const reader = new FileReader();
       reader.onload = () => {
         setImageToCrop(reader.result as string);
         setCropperOpen(true);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(filesArray[0]);
     }
   };
 
   const handleCropComplete = (croppedBlob: Blob) => {
     const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
     setImages([...images, croppedFile]);
+    
+    // Check if there are more images to process
+    const nextIndex = currentImageIndex + 1;
+    if (nextIndex < pendingImages.length) {
+      setCurrentImageIndex(nextIndex);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(pendingImages[nextIndex]);
+    } else {
+      // No more images, clear pending
+      setPendingImages([]);
+      setCurrentImageIndex(0);
+    }
   };
 
   const setExistingThumbnail = async (imageId: string) => {
@@ -247,14 +269,14 @@ export default function ProductForm() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">{isEdit ? "Edit Product" : "Add New Product"}</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">{isEdit ? "Edit Product" : "Add New Product"}</h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Product Name *</Label>
               <Input
@@ -285,7 +307,7 @@ export default function ProductForm() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <Label htmlFor="category">分类</Label>
               <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value, sub_category_id: "" })}>
@@ -319,7 +341,7 @@ export default function ProductForm() {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Pricing & Stock</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="gold_type">Gold Type *</Label>
               <Select value={formData.gold_type} onValueChange={(value: "916" | "999") => setFormData({ ...formData, gold_type: value })}>
@@ -422,7 +444,7 @@ export default function ProductForm() {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Media</h2>
           
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
             {existingImages.map((img) => (
               <div key={img.id} className="relative border rounded-lg p-2 bg-card">
                 {img.media_type === 'video' ? (
@@ -491,12 +513,13 @@ export default function ProductForm() {
                 <div className="border-2 border-dashed rounded p-8 text-center hover:border-primary transition-colors">
                   <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                   <p className="mt-2 font-medium">Click to upload and crop images (1:1 ratio)</p>
-                  <p className="text-xs text-muted-foreground mt-1">Images will be automatically cropped to square format</p>
+                  <p className="text-xs text-muted-foreground mt-1">Select multiple images - you can adjust crop for each</p>
                 </div>
                 <Input
                   id="images"
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   onChange={handleImageSelect}
                 />
@@ -513,7 +536,7 @@ export default function ProductForm() {
                   id="videos"
                   type="file"
                   multiple
-                  accept="video/*"
+                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
                   className="hidden"
                   onChange={(e) => setVideos(Array.from(e.target.files || []))}
                 />
@@ -540,6 +563,8 @@ export default function ProductForm() {
         onClose={() => {
           setCropperOpen(false);
           setImageToCrop("");
+          setPendingImages([]);
+          setCurrentImageIndex(0);
         }}
         onCropComplete={handleCropComplete}
       />

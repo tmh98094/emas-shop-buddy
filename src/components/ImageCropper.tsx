@@ -74,11 +74,11 @@ export const ImageCropper = ({ image, onCropComplete, onClose, open }: ImageCrop
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crop Image (1:1)</DialogTitle>
         </DialogHeader>
-        <div className="relative h-96">
+        <div className="relative h-64 md:h-96 w-full">
           <Cropper
             image={image}
             crop={crop}

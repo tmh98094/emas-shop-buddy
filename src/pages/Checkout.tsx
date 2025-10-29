@@ -152,11 +152,17 @@ export default function Checkout() {
 
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => {
+      const product = item.product;
+      
+      // For pre-order items, use deposit amount
+      if (product?.is_preorder && product?.preorder_deposit) {
+        return sum + Math.round(product.preorder_deposit * item.quantity * 100) / 100;
+      }
+      
       if (item.calculated_price) {
         return sum + Math.round(item.calculated_price * item.quantity * 100) / 100;
       }
       
-      const product = item.product;
       const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
       const itemTotal = calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
       return sum + itemTotal;
@@ -585,20 +591,40 @@ export default function Checkout() {
             <div>
               <Card className="p-6 sticky top-32">
                 <h2 className="text-xl font-semibold mb-4"><T zh="订单摘要" en="Order Summary" /></h2>
+                {items.some(item => item.product?.is_preorder) && (
+                  <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                    <AlertDescription className="text-sm text-amber-900 dark:text-amber-100">
+                      <T 
+                        zh="此订单包含预购商品。您只需支付定金，商品到货后客服会通过 WhatsApp 联系您支付余款。" 
+                        en="This order contains pre-order items. You only pay the deposit now. Our team will contact you via WhatsApp for the balance when items arrive." 
+                      />
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-4 mb-6">
                   {items.map((item) => {
                     const product = item.product;
-                    const itemTotal = item.calculated_price 
-                      ? Math.round(item.calculated_price * item.quantity * 100) / 100
-                      : (() => {
-                          const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-                          return calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
-                        })();
+                    const isPreorder = product?.is_preorder;
+                    const itemTotal = isPreorder && product?.preorder_deposit
+                      ? Math.round(product.preorder_deposit * item.quantity * 100) / 100
+                      : item.calculated_price 
+                        ? Math.round(item.calculated_price * item.quantity * 100) / 100
+                        : (() => {
+                            const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
+                            return calculateItemTotal(goldPrice, parseFloat(product.weight_grams), parseFloat(product.labour_fee), item.quantity);
+                          })();
                     
                     return (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span>{product.name} x {item.quantity}</span>
-                        <span>RM {formatPrice(itemTotal)}</span>
+                      <div key={item.id} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="flex-1">{product.name} x {item.quantity}</span>
+                          <span>RM {formatPrice(itemTotal)}</span>
+                        </div>
+                        {isPreorder && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            <T zh="（仅定金）" en="(Deposit only)" />
+                          </p>
+                        )}
                       </div>
                     );
                   })}

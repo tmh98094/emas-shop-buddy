@@ -38,12 +38,13 @@ export const HeroCarousel = () => {
   ];
 
   return (
-    <Carousel 
-      className="w-full" 
-      opts={{ loop: true }}
-      plugins={[autoplayPlugin.current]}
-      setApi={setApi}
-    >
+    <div className="overflow-hidden">
+      <Carousel 
+        className="w-full" 
+        opts={{ loop: true }}
+        plugins={[autoplayPlugin.current]}
+        setApi={setApi}
+      >
       <CarouselContent>
         {slides.map((slide, index) => (
           <CarouselItem key={index}>
@@ -85,5 +86,6 @@ export const HeroCarousel = () => {
       <CarouselPrevious className="left-2 md:left-4 bg-secondary/80 hover:bg-secondary text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
       <CarouselNext className="right-2 md:right-4 bg-secondary/80 hover:bg-secondary text-primary border-primary h-10 w-10 md:h-12 md:w-12" />
     </Carousel>
+    </div>
   );
 };
