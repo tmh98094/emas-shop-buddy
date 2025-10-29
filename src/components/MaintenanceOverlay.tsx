@@ -45,7 +45,7 @@ export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) 
           }}
           className="inline-flex items-center justify-center rounded-md px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 transition"
         >
-          联系WhatsApp客服进行下单
+          联系WhatsApp客服
         </button>
       </div>
     </div>
