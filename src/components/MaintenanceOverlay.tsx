@@ -36,7 +36,7 @@ export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) 
   return (
     <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-card border rounded-lg p-8 text-center shadow-lg">
-        <h1 className="text-2xl font-bold mb-3">Under Maintenance</h1>
+        <h1 className="text-2xl font-bold mb-3">网站维护中</h1>
         <p className="text-muted-foreground mb-6">{message}</p>
         <button
           onClick={() => {
@@ -45,7 +45,7 @@ export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) 
           }}
           className="inline-flex items-center justify-center rounded-md px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 transition"
         >
-          Contact us on WhatsApp
+          联系WhatsApp客服进行下单
         </button>
       </div>
     </div>
