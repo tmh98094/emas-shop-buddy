@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload } from "lucide-react";
+import { Upload, ArrowLeft } from "lucide-react";
 import { T } from "@/components/T";
 import { useQuery } from "@tanstack/react-query";
 
@@ -117,6 +118,16 @@ export default function TouchNGoPayment() {
       
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/checkout')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <T zh="返回结账" en="Back to Checkout" />
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold text-primary mb-8">Touch 'n Go 支付</h1>
 
           <Card className="p-4 md:p-8 space-y-6">
@@ -179,6 +190,7 @@ export default function TouchNGoPayment() {
           </Card>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

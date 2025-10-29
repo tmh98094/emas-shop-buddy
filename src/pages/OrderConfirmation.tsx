@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Package, MapPin, Clock } from "lucide-react";
@@ -151,6 +152,25 @@ export default function OrderConfirmation() {
             <p className="font-semibold">{order.phone_number}</p>
           </div>
 
+          {order.payment_method === "touch_n_go" && (
+            <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-4">
+                <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400 mt-1 flex-shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg text-amber-900 dark:text-amber-100">
+                    <T zh="Touch'n'Go 付款处理时间" en="Touch'n'Go Payment Processing Time" />
+                  </h3>
+                  <p className="text-sm text-amber-900 dark:text-amber-100">
+                    <T 
+                      zh="由于Touch'N'Go付款需要小助理手动确认，付款状态会在1-2小时能进行更新，若需加急请透过Whatsapp进行催单" 
+                      en="Touch'n'Go payments require manual verification. Payment status will be updated within 1-2 hours. For urgent matters, please contact us via WhatsApp" 
+                    />
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6 mb-6 bg-muted border-border">
             <div className="flex items-start gap-4">
               <Package className="h-6 w-6 text-primary mt-1" />
@@ -290,6 +310,7 @@ export default function OrderConfirmation() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

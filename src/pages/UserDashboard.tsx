@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +22,7 @@ export default function UserDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -99,6 +101,38 @@ export default function UserDashboard() {
       return `${match[1]} ${match[2]}-${match[3]} ${match[4]}`;
     }
     return phone;
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
+      return;
+    }
+
+    setCancellingOrderId(orderId);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ order_status: "cancelled" })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Cancelled",
+        description: "Your order has been cancelled and stock has been restored.",
+      });
+
+      // Reload dashboard data
+      await loadDashboardData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingOrderId(null);
+    }
   };
 
   if (loading) {
@@ -237,6 +271,24 @@ export default function UserDashboard() {
                             <T zh="总计" en="Total" />: RM {formatPrice(parseFloat(order.total_amount))}
                           </span>
                           <div className="flex gap-2 flex-wrap">
+                            {order.payment_status === "pending" && order.order_status === "pending" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="flex-1 md:flex-none h-10 md:h-9 touch-manipulation"
+                                onClick={() => handleCancelOrder(order.id)}
+                                disabled={cancellingOrderId === order.id}
+                              >
+                                {cancellingOrderId === order.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    <T zh="取消中..." en="Cancelling..." />
+                                  </>
+                                ) : (
+                                  <T zh="取消订单" en="Cancel Order" />
+                                )}
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -300,6 +352,7 @@ export default function UserDashboard() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

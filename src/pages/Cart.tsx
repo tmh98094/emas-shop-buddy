@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { useCart } from "@/hooks/useCart";
 import { Button } from "@/components/ui/button";
@@ -280,6 +281,7 @@ export default function Cart() {
         )}
       </main>
 
+      <Footer />
       <WhatsAppFloater />
     </div>
   );

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
@@ -236,6 +237,7 @@ export default function ProductDetail() {
         </div>
       </main>
 
+      <Footer />
       <WhatsAppFloater />
     </div>
   );

@@ -878,6 +878,7 @@ export type Database = {
     }
     Functions: {
       cleanup_expired_otps: { Args: never; Returns: undefined }
+      expire_unpaid_orders: { Args: never; Returns: undefined }
       get_next_order_sequence: { Args: never; Returns: number }
       has_role: {
         Args: {

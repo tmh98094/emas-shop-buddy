@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
+import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
@@ -59,30 +60,24 @@ export default function UserProfile() {
         const phone = data.phone_number || "";
         
         if (phone) {
-          // Extract country code and remaining digits
-          let extractedCode = "+60"; // default
-          let digits = "";
+          // Use strict regex to match E.164 format: +CC followed by national number
+          const phoneMatch = phone.match(/^\+(\d{2,3})(\d+)$/);
           
-          if (phone.startsWith("+")) {
-            // Try to extract +60, +65, +66, etc (2-3 digit country codes)
-            const match = phone.match(/^(\+\d{2,3})(.*)/);
-            if (match) {
-              extractedCode = match[1];
-              digits = match[2].replace(/\D/g, "");
-            } else if (phone.length >= 4) {
-              // Fallback: take first 3 chars as country code if starts with +
-              extractedCode = phone.substring(0, 3);
-              digits = phone.substring(3).replace(/\D/g, "");
-            } else {
-              digits = phone.slice(1).replace(/\D/g, "");
-            }
+          if (phoneMatch) {
+            const cc = `+${phoneMatch[1]}`;
+            const nationalNumber = phoneMatch[2];
+            
+            // Validate country code (accept +60, +65, +66, etc)
+            setCountryCode(cc);
+            setPhoneNumber(nationalNumber);
           } else {
-            // No + prefix, extract all digits
-            digits = phone.replace(/\D/g, "");
+            // Fallback: Try to extract digits and assume +60
+            const digits = phone.replace(/\D/g, "");
+            if (digits) {
+              setCountryCode("+60");
+              setPhoneNumber(digits);
+            }
           }
-          
-          setCountryCode(extractedCode);
-          setPhoneNumber(digits);
         }
         
         setProfile({
@@ -323,6 +318,7 @@ export default function UserProfile() {
           </Tabs>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

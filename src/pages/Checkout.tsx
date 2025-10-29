@@ -35,6 +35,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "stripe_card" | "touch_n_go">("stripe_fpx");
@@ -221,6 +222,7 @@ export default function Checkout() {
   const proceedWithOrder = async () => {
     setShowConfirmDialog(false);
     setLoading(true);
+    setCheckoutLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -372,7 +374,8 @@ export default function Checkout() {
         if (sessionError) throw sessionError;
 
         if (sessionData?.url) {
-          // Redirect to Stripe checkout in same window (important for return URL to work)
+          // Keep loading overlay visible while redirecting
+          // Redirect to Stripe checkout in same window
           window.location.href = sessionData.url;
         } else {
           throw new Error("Failed to create Stripe session");
@@ -384,6 +387,7 @@ export default function Checkout() {
         description: error.message,
         variant: "destructive",
       });
+      setCheckoutLoading(false);
     } finally {
       setLoading(false);
     }
@@ -398,6 +402,28 @@ export default function Checkout() {
     <div className="min-h-screen">
       <GoldPriceBanner />
       <Header />
+
+      {/* Loading Overlay during checkout redirect */}
+      {checkoutLoading && (
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="p-8 max-w-md mx-4 text-center">
+            <div className="space-y-4">
+              <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-primary">
+                  <T zh="请稍候" en="Please Wait" />
+                </h2>
+                <p className="text-muted-foreground">
+                  <T zh="您将被重定向到支付页面" en="You will be redirected to payment page" />
+                </p>
+                <p className="text-sm text-destructive font-semibold mt-4">
+                  <T zh="⚠️ 请勿关闭或重新加载页面" en="⚠️ Do not close or reload the page" />
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
       
       <main className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-primary mb-8"><T zh="结账" en="Checkout" /></h1>

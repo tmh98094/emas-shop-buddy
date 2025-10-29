@@ -29,10 +29,6 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  
-  // Admin email login
-  const [emailInput, setEmailInput] = useState("");
-  const [emailPassword, setEmailPassword] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,32 +237,6 @@ export default function Auth() {
     }
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: emailInput,
-        password: emailPassword,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "登录成功！",
-      });
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "登录失败",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -518,40 +488,6 @@ export default function Auth() {
               </TabsContent>
 
             </Tabs>
-
-            {/* Admin Email Login (Temporary) */}
-            <div className="border-t pt-6 mt-6">
-              <p className="text-sm text-muted-foreground mb-4 text-center">
-                <T zh="管理员邮箱登录（临时）" en="Admin Email Login (Temporary)" />
-              </p>
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div>
-                  <Label htmlFor="email-login"><T zh="邮箱" en="Email" /></Label>
-                  <Input
-                    id="email-login"
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="admin@jjemas.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password-login"><T zh="密码" en="Password" /></Label>
-                  <Input
-                    id="password-login"
-                    type="password"
-                    value={emailPassword}
-                    onChange={(e) => setEmailPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading} variant="outline">
-                  {loading ? <T zh="登录中..." en="Logging in..." /> : <T zh="邮箱登录" en="Email Login" />}
-                </Button>
-              </form>
-            </div>
           </Card>
         </div>
       </main>
