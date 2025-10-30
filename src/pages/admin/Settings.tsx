@@ -22,6 +22,7 @@ export default function Settings() {
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("We'll be back soon.");
   const [maintenanceWhatsapp, setMaintenanceWhatsapp] = useState("+60122379178");
+  const [adminEmail, setAdminEmail] = useState("");
 
   const { data: settings } = useQuery({
     queryKey: ["admin-settings"],
@@ -29,10 +30,10 @@ export default function Settings() {
       const { data, error } = await supabase
         .from("settings")
         .select("key, value")
-        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card", "site_maintenance"]);
+        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card", "site_maintenance", "admin_email"]);
       if (error) throw error;
       
-      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true, maintenance: { enabled: false, message: "We'll be back soon.", whatsapp: "+60122379178" } };
+      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true, maintenance: { enabled: false, message: "We'll be back soon.", whatsapp: "+60122379178" }, adminEmail: "" };
       data?.forEach(item => {
         if (item.key === "gold_price_916") {
           result.goldPrices["916"] = (item.value as any).price;
@@ -48,6 +49,8 @@ export default function Settings() {
             message: (item.value as any).message || "We'll be back soon.",
             whatsapp: (item.value as any).whatsapp || "+60122379178",
           };
+        } else if (item.key === "admin_email") {
+          result.adminEmail = (item.value as any).email || "";
         }
       });
       return result;
@@ -65,6 +68,7 @@ export default function Settings() {
       setMaintenanceEnabled(settings.maintenance.enabled);
       setMaintenanceMessage(settings.maintenance.message);
       setMaintenanceWhatsapp(settings.maintenance.whatsapp);
+      setAdminEmail(settings.adminEmail);
       setInitialized(true);
     }
   }, [settings, initialized]);
@@ -192,6 +196,42 @@ export default function Settings() {
     },
   });
 
+  const updateAdminEmail = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(adminEmail)) {
+        throw new Error("Please enter a valid email address");
+      }
+      
+      const { error } = await supabase
+        .from("settings")
+        .upsert({
+          key: "admin_email",
+          value: { email: adminEmail },
+          updated_by: user?.id ?? null,
+        }, {
+          onConflict: 'key'
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast({ title: "Admin email updated successfully" });
+    },
+    onError: (error: any) => {
+      console.error('updateAdminEmail error', error);
+      toast({ 
+        title: "Error updating admin email", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
   return (
     <div>
       <h1 className="text-4xl font-bold text-primary mb-8">Settings</h1>
@@ -303,6 +343,35 @@ export default function Settings() {
                 }}
                 disabled={updateCreditCardSetting.isPending}
               />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-2xl font-bold mb-6">Email Notifications</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="admin-email">Admin Email Address</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Email address where admin notifications will be sent (out of stock, pre-orders, Touch 'n Go payments)
+              </p>
+              <Input
+                id="admin-email"
+                type="email"
+                placeholder="admin@example.com"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button 
+                onClick={() => updateAdminEmail.mutate()} 
+                disabled={updateAdminEmail.isPending || !adminEmail}
+              >
+                {updateAdminEmail.isPending ? "Saving..." : "Save Admin Email"}
+              </Button>
             </div>
           </div>
         </Card>
