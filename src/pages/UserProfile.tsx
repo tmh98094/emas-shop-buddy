@@ -60,18 +60,15 @@ export default function UserProfile() {
         const phone = data.phone_number || "";
         
         if (phone) {
-          // Use strict regex to match E.164 format: +CC followed by national number
-          const phoneMatch = phone.match(/^\+(\d{2,3})(\d+)$/);
-          
-          if (phoneMatch) {
-            const cc = `+${phoneMatch[1]}`;
-            const nationalNumber = phoneMatch[2];
-            
-            // Validate country code (accept +60, +65, +66, etc)
-            setCountryCode(cc);
-            setPhoneNumber(nationalNumber);
+          // Check for specific country codes first (+60, +65)
+          if (phone.startsWith('+60')) {
+            setCountryCode('+60');
+            setPhoneNumber(phone.slice(3)); // Everything after +60
+          } else if (phone.startsWith('+65')) {
+            setCountryCode('+65');
+            setPhoneNumber(phone.slice(3)); // Everything after +65
           } else {
-            // Fallback: Try to extract digits and assume +60
+            // Fallback: extract all digits and assume +60
             const digits = phone.replace(/\D/g, "");
             if (digits) {
               setCountryCode("+60");

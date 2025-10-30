@@ -8,7 +8,6 @@ import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { T } from "./T";
 import { Badge } from "./ui/badge";
-import { useState } from "react";
 
 interface ProductCardProps {
   product: {
@@ -29,7 +28,6 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const { addItem } = useCart();
-  const [hoveredThumbIndex, setHoveredThumbIndex] = useState<number | null>(null);
   
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -54,11 +52,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const goldPrice = goldPrices?.[product.gold_type] || 0;
   const totalPrice = calculatePrice(goldPrice, product.weight_grams, product.labour_fee);
 
-  // Get all media sorted by display order
-  const allMedia = product.product_images?.sort((a, b) => (a.display_order || 0) - (b.display_order || 0)) || [];
-  const displayImage = hoveredThumbIndex !== null && allMedia[hoveredThumbIndex] 
-    ? allMedia[hoveredThumbIndex].image_url 
-    : (imageUrl || allMedia[0]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format");
+  const displayImage = imageUrl || product.product_images?.find(img => img.display_order === 0)?.image_url || product.product_images?.[0]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format";
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,32 +89,9 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <span className="text-white font-semibold text-sm"><T zh="缺货" en="Out of Stock" /></span>
               </div>
-            )}
-          </div>
-          {/* Thumbnail Showreel */}
-          {allMedia.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5">
-              {allMedia.slice(0, 4).map((media, idx) => (
-                <div
-                  key={idx}
-                  onMouseEnter={() => setHoveredThumbIndex(idx)}
-                  onMouseLeave={() => setHoveredThumbIndex(null)}
-                  className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
-                    hoveredThumbIndex === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'
-                  }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setHoveredThumbIndex(idx);
-                  }}
-                />
-              ))}
-              {allMedia.length > 4 && (
-                <div className="text-white/70 text-[10px] font-medium ml-0.5">+{allMedia.length - 4}</div>
-              )}
-            </div>
           )}
         </div>
+      </div>
       <CardContent className="p-3 md:p-4 space-y-2 flex-1 flex flex-col">
         <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] text-foreground">{product.name}</h3>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">

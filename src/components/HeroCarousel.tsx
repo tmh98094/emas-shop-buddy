@@ -20,20 +20,20 @@ export const HeroCarousel = () => {
 
   const slides = [
     {
-      title: "纯999黄金系列",
-      titleEn: "Pure 999 Gold Collection",
-      description: "为鉴赏家提供最高纯度",
-      descriptionEn: "Highest purity for discerning collectors",
-      image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80&fm=webp&auto=format",
-      srcset: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80&fm=webp&auto=format 1200w",
+      title: "精美黄金手镯系列",
+      titleEn: "Exquisite Gold Bracelets",
+      description: "传统与现代的完美结合",
+      descriptionEn: "Perfect blend of tradition and modernity",
+      image: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1200&q=80&fm=webp&auto=format 1200w",
     },
     {
-      title: "精美916黄金珠宝",
-      titleEn: "Exquisite 916 Gold Jewelry",
+      title: "典雅黄金项链",
+      titleEn: "Elegant Gold Necklaces",
       description: "匠心独运，打造永恒优雅",
       descriptionEn: "Timeless elegance crafted to perfection",
-      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp&auto=format",
-      srcset: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&q=80&fm=webp&auto=format 1200w",
+      image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&q=80&fm=webp&auto=format 1200w",
     },
   ];
 

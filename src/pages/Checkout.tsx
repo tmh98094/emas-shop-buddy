@@ -74,13 +74,13 @@ export default function Checkout() {
           let extractedPhone = "";
           
           if (profile.phone_number) {
-            // Use strict regex to match E.164 format: +CC followed by national number
-            const phoneMatch = profile.phone_number.match(/^\+(\d{1,3})(\d+)$/);
-            if (phoneMatch) {
-              const cc = `+${phoneMatch[1]}`;
-              // Only accept +60 or +65, fallback to +60 otherwise
-              extractedCountryCode = (cc === "+60" || cc === "+65") ? cc : "+60";
-              extractedPhone = phoneMatch[2];
+            // Check for specific country codes first (+60, +65)
+            if (profile.phone_number.startsWith('+60')) {
+              extractedCountryCode = '+60';
+              extractedPhone = profile.phone_number.slice(3); // Everything after +60
+            } else if (profile.phone_number.startsWith('+65')) {
+              extractedCountryCode = '+65';
+              extractedPhone = profile.phone_number.slice(3); // Everything after +65
             } else {
               // Fallback: extract all digits and assume +60
               extractedPhone = profile.phone_number.replace(/\D/g, "");
