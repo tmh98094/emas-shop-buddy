@@ -93,10 +93,22 @@ export default function UserProfile() {
 
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
 
+      // Prevent duplicate phone numbers across profiles
+      const { data: conflict, error: conflictError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("phone_number", normalizedPhone)
+        .limit(1);
+      if (conflictError) throw conflictError;
+      // Using current authenticated user from above
+      if (conflict && conflict.length > 0 && conflict[0]?.id !== user?.id) {
+        throw new Error("This phone number is already in use by another account.");
+      }
+
       const { error } = await supabase
         .from("profiles")
         .upsert({
-          id: user.id,
+          id: user!.id,
           full_name: profile.full_name,
           email: profile.email,
           phone_number: normalizedPhone,

@@ -63,14 +63,13 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find valid OTP
+    // Find OTP record (idempotent): allow already-verified within expiry
     const { data: otpRecords, error: fetchError } = await supabase
       .from("otp_verifications")
       .select("*")
       .eq("phone_number", phoneNumber)
       .eq("otp_code", otpCode)
-      .eq("verified", false)
-      .gt("expires_at", new Date().toISOString())
+      .gte("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -96,17 +95,21 @@ serve(async (req) => {
     const otpRecord = otpRecords[0];
     logStep("Valid OTP found", { id: otpRecord.id });
 
-    // Mark OTP as verified
-    const { error: updateError } = await supabase
-      .from("otp_verifications")
-      .update({
-        verified: true,
-        verified_at: new Date().toISOString(),
-      })
-      .eq("id", otpRecord.id);
+    // Mark OTP as verified if not already (idempotent)
+    if (!otpRecord.verified) {
+      const { error: updateError } = await supabase
+        .from("otp_verifications")
+        .update({
+          verified: true,
+          verified_at: new Date().toISOString(),
+        })
+        .eq("id", otpRecord.id);
 
-    if (updateError) {
-      logStep("Failed to mark OTP as verified", { error: updateError });
+      if (updateError) {
+        logStep("Failed to mark OTP as verified", { error: updateError });
+      }
+    } else {
+      logStep("OTP already verified - idempotent success", { id: otpRecord.id });
     }
 
     // Check if user exists
