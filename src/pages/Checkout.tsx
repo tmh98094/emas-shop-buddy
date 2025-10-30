@@ -578,7 +578,7 @@ export default function Checkout() {
                     </div>
                     <div className="relative">
                       <Label htmlFor="state">
-                        <T zh="州" en="State" /> *
+                        <T zh="州/省" en="State" /> *
                       </Label>
                       <Input
                         id="state"
@@ -662,14 +662,14 @@ export default function Checkout() {
                   <div className="flex items-center space-x-2 p-4 border rounded">
                     <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
                     <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
-                      <T zh="FPX（通过 Stripe）" en="FPX (via Stripe)" />
+                      <T zh="FPX (网上银行)" en="FPX (Online Banking)" />
                     </Label>
                   </div>
                   {creditCardEnabled && (
                     <div className="flex items-center space-x-2 p-4 border rounded mt-2">
                       <RadioGroupItem value="stripe_card" id="stripe_card" />
                       <Label htmlFor="stripe_card" className="flex-1 cursor-pointer">
-                        <T zh="信用卡（通过 Stripe）" en="Credit Card (via Stripe)" />
+                        <T zh="信用卡/提款卡" en="Credit/Debit Card" />
                       </Label>
                     </div>
                   )}
