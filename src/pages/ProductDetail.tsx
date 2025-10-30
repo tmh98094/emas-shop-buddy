@@ -18,7 +18,7 @@ import { Minus, Plus, Play } from "lucide-react";
 import { T } from "@/components/T";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ProductDetailSkeleton } from "@/components/LoadingSkeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -137,45 +137,85 @@ export default function ProductDetail() {
               </AspectRatio>
             </Card>
 
-            {/* Product Image Gallery - Horizontal on mobile, Grid on desktop */}
+            {/* Product Image Gallery - Carousel on mobile, Grid on desktop */}
             {sortedImages.length > 1 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">
                   <T zh="产品图库" en="Product Image Gallery" />
                 </h3>
-                <ScrollArea className="w-full">
-                  <div className="flex lg:grid lg:grid-cols-4 gap-2 pb-2">
-                    {sortedImages.map((img: any, index: number) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`relative flex-shrink-0 w-20 h-20 lg:w-full lg:aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedImageIndex === index 
-                            ? 'border-primary ring-2 ring-primary' 
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        {img.media_type === 'video' ? (
-                          <div className="relative w-full h-full bg-muted flex items-center justify-center">
-                            <Play className="h-6 w-6 text-primary" />
-                            <video 
-                              src={img.image_url} 
-                              className="absolute inset-0 w-full h-full object-cover opacity-50"
-                              preload="metadata"
-                            />
-                          </div>
-                        ) : (
-                          <img 
+                
+                {/* Mobile Carousel */}
+                <div className="lg:hidden">
+                  <Carousel className="w-full">
+                    <CarouselContent className="-ml-2">
+                      {sortedImages.map((img: any, index: number) => (
+                        <CarouselItem key={index} className="pl-2 basis-1/4">
+                          <button
+                            onClick={() => setSelectedImageIndex(index)}
+                            className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                              selectedImageIndex === index 
+                                ? 'border-primary ring-2 ring-primary' 
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            {img.media_type === 'video' ? (
+                              <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                                <Play className="h-6 w-6 text-primary" />
+                                <video 
+                                  src={img.image_url} 
+                                  className="absolute inset-0 w-full h-full object-cover opacity-50"
+                                  preload="metadata"
+                                />
+                              </div>
+                            ) : (
+                              <img 
+                                src={img.image_url} 
+                                alt={`Thumbnail ${index + 1}`} 
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                          </button>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </Carousel>
+                </div>
+
+                {/* Desktop Grid */}
+                <div className="hidden lg:grid lg:grid-cols-4 gap-2">
+                  {sortedImages.map((img: any, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImageIndex === index 
+                          ? 'border-primary ring-2 ring-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      {img.media_type === 'video' ? (
+                        <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                          <Play className="h-6 w-6 text-primary" />
+                          <video 
                             src={img.image_url} 
-                            alt={`Thumbnail ${index + 1}`} 
-                            className="w-full h-full object-cover"
-                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover opacity-50"
+                            preload="metadata"
                           />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </ScrollArea>
+                        </div>
+                      ) : (
+                        <img 
+                          src={img.image_url} 
+                          alt={`Thumbnail ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             
