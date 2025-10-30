@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { T } from "@/components/T";
+import { SafeHtmlContent } from "@/components/SafeHtmlContent";
 
 export default function FAQ() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,7 +50,7 @@ export default function FAQ() {
         {isLoading ? (
           <p className="text-muted-foreground text-center">加载中…</p>
         ) : filteredHtml ? (
-          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: filteredHtml }} />
+          <SafeHtmlContent content={filteredHtml} className="prose prose-sm max-w-none" />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground"><T zh="暂无内容。请在后台内容管理中编辑本页。" en="No content. Please edit this page in Admin Content." /></p>

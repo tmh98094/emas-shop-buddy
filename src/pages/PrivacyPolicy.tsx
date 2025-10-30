@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { T } from "@/components/T";
+import { SafeHtmlContent } from "@/components/SafeHtmlContent";
 
 export default function PrivacyPolicy() {
   const { data, isLoading } = useQuery({
@@ -32,7 +33,7 @@ export default function PrivacyPolicy() {
             {isLoading ? (
               <p className="text-muted-foreground"><T zh="加载中…" en="Loading..." /></p>
             ) : data?.content ? (
-              <div dangerouslySetInnerHTML={{ __html: data.content }} />
+              <SafeHtmlContent content={data.content} />
             ) : (
               <p className="text-muted-foreground"><T zh="暂无内容。请在后台内容管理中编辑本页。" en="No content. Please edit this page in Admin Content." /></p>
             )}

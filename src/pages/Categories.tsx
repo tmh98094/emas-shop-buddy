@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { T } from "@/components/T";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SafeHtmlContent } from "@/components/SafeHtmlContent";
 
 export default function Categories() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export default function Categories() {
           <h1 className="text-4xl font-bold mb-4"><T zh="按类别选购" en="Shop by Category" /></h1>
           {/* Admin-editable intro */}
           {content?.content && (
-            <div className="prose prose-sm max-w-none text-muted-foreground mb-6" dangerouslySetInnerHTML={{ __html: content.content }} />
+            <SafeHtmlContent content={content.content} className="prose prose-sm max-w-none text-muted-foreground mb-6" />
           )}
         </div>
 

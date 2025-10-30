@@ -231,7 +231,6 @@ serve(async (req) => {
         message: "OTP verified successfully",
         userId,
         isNewUser,
-        tempPassword: otpCode, // Return OTP as temp password for frontend to auto-login
         phoneNumber, // Return normalized phone for consistency
       }),
       {

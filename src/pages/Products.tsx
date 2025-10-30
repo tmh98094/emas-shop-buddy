@@ -14,6 +14,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { T } from "@/components/T";
+import { SafeHtmlContent } from "@/components/SafeHtmlContent";
 
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -231,9 +232,9 @@ export default function Products() {
             <h1 className="text-4xl font-bold text-primary mb-2"><T zh="商店" en="Shop" /></h1>
           )}
           {shopContent?.content && (
-            <div
+            <SafeHtmlContent 
+              content={shopContent.content}
               className="prose prose-sm max-w-none text-muted-foreground mb-4"
-              dangerouslySetInnerHTML={{ __html: shopContent.content }}
             />
           )}
           <ProductSearch value={searchQuery} onChange={setSearchQuery} />
