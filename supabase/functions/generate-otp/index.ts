@@ -59,6 +59,35 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Rate limiting: Check for recent OTP attempts (last 10 minutes)
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const { data: recentOTPs, error: rateLimitError } = await supabase
+      .from("otp_verifications")
+      .select("created_at")
+      .eq("phone_number", phoneNumber)
+      .gte("created_at", tenMinutesAgo.toISOString());
+
+    if (rateLimitError) {
+      logStep("Rate limit check error", { error: rateLimitError });
+      throw new Error("Failed to check rate limit");
+    }
+
+    if (recentOTPs && recentOTPs.length >= 3) {
+      logStep("Rate limit exceeded", { phoneNumber, attempts: recentOTPs.length });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Too many OTP requests. Please try again in 10 minutes.",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+        }
+      );
+    }
+
+    logStep("Rate limit check passed", { recentAttempts: recentOTPs?.length || 0 });
+
     // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
