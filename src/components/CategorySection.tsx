@@ -7,15 +7,12 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 
 export const CategorySection = () => {
   const navigate = useNavigate();
-  
+
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("display_order", { ascending: true });
-      
+      const { data, error } = await supabase.from("categories").select("*").order("display_order", { ascending: true });
+
       if (error) throw error;
       return data;
     },
@@ -25,9 +22,7 @@ export const CategorySection = () => {
     return (
       <section className="py-12 bg-muted">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-primary mb-8 text-center">
-            Shop by Category
-          </h2>
+          <h2 className="text-3xl font-bold text-primary mb-8 text-center">金饰类型</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-32" />
@@ -48,9 +43,7 @@ export const CategorySection = () => {
   return (
     <section className="py-12 bg-muted">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-primary mb-8 text-center">
-          Shop by Category
-        </h2>
+        <h2 className="text-3xl font-bold text-primary mb-8 text-center">金饰类型</h2>
         <Carousel>
           <CarouselContent>
             {displayedCategories.map((category) => (
