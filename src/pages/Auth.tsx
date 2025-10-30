@@ -55,16 +55,19 @@ export default function Auth() {
 
       if (error) throw error;
 
-      // Create profile
+      // Create or update profile (idempotent)
       if (data.user) {
-        await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: data.user.id,
             full_name: fullName,
             phone_number: normalizedPhone,
             email: email || null,
-          });
+          }, { onConflict: 'id' });
+        if (profileError) {
+          console.error('Profile upsert error:', profileError);
+        }
       }
 
       toast({

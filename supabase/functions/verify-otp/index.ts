@@ -112,50 +112,36 @@ serve(async (req) => {
       logStep("OTP already verified - idempotent success", { id: otpRecord.id });
     }
 
-    // Check if user exists
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("phone_number", phoneNumber)
-      .single();
+    // Locate or create auth user strictly by phone
+    const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) {
+      logStep("Failed to list users", { error: listError });
+      throw new Error("Failed to verify user account");
+    }
 
-    let userId = existingProfile?.id;
+    const digitsOnly = phoneNumber.replace(/^\+/, "");
+    const existingAuthUser = users.users.find((u: any) => u.phone === phoneNumber || u.phone === digitsOnly);
+
+    let userId = existingAuthUser?.id;
     let isNewUser = false;
 
-    if (!existingProfile) {
-      logStep("No profile found, checking auth user");
-      
-      // Try to create a new auth user with phone
+    if (!userId) {
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: phoneNumber,
         phone_confirm: true,
-        user_metadata: {
-          full_name: fullName || "",
-        },
+        user_metadata: { full_name: fullName || "" },
       });
 
       if (authError) {
-        // If user already exists in auth, try to find them
+        // If creation failed because phone exists, resolve to that user
         if (authError.message?.includes("phone_exists") || authError.message?.includes("already registered")) {
-          logStep("Auth user already exists, looking up by phone");
-          
-          // List users and find by phone
-          const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-          
-          if (listError) {
-            logStep("Failed to list users", { error: listError });
-            throw new Error("Failed to verify user account");
-          }
-          
-          const existingAuthUser = users.users.find(u => u.phone === phoneNumber);
-          
-          if (!existingAuthUser) {
+          const existingByPhone = users.users.find((u: any) => u.phone === phoneNumber || u.phone === digitsOnly);
+          if (!existingByPhone) {
             logStep("Auth user not found after phone_exists error");
             throw new Error("User verification failed");
           }
-          
-          userId = existingAuthUser.id;
-          logStep("Found existing auth user", { userId });
+          userId = existingByPhone.id;
+          logStep("Found existing auth user after phone_exists", { userId });
         } else {
           logStep("Failed to create auth user", { error: authError });
           throw new Error("Failed to create user account");
@@ -165,29 +151,26 @@ serve(async (req) => {
         isNewUser = true;
         logStep("Auth user created", { userId });
       }
-
-      // Create or update profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: userId,
-          phone_number: phoneNumber,
-          full_name: fullName || "",
-        }, {
-          onConflict: "id"
-        });
-
-      if (profileError) {
-        logStep("Failed to create/update profile", { error: profileError });
-      } else {
-        logStep("Profile created/updated", { userId });
-      }
     } else {
-      logStep("Existing user found", { userId });
+      logStep("Found existing auth user by phone", { userId });
+    }
+
+    // Create or update profile for this user
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        phone_number: phoneNumber,
+        full_name: fullName || "",
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      logStep("Failed to create/update profile", { error: profileError });
     }
 
     // Update user's phone to be confirmed and set temporary password
     const { error: updateUserError } = await supabase.auth.admin.updateUserById(userId, {
+      phone: phoneNumber,
       phone_confirm: true,
       password: otpCode, // Set OTP as temporary password for this session
     });
@@ -204,7 +187,7 @@ serve(async (req) => {
         success: true,
         message: "OTP verified successfully",
         userId,
-        isNewUser: isNewUser || !existingProfile,
+        isNewUser,
         tempPassword: otpCode, // Return OTP as temp password for frontend to auto-login
         phoneNumber, // Return normalized phone for consistency
       }),
