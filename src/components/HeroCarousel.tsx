@@ -20,12 +20,12 @@ export const HeroCarousel = () => {
 
   const slides = [
     {
-      title: "精美黄金手镯系列",
-      titleEn: "Exquisite Gold Bracelets",
+      title: "999纯金项链",
+      titleEn: "999 Pure Gold Necklace",
       description: "传统与现代的完美结合",
       descriptionEn: "Perfect blend of tradition and modernity",
-      image: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80&fm=webp&auto=format",
-      srcset: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1200&q=80&fm=webp&auto=format 1200w",
+      image: "https://images.unsplash.com/photo-1721807550942-a218261a4896?w=800&q=80&fm=webp&auto=format",
+      srcset: "https://images.unsplash.com/photo-1721807550942-a218261a4896?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1721807550942-a218261a4896?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1721807550942-a218261a4896?w=1200&q=80&fm=webp&auto=format 1200w",
     },
     {
       title: "典雅黄金项链",
