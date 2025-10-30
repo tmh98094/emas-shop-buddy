@@ -152,7 +152,22 @@ export default function UserProfile() {
           phone_number: normalizedPhone,
         });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = "更新失败，请稍后重试";
+        if (error.message.includes("duplicate") || error.code === "23505") {
+          if (error.message.includes("phone")) {
+            errorMessage = "该手机号码已被使用";
+          } else if (error.message.includes("email")) {
+            errorMessage = "该电子邮件已被使用";
+          }
+        }
+        toast({
+          title: "更新失败",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "个人资料已更新",
@@ -160,8 +175,8 @@ export default function UserProfile() {
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "更新失败",
+        description: "发生意外错误，请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -197,7 +212,20 @@ export default function UserProfile() {
         password: passwordData.newPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = "密码更新失败，请稍后重试";
+        if (error.message.includes("Password should be")) {
+          errorMessage = "密码必须至少6个字符";
+        } else if (error.message.includes("New password should be different")) {
+          errorMessage = "新密码必须与当前密码不同";
+        }
+        toast({
+          title: "密码更新失败",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "密码已更新",
@@ -211,8 +239,8 @@ export default function UserProfile() {
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "密码更新失败",
+        description: "发生意外错误，请稍后重试",
         variant: "destructive",
       });
     } finally {

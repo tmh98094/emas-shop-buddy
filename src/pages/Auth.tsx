@@ -18,8 +18,6 @@ export default function Auth() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
-  const [loginMethod, setLoginMethod] = useState<"phone" | "email">("phone");
-  const [signupMethod, setSignupMethod] = useState<"phone" | "email">("phone");
   const [useOtp, setUseOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
@@ -38,71 +36,55 @@ export default function Auth() {
 
     try {
       if (!fullName.trim()) {
-        throw new Error("Full name is required");
+        toast({
+          title: "注册失败",
+          description: "请输入您的全名",
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (signupMethod === "phone") {
-        const normalizedPhone = normalizePhone(phoneNumber, countryCode);
-        
-        // Sign up with phone + password
-        const { data, error } = await supabase.auth.signUp({
-          phone: normalizedPhone,
-          password: password,
-          options: {
-            data: {
-              full_name: fullName,
-              email: email || null,
-            }
-          }
-        });
-
-        if (error) throw error;
-
-        // Create or update profile (idempotent)
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              full_name: fullName,
-              phone_number: normalizedPhone,
-              email: email || null,
-            }, { onConflict: 'id' });
-          if (profileError) {
-            console.error('Profile upsert error:', profileError);
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      
+      // Sign up with phone + password
+      const { data, error } = await supabase.auth.signUp({
+        phone: normalizedPhone,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            email: email || null,
           }
         }
-      } else {
-        // Sign up with email + password
-        if (!email.trim()) {
-          throw new Error("Email is required");
+      });
+
+      if (error) {
+        let errorMessage = "注册失败，请稍后重试";
+        if (error.message.includes("already registered")) {
+          errorMessage = "该手机号码已被注册";
+        } else if (error.message.includes("Password should be")) {
+          errorMessage = "密码必须至少6个字符";
         }
-
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password,
-          options: {
-            data: {
-              full_name: fullName,
-            }
-          }
+        toast({
+          title: "注册失败",
+          description: errorMessage,
+          variant: "destructive",
         });
+        return;
+      }
 
-        if (error) throw error;
-
-        // Create or update profile (idempotent)
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              full_name: fullName,
-              email: email.trim(),
-              phone_number: phoneNumber ? normalizePhone(phoneNumber, countryCode) : null,
-            }, { onConflict: 'id' });
-          if (profileError) {
-            console.error('Profile upsert error:', profileError);
-          }
+      // Create or update profile (idempotent)
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            full_name: fullName,
+            phone_number: normalizedPhone,
+            email: email || null,
+          }, { onConflict: 'id' });
+        if (profileError) {
+          console.error('Profile upsert error:', profileError);
         }
       }
 
@@ -114,7 +96,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: "注册失败",
-        description: error.message,
+        description: "发生意外错误，请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -127,23 +109,26 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (loginMethod === "phone") {
-        const normalizedPhone = normalizePhone(phoneNumber, countryCode);
-        
-        const { error } = await supabase.auth.signInWithPassword({
-          phone: normalizedPhone,
-          password: password,
-        });
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        phone: normalizedPhone,
+        password: password,
+      });
 
-        if (error) throw error;
-      } else {
-        // Email login
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password,
+      if (error) {
+        let errorMessage = "登录失败，请检查您的信息";
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "手机号码或密码不正确";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "请先确认您的邮箱";
+        }
+        toast({
+          title: "登录失败",
+          description: errorMessage,
+          variant: "destructive",
         });
-
-        if (error) throw error;
+        return;
       }
 
       toast({
@@ -153,7 +138,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: "登录失败",
-        description: error.message,
+        description: "发生意外错误，请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -339,50 +324,17 @@ export default function Auth() {
               <TabsContent value="signin">
                 {!showRecovery && !useOtp && !otpSent && (
                   <>
-                    <div className="flex gap-2 mb-4">
-                      <Button
-                        type="button"
-                        variant={loginMethod === "phone" ? "default" : "outline"}
-                        onClick={() => setLoginMethod("phone")}
-                        className="flex-1"
-                      >
-                        <T zh="手机登录" en="Phone Login" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={loginMethod === "email" ? "default" : "outline"}
-                        onClick={() => setLoginMethod("email")}
-                        className="flex-1"
-                      >
-                        <T zh="邮箱登录" en="Email Login" />
-                      </Button>
-                    </div>
-                    
                     <form onSubmit={handleSignIn} className="space-y-4">
-                      {loginMethod === "phone" ? (
-                        <div>
-                          <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
-                          <PhoneInput
-                            countryCode={countryCode}
-                            phoneNumber={phoneNumber}
-                            onCountryCodeChange={setCountryCode}
-                            onPhoneNumberChange={setPhoneNumber}
-                            required
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <Label htmlFor="email-login"><T zh="电子邮件" en="Email" /> *</Label>
-                          <Input
-                            id="email-login"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="your@email.com"
-                            required
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                        <PhoneInput
+                          countryCode={countryCode}
+                          phoneNumber={phoneNumber}
+                          onCountryCodeChange={setCountryCode}
+                          onPhoneNumberChange={setPhoneNumber}
+                          required
+                        />
+                      </div>
                       <div>
                         <Label htmlFor="password"><T zh="密码" en="Password" /> *</Label>
                         <Input
@@ -404,16 +356,14 @@ export default function Auth() {
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? <T zh="登录中..." en="Signing in..." /> : <T zh="登录" en="Sign In" />}
                       </Button>
-                      {loginMethod === "phone" && (
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="w-full"
-                          onClick={() => setUseOtp(true)}
-                        >
-                          <T zh="使用验证码登录" en="Login with Verification Code" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="w-full"
+                        onClick={() => setUseOtp(true)}
+                      >
+                        <T zh="使用验证码登录" en="Login with Verification Code" />
+                      </Button>
                     </form>
                   </>
                 )}
@@ -548,25 +498,6 @@ export default function Auth() {
 
               {/* Sign Up Tab */}
               <TabsContent value="signup">
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    type="button"
-                    variant={signupMethod === "phone" ? "default" : "outline"}
-                    onClick={() => setSignupMethod("phone")}
-                    className="flex-1"
-                  >
-                    <T zh="手机注册" en="Phone Signup" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={signupMethod === "email" ? "default" : "outline"}
-                    onClick={() => setSignupMethod("email")}
-                    className="flex-1"
-                  >
-                    <T zh="邮箱注册" en="Email Signup" />
-                  </Button>
-                </div>
-
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
                     <Label htmlFor="full-name"><T zh="全名" en="Full Name" /> *</Label>
@@ -578,56 +509,26 @@ export default function Auth() {
                       required
                     />
                   </div>
-                  
-                  {signupMethod === "phone" ? (
-                    <>
-                      <div>
-                        <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
-                        <PhoneInput
-                          countryCode={countryCode}
-                          phoneNumber={phoneNumber}
-                          onCountryCodeChange={setCountryCode}
-                          onPhoneNumberChange={setPhoneNumber}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email-signup"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
-                        <Input
-                          id="email-signup"
-                          type="email"
-                          value={email}
-                          placeholder="例如：example@email.com"
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <Label htmlFor="email-signup-req"><T zh="电子邮件" en="Email" /> *</Label>
-                        <Input
-                          id="email-signup-req"
-                          type="email"
-                          value={email}
-                          placeholder="例如：example@email.com"
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label><T zh="手机号码（可选）" en="Mobile Phone (Optional)" /></Label>
-                        <PhoneInput
-                          countryCode={countryCode}
-                          phoneNumber={phoneNumber}
-                          onCountryCodeChange={setCountryCode}
-                          onPhoneNumberChange={setPhoneNumber}
-                          required={false}
-                        />
-                      </div>
-                    </>
-                  )}
-                  
+                  <div>
+                    <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                    <PhoneInput
+                      countryCode={countryCode}
+                      phoneNumber={phoneNumber}
+                      onCountryCodeChange={setCountryCode}
+                      onPhoneNumberChange={setPhoneNumber}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email-signup"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
+                    <Input
+                      id="email-signup"
+                      type="email"
+                      value={email}
+                      placeholder="例如：example@email.com"
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="password-signup"><T zh="密码" en="Password" /> *</Label>
                     <Input
