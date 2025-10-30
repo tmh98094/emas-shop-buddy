@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Eye } from "lucide-react";
+import { ShoppingCart, Eye, Flame } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -116,7 +116,8 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
             {/* Hot label for best sellers */}
             {product.is_best_seller && product.stock > 0 && (
               <div className="absolute top-2 right-2">
-                <Badge variant="destructive" className="bg-red-600 text-white font-bold shadow-lg">
+                <Badge variant="destructive" className="bg-red-600 text-white font-bold shadow-lg flex items-center gap-1">
+                  <Flame className="h-3.5 w-3.5" />
                   <T zh="热" en="Hot" />
                 </Badge>
               </div>

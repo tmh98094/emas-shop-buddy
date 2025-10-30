@@ -261,38 +261,79 @@ export default function ProductDetail() {
                   </Carousel>
                 </div>
 
-                {/* Desktop Grid */}
-                <div className="hidden lg:grid lg:grid-cols-4 gap-2">
-                  {sortedImages.map((img: any, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImageIndex === index 
-                          ? 'border-primary ring-2 ring-primary' 
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      {img.media_type === 'video' ? (
-                        <div className="relative w-full h-full bg-muted flex items-center justify-center">
-                          <Play className="h-6 w-6 text-primary" />
-                          <video 
+                {/* Desktop - Use carousel if more than 4 images, else grid */}
+                {sortedImages.length <= 4 ? (
+                  <div className="hidden lg:grid lg:grid-cols-4 gap-2">
+                    {sortedImages.map((img: any, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedImageIndex === index 
+                            ? 'border-primary ring-2 ring-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        {img.media_type === 'video' ? (
+                          <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                            <Play className="h-6 w-6 text-primary" />
+                            <video 
+                              src={img.image_url} 
+                              className="absolute inset-0 w-full h-full object-cover opacity-50"
+                              preload="metadata"
+                            />
+                          </div>
+                        ) : (
+                          <img 
                             src={img.image_url} 
-                            className="absolute inset-0 w-full h-full object-cover opacity-50"
-                            preload="metadata"
+                            alt={`Thumbnail ${index + 1}`} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
                           />
-                        </div>
-                      ) : (
-                        <img 
-                          src={img.image_url} 
-                          alt={`Thumbnail ${index + 1}`} 
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="hidden lg:block">
+                    <Carousel className="w-full">
+                      <CarouselContent className="-ml-2">
+                        {sortedImages.map((img: any, index: number) => (
+                          <CarouselItem key={index} className="pl-2 basis-1/4">
+                            <button
+                              onClick={() => setSelectedImageIndex(index)}
+                              className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                                selectedImageIndex === index 
+                                  ? 'border-primary ring-2 ring-primary' 
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              {img.media_type === 'video' ? (
+                                <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                                  <Play className="h-6 w-6 text-primary" />
+                                  <video 
+                                    src={img.image_url} 
+                                    className="absolute inset-0 w-full h-full object-cover opacity-50"
+                                    preload="metadata"
+                                  />
+                                </div>
+                              ) : (
+                                <img 
+                                  src={img.image_url} 
+                                  alt={`Thumbnail ${index + 1}`} 
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              )}
+                            </button>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </Carousel>
+                  </div>
+                )}
               </div>
             )}
             
@@ -429,33 +470,37 @@ export default function ProductDetail() {
       {/* Sticky Mobile Cart Bar */}
       {showStickyCart && (
         <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-background border-t border-border shadow-lg z-40 animate-slide-up">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <div className="text-lg font-bold text-primary">
-              RM {formatPrice(totalPrice)}
+          <div className="container mx-auto px-4 py-2 space-y-2">
+            {/* Row 1: Price and Quantity */}
+            <div className="flex items-center justify-between">
+              <div className="text-lg font-bold text-primary">
+                RM {formatPrice(totalPrice)}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-sm font-semibold w-6 text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="text-base font-semibold w-8 text-center">{quantity}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* Row 2: Add to Cart Button */}
             <Button
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
-              className="flex-1 max-w-[150px]"
+              className="w-full h-10"
             >
               <T zh="加入购物车" en="Add to Cart" />
             </Button>
