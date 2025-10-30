@@ -5,7 +5,7 @@ ADD COLUMN IF NOT EXISTS variant_selection TEXT;
 -- Phase 2: Admin Email Notification System
 -- First, ensure we have admin_email setting
 INSERT INTO settings (key, value)
-VALUES ('admin_email', '{"email": "tmh0249@gmail.com"}')
+VALUES ('admin_email', '{"email": "hello@onepagelab.dev"}')
 ON CONFLICT (key) DO NOTHING;
 
 -- Trigger 1: Notify admin when product goes out of stock
@@ -39,7 +39,7 @@ BEGIN
         'product_name', NEW.name,
         'gold_type', NEW.gold_type,
         'weight_grams', NEW.weight_grams,
-        'admin_email', COALESCE((admin_email_setting->>'email')::text, 'tmh0249@gmail.com')
+        'admin_email', COALESCE((admin_email_setting->>'email')::text, 'hello@onepagelab.dev')
       )
     );
   END IF;
@@ -88,7 +88,7 @@ BEGIN
       'deposit_paid', NEW.deposit_paid,
       'balance_due', NEW.balance_due,
       'order_id', NEW.order_id,
-      'admin_email', COALESCE((admin_email_setting->>'email')::text, 'tmh0249@gmail.com')
+      'admin_email', COALESCE((admin_email_setting->>'email')::text, 'hello@onepagelab.dev')
     )
   );
   RETURN NEW;
@@ -134,7 +134,7 @@ BEGIN
       'total_amount', order_info.total_amount,
       'receipt_url', NEW.receipt_image_url,
       'order_id', NEW.order_id,
-      'admin_email', COALESCE((admin_email_setting->>'email')::text, 'tmh0249@gmail.com')
+      'admin_email', COALESCE((admin_email_setting->>'email')::text, 'hello@onepagelab.dev')
     )
   );
   RETURN NEW;
