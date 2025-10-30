@@ -14,6 +14,15 @@ import { Loader2 } from "lucide-react";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone, parseE164 } from "@/lib/phone-utils";
 import { T } from "@/components/T";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -31,6 +40,11 @@ export default function UserProfile() {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+  });
+  const [duplicateDialog, setDuplicateDialog] = useState({
+    open: false,
+    type: "",
+    value: "",
   });
 
   useEffect(() => {
@@ -94,15 +108,39 @@ export default function UserProfile() {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
 
       // Prevent duplicate phone numbers across profiles
-      const { data: conflict, error: conflictError } = await supabase
+      const { data: phoneConflict, error: phoneConflictError } = await supabase
         .from("profiles")
         .select("id")
         .eq("phone_number", normalizedPhone)
         .limit(1);
-      if (conflictError) throw conflictError;
-      // Using current authenticated user from above
-      if (conflict && conflict.length > 0 && conflict[0]?.id !== user?.id) {
-        throw new Error("This phone number is already in use by another account.");
+      if (phoneConflictError) throw phoneConflictError;
+      
+      if (phoneConflict && phoneConflict.length > 0 && phoneConflict[0]?.id !== user?.id) {
+        setDuplicateDialog({
+          open: true,
+          type: "phone",
+          value: normalizedPhone,
+        });
+        return;
+      }
+
+      // Prevent duplicate emails across profiles if email is provided
+      if (profile.email && profile.email.trim()) {
+        const { data: emailConflict, error: emailConflictError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", profile.email.trim())
+          .limit(1);
+        if (emailConflictError) throw emailConflictError;
+        
+        if (emailConflict && emailConflict.length > 0 && emailConflict[0]?.id !== user?.id) {
+          setDuplicateDialog({
+            open: true,
+            type: "email",
+            value: profile.email,
+          });
+          return;
+        }
       }
 
       const { error } = await supabase
@@ -316,6 +354,36 @@ export default function UserProfile() {
         )}
       </div>
       <Footer />
+
+      <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog({ ...duplicateDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <T 
+                zh={duplicateDialog.type === "phone" ? "手机号码已存在" : "电子邮件已存在"} 
+                en={duplicateDialog.type === "phone" ? "Phone Number Already Exists" : "Email Already Exists"} 
+              />
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <T 
+                zh={duplicateDialog.type === "phone" 
+                  ? `手机号码 ${duplicateDialog.value} 已被另一个账户使用。请使用其他号码。` 
+                  : `电子邮件 ${duplicateDialog.value} 已被另一个账户使用。请使用其他邮箱。`
+                } 
+                en={duplicateDialog.type === "phone"
+                  ? `The phone number ${duplicateDialog.value} is already in use by another account. Please use a different number.`
+                  : `The email ${duplicateDialog.value} is already in use by another account. Please use a different email.`
+                } 
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDuplicateDialog({ open: false, type: "", value: "" })}>
+              <T zh="确定" en="OK" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
