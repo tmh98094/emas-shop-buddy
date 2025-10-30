@@ -46,7 +46,7 @@ export default function ProductForm() {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [enableVariants, setEnableVariants] = useState(false);
-  const [variantGroups, setVariantGroups] = useState<Array<{ name: string; values: string; price_adjustment: string; stock_adjustment: string }>>([]);
+  const [variantGroups, setVariantGroups] = useState<Array<{ name: string; values: string }>>([]);
   const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
@@ -213,11 +213,17 @@ export default function ProductForm() {
 
       // Handle variants
       if (enableVariants) {
-        // Delete removed existing variants
-        const existingVariantIds = existingVariants.map(v => v.id);
-        const keptVariantIds = existingVariants.filter(v => v.id).map(v => v.id);
-        const deletedVariantIds = existingVariantIds.filter(id => !keptVariantIds.includes(id));
+        // First, get all current variant IDs from database
+        const { data: currentVariants } = await supabase
+          .from("product_variants")
+          .select("id")
+          .eq("product_id", productId);
         
+        const currentVariantIds = currentVariants?.map(v => v.id) || [];
+        const keptVariantIds = existingVariants.map(v => v.id).filter(id => id);
+        
+        // Delete variants that were removed
+        const deletedVariantIds = currentVariantIds.filter(id => !keptVariantIds.includes(id));
         for (const variantId of deletedVariantIds) {
           await supabase.from("product_variants").delete().eq("id", variantId);
         }
@@ -228,8 +234,6 @@ export default function ProductForm() {
             await supabase.from("product_variants").update({
               name: variant.name,
               value: variant.value,
-              price_adjustment: parseFloat(variant.price_adjustment || "0"),
-              stock_adjustment: parseInt(variant.stock_adjustment || "0"),
             }).eq("id", variant.id);
           }
         }
@@ -244,8 +248,6 @@ export default function ProductForm() {
               product_id: productId,
               name: group.name,
               value: value,
-              price_adjustment: parseFloat(group.price_adjustment || "0"),
-              stock_adjustment: parseInt(group.stock_adjustment || "0"),
             });
           }
         }
@@ -315,7 +317,7 @@ export default function ProductForm() {
   };
 
   const addVariantGroup = () => {
-    setVariantGroups([...variantGroups, { name: "", values: "", price_adjustment: "0", stock_adjustment: "0" }]);
+    setVariantGroups([...variantGroups, { name: "", values: "" }]);
   };
 
   const updateVariantGroup = (index: number, field: string, value: string) => {
@@ -644,7 +646,7 @@ export default function ProductForm() {
                 <div className="space-y-3">
                   <h3 className="font-medium text-sm">Existing Variants (Edit individually)</h3>
                   {existingVariants.map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg">
+                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg">
                       <div>
                         <Label className="text-xs">Variant Name</Label>
                         <Input
@@ -663,36 +665,16 @@ export default function ProductForm() {
                           className="text-sm"
                         />
                       </div>
-                      <div>
-                        <Label className="text-xs">Price Adj. (RM)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0"
-                          value={variant.price_adjustment}
-                          onChange={(e) => updateExistingVariant(index, "price_adjustment", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Stock Adj.</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={variant.stock_adjustment}
-                            onChange={(e) => updateExistingVariant(index, "stock_adjustment", e.target.value)}
-                            className="text-sm"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => removeExistingVariant(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeExistingVariant(index)}
+                          className="w-full"
+                        >
+                          <X className="h-4 w-4 mr-1" /> Remove
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -703,7 +685,7 @@ export default function ProductForm() {
                 <div className="space-y-3">
                   <h3 className="font-medium text-sm">New Variant Groups</h3>
                   {variantGroups.map((group, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg bg-muted/50">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/50">
                       <div>
                         <Label className="text-xs">Variant Name</Label>
                         <Input
@@ -722,36 +704,16 @@ export default function ProductForm() {
                           className="text-sm"
                         />
                       </div>
-                      <div>
-                        <Label className="text-xs">Price Adj. (RM)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0"
-                          value={group.price_adjustment}
-                          onChange={(e) => updateVariantGroup(index, "price_adjustment", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Stock Adj.</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={group.stock_adjustment}
-                            onChange={(e) => updateVariantGroup(index, "stock_adjustment", e.target.value)}
-                            className="text-sm"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => removeVariantGroup(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeVariantGroup(index)}
+                          className="w-full"
+                        >
+                          <X className="h-4 w-4 mr-1" /> Remove
+                        </Button>
                       </div>
                     </div>
                   ))}

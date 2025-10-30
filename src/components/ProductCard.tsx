@@ -34,6 +34,19 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const { addItem } = useCart();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   
+  const { data: productVariants } = useQuery({
+    queryKey: ["product-variants", product.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", product.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
     queryFn: async () => {
@@ -62,6 +75,13 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // If product has variants, open quick view instead of adding directly
+    if (productVariants && productVariants.length > 0) {
+      setQuickViewOpen(true);
+      return;
+    }
+    
     await addItem(product.id, 1);
   };
 
