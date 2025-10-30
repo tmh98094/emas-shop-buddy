@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/PhoneInput";
 import { Loader2 } from "lucide-react";
+import { formatVariantsForDisplay } from "@/lib/cart-utils";
 
 export default function Checkout() {
   const { items, clearCart, refreshPrices } = useCart();
@@ -307,6 +308,9 @@ export default function Checkout() {
               item.quantity,
             );
 
+        // Format variant selection for storage
+        const variantSelection = item.selected_variants ? formatVariantsForDisplay(item.selected_variants) : null;
+
         return {
           order_id: orderId,
           product_id: item.product_id,
@@ -317,6 +321,7 @@ export default function Checkout() {
           gold_price_at_purchase: goldPrice,
           quantity: item.quantity,
           subtotal: subtotal,
+          variant_selection: variantSelection,
         };
       });
 

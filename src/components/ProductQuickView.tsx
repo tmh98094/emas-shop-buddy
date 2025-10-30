@@ -3,12 +3,14 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Minus, Plus, ExternalLink } from "lucide-react";
+import { Minus, Plus, ExternalLink, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { T } from "@/components/T";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { validateVariantSelection, SelectedVariantsMap } from "@/lib/cart-utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProductQuickViewProps {
   product: any;
@@ -22,7 +24,8 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, { name: string; value: string; id: string }>>({});
+  const [selectedVariants, setSelectedVariants] = useState<SelectedVariantsMap>({});
+  const [variantError, setVariantError] = useState("");
 
   const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
   
@@ -40,8 +43,19 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
   }, {});
 
   const handleAddToCart = async () => {
-    await addItem(product.id, quantity);
+    // Validate variant selection if product has variants
+    if (Object.keys(variantGroups).length > 0) {
+      const validation = validateVariantSelection(variantGroups, selectedVariants);
+      if (!validation.isValid) {
+        setVariantError(validation.message);
+        return;
+      }
+    }
+    
+    await addItem(product.id, quantity, selectedVariants);
     onOpenChange(false);
+    setSelectedVariants({});
+    setVariantError("");
   };
 
   const handleViewFullDetails = () => {
@@ -106,8 +120,14 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
 
             {/* Variants */}
             {Object.keys(variantGroups).length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-semibold"><T zh="选项" en="Options" /></h3>
+              <div className="space-y-3 border-t border-b py-4">
+                <h3 className="font-semibold"><T zh="选择选项" en="Select Options" /></h3>
+                {variantError && (
+                  <Alert variant="destructive" className="py-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-sm">{variantError}</AlertDescription>
+                  </Alert>
+                )}
                 {Object.keys(variantGroups).map((variantName) => (
                   <div key={variantName}>
                     <label className="text-sm font-medium mb-2 block">{variantName}</label>
@@ -120,6 +140,7 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
                             ...prev,
                             [variantName]: { name: variant.name, value: variant.value, id: variant.id }
                           }));
+                          setVariantError(""); // Clear error on selection
                         }
                       }}
                     >

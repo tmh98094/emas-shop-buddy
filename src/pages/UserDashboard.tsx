@@ -258,10 +258,17 @@ export default function UserDashboard() {
                         
                         <div className="space-y-2">
                           {order.order_items?.map((item: any) => (
-                            <div key={item.id} className="flex justify-between items-center">
-                              <p className="text-sm">
-                                {item.quantity}x {item.product_name}
-                              </p>
+                            <div key={item.id} className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="text-sm">
+                                  {item.quantity}x {item.product_name}
+                                </p>
+                                {item.variant_selection && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.variant_selection}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

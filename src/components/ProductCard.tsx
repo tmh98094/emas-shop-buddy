@@ -138,7 +138,6 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               <div className="absolute top-2 right-2">
                 <Badge variant="destructive" className="bg-red-600 text-white font-bold shadow-lg flex items-center gap-1">
                   <Flame className="h-3.5 w-3.5" />
-                  <T zh="热" en="Hot" />
                 </Badge>
               </div>
             )}

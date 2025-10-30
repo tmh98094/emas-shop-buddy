@@ -106,11 +106,10 @@ export default function OrderDetail() {
                   <div className="text-xs text-muted-foreground">
                     {item.gold_type} • {item.weight_grams}g • Qty: {item.quantity}
                   </div>
-                  {item.variant_name && (
-                    <div className="text-xs">{item.variant_name}: {item.variant_value}</div>
-                  )}
-                  {item.color_name && (
-                    <div className="text-xs">Color: {item.color_name}</div>
+                  {item.variant_selection && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Options: {item.variant_selection}
+                    </div>
                   )}
                 </div>
                 <div className="font-semibold text-sm whitespace-nowrap">RM {formatPrice(parseFloat(item.subtotal))}</div>

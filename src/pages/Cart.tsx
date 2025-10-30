@@ -16,6 +16,8 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import { Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/price-utils";
 import { T } from "@/components/T";
+import { formatVariantsForDisplay } from "@/lib/cart-utils";
+import { Badge } from "@/components/ui/badge";
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, refreshPrices, loading } = useCart();
@@ -177,6 +179,15 @@ export default function Cart() {
                           <div className="flex-1 pr-2">
                             <h3 className="font-semibold text-base md:text-lg mb-1">{product.name}</h3>
                             <p className="text-xs md:text-sm text-muted-foreground">{product.gold_type} Gold</p>
+                            {item.selected_variants && Object.keys(item.selected_variants).length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {Object.values(item.selected_variants).map((variant: any, idx: number) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {variant.name}: {variant.value}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
                             {isPreorder && (
                               <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                                 <T zh="定金：RM" en="Deposit: RM" /> {formatPrice(product.preorder_deposit || 100)}

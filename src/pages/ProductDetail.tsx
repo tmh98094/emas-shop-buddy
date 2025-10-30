@@ -15,7 +15,7 @@ import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Play } from "lucide-react";
+import { Minus, Plus, Play, ShoppingCart } from "lucide-react";
 import { T } from "@/components/T";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ProductDetailSkeleton } from "@/components/LoadingSkeleton";
@@ -467,44 +467,52 @@ export default function ProductDetail() {
         </div>
       </main>
 
-      {/* Sticky Mobile Cart Bar */}
+      {/* Mobile Sticky Add to Cart Bar - Optimized to 2 rows */}
       {showStickyCart && (
-        <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-background border-t border-border shadow-lg z-40 animate-slide-up">
-          <div className="container mx-auto px-4 py-2 space-y-2">
-            {/* Row 1: Price and Quantity */}
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-bold text-primary">
-                RM {formatPrice(totalPrice)}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </Button>
-                <span className="text-sm font-semibold w-6 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg z-40 p-3 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-bold text-primary">
+              RM {formatPrice(totalPrice)}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 touch-manipulation"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="w-8 text-center font-semibold text-sm">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 touch-manipulation"
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-            {/* Row 2: Add to Cart Button */}
-            <Button
-              onClick={handleAddToCart}
-              disabled={product.stock <= 0}
-              className="w-full h-10"
-            >
-              <T zh="加入购物车" en="Add to Cart" />
-            </Button>
           </div>
+          <Button 
+            className="w-full h-11 text-base touch-manipulation" 
+            onClick={handleAddToCart}
+            disabled={product.stock === 0}
+          >
+            {product.stock === 0 ? (
+              <T zh="缺货" en="Out of Stock" />
+            ) : product.is_preorder ? (
+              <>
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                <T zh="预购" en="Pre-order" />
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                <T zh="加入购物车" en="Add to Cart" />
+              </>
+            )}
+          </Button>
         </div>
       )}
 

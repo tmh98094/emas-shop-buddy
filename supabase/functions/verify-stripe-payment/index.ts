@@ -36,7 +36,7 @@ serve(async (req) => {
     // Get the order details
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("order_number, payment_status, phone_number")
+      .select("order_number, payment_status, phone_number, full_name")
       .eq("id", orderId)
       .single();
 
@@ -96,6 +96,27 @@ serve(async (req) => {
       }
 
       console.log("Order payment status updated to completed");
+
+      // Create admin notification for new order
+      try {
+        const { error: notifError } = await supabase
+          .from("admin_notifications")
+          .insert({
+            type: "new_order",
+            title: "New Order Placed",
+            message: `Order ${order.order_number} has been placed by ${order.full_name}. Payment confirmed via Stripe.`,
+            order_id: orderId,
+          });
+
+        if (notifError) {
+          console.error("Error creating notification:", notifError);
+        } else {
+          console.log("Admin notification created successfully");
+        }
+      } catch (notifErr) {
+        console.error("Failed to create admin notification:", notifErr);
+      }
+
       return new Response(
         JSON.stringify({ status: "completed", message: "Payment verified and order updated" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

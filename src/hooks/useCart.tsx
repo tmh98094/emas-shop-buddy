@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+import { SelectedVariantsMap } from "@/lib/cart-utils";
+
 interface CartItem {
   id: string;
   product_id: string;
@@ -9,12 +11,13 @@ interface CartItem {
   calculated_price?: number;
   gold_price_snapshot?: number;
   locked_at?: string;
+  selected_variants?: SelectedVariantsMap;
   product?: any;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (productId: string, quantity?: number) => Promise<void>;
+  addItem: (productId: string, quantity?: number, selectedVariants?: SelectedVariantsMap) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -63,7 +66,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      setItems(data || []);
+      
+      // Map the data to CartItem type, converting selected_variants from Json to SelectedVariantsMap
+      const mappedItems: CartItem[] = (data || []).map(item => ({
+        ...item,
+        selected_variants: (item.selected_variants as any) || {},
+      }));
+      
+      setItems(mappedItems);
     } catch (error: any) {
       console.error("Error fetching cart:", error);
     } finally {
@@ -75,7 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     fetchCart();
   }, []);
 
-  const addItem = async (productId: string, quantity = 1) => {
+  const addItem = async (productId: string, quantity = 1, selectedVariants?: SelectedVariantsMap) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const sessionId = getSessionId();
@@ -108,7 +118,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
       const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
 
-      const { error } = await supabase.from("cart_items").insert({
+      const { error } = await supabase.from("cart_items").insert([{
         product_id: productId,
         quantity,
         user_id: user?.id,
@@ -116,7 +126,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         calculated_price: calculatedPrice,
         gold_price_snapshot: goldPrice,
         locked_at: new Date().toISOString(),
-      });
+        selected_variants: JSON.parse(JSON.stringify(selectedVariants || {})),
+      }]);
 
       if (error) throw error;
       await fetchCart();

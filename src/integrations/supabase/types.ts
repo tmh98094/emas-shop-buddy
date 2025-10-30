@@ -95,6 +95,7 @@ export type Database = {
           locked_at: string | null
           product_id: string
           quantity: number
+          selected_variants: Json | null
           session_id: string | null
           updated_at: string
           user_id: string | null
@@ -109,6 +110,7 @@ export type Database = {
           locked_at?: string | null
           product_id: string
           quantity?: number
+          selected_variants?: Json | null
           session_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -123,6 +125,7 @@ export type Database = {
           locked_at?: string | null
           product_id?: string
           quantity?: number
+          selected_variants?: Json | null
           session_id?: string | null
           updated_at?: string
           user_id?: string | null

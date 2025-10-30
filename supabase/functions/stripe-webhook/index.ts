@@ -45,6 +45,18 @@ serve(async (req) => {
       if (orderId) {
         console.log("Updating order payment status for:", orderId);
         
+        // Get order details before updating
+        const { data: order, error: orderFetchError } = await supabase
+          .from("orders")
+          .select("order_number, full_name, total_amount")
+          .eq("id", orderId)
+          .single();
+
+        if (orderFetchError) {
+          console.error("Error fetching order:", orderFetchError);
+          throw orderFetchError;
+        }
+        
         const { error } = await supabase
           .from("orders")
           .update({
@@ -59,6 +71,26 @@ serve(async (req) => {
         }
 
         console.log("Order payment status updated successfully");
+
+        // Create admin notification for new order
+        try {
+          const { error: notifError } = await supabase
+            .from("admin_notifications")
+            .insert({
+              type: "new_order",
+              title: "New Order Placed",
+              message: `Order ${order.order_number} has been placed by ${order.full_name}. Payment confirmed via Stripe.`,
+              order_id: orderId,
+            });
+
+          if (notifError) {
+            console.error("Error creating notification:", notifError);
+          } else {
+            console.log("Admin notification created successfully");
+          }
+        } catch (notifErr) {
+          console.error("Failed to create admin notification:", notifErr);
+        }
       }
     }
 
