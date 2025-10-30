@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "@/components/ImageCropper";
 
@@ -45,6 +45,9 @@ export default function ProductForm() {
   const [imageToCrop, setImageToCrop] = useState<string>("");
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [enableVariants, setEnableVariants] = useState(false);
+  const [variants, setVariants] = useState<Array<{ name: string; value: string; price_adjustment: string; stock_adjustment: string }>>([]);
+  const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -81,7 +84,8 @@ export default function ProductForm() {
         .from("products")
         .select(`
           *,
-          product_images (*)
+          product_images (*),
+          product_variants (*)
         `)
         .eq("id", id)
         .single();
@@ -113,6 +117,11 @@ export default function ProductForm() {
       setExistingImages(product.product_images || []);
       const thumbnail = product.product_images?.find((img: any) => img.is_thumbnail);
       if (thumbnail) setThumbnailId(thumbnail.id);
+      
+      if (product.product_variants && product.product_variants.length > 0) {
+        setEnableVariants(true);
+        setExistingVariants(product.product_variants);
+      }
     }
   }, [product]);
 
@@ -201,6 +210,41 @@ export default function ProductForm() {
           display_order: existingImages.length + images.length + i,
         });
       }
+
+      // Handle variants
+      if (enableVariants) {
+        // Delete removed existing variants
+        const existingVariantIds = existingVariants.map(v => v.id);
+        const keptVariantIds = existingVariants.filter(v => v.id).map(v => v.id);
+        const deletedVariantIds = existingVariantIds.filter(id => !keptVariantIds.includes(id));
+        
+        for (const variantId of deletedVariantIds) {
+          await supabase.from("product_variants").delete().eq("id", variantId);
+        }
+        
+        // Update existing variants
+        for (const variant of existingVariants) {
+          if (variant.id) {
+            await supabase.from("product_variants").update({
+              name: variant.name,
+              value: variant.value,
+              price_adjustment: parseFloat(variant.price_adjustment || "0"),
+              stock_adjustment: parseInt(variant.stock_adjustment || "0"),
+            }).eq("id", variant.id);
+          }
+        }
+        
+        // Insert new variants
+        for (const variant of variants) {
+          await supabase.from("product_variants").insert({
+            product_id: productId,
+            name: variant.name,
+            value: variant.value,
+            price_adjustment: parseFloat(variant.price_adjustment || "0"),
+            stock_adjustment: parseInt(variant.stock_adjustment || "0"),
+          });
+        }
+      }
     },
     onSuccess: () => {
       toast({ title: `Product ${isEdit ? "updated" : "created"} successfully` });
@@ -263,6 +307,30 @@ export default function ProductForm() {
   const removeImage = async (imageId: string) => {
     await supabase.from("product_images").delete().eq("id", imageId);
     setExistingImages(existingImages.filter((img) => img.id !== imageId));
+  };
+
+  const addVariant = () => {
+    setVariants([...variants, { name: "", value: "", price_adjustment: "0", stock_adjustment: "0" }]);
+  };
+
+  const updateVariant = (index: number, field: string, value: string) => {
+    const updated = [...variants];
+    updated[index] = { ...updated[index], [field]: value };
+    setVariants(updated);
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  const updateExistingVariant = (index: number, field: string, value: string) => {
+    const updated = [...existingVariants];
+    updated[index] = { ...updated[index], [field]: value };
+    setExistingVariants(updated);
+  };
+
+  const removeExistingVariant = (index: number) => {
+    setExistingVariants(existingVariants.filter((_, i) => i !== index));
   };
 
   if (isLoading) {
@@ -547,6 +615,150 @@ export default function ProductForm() {
               {videos.length > 0 && <p className="mt-2 text-sm">{videos.length} new video(s) selected</p>}
             </div>
           </div>
+        </Card>
+
+        <Card className="p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3">Product Variants (Optional)</h2>
+          
+          <div className="flex items-center space-x-2 mb-4">
+            <Checkbox
+              id="enable_variants"
+              checked={enableVariants}
+              onCheckedChange={(checked) => setEnableVariants(checked as boolean)}
+            />
+            <Label htmlFor="enable_variants" className="text-sm">Enable Variants (e.g., sizes, zodiacs, colors)</Label>
+          </div>
+
+          {enableVariants && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Add different variants for this product. For example: "Zodiac: Aries", "Size: 5cm", etc.
+              </p>
+
+              {existingVariants.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm">Existing Variants</h3>
+                  {existingVariants.map((variant, index) => (
+                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg">
+                      <div>
+                        <Label className="text-xs">Variant Name</Label>
+                        <Input
+                          placeholder="e.g., Zodiac, Size"
+                          value={variant.name}
+                          onChange={(e) => updateExistingVariant(index, "name", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Value</Label>
+                        <Input
+                          placeholder="e.g., Aries, 5cm"
+                          value={variant.value}
+                          onChange={(e) => updateExistingVariant(index, "value", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Price Adj. (RM)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          value={variant.price_adjustment}
+                          onChange={(e) => updateExistingVariant(index, "price_adjustment", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Stock Adj.</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={variant.stock_adjustment}
+                            onChange={(e) => updateExistingVariant(index, "stock_adjustment", e.target.value)}
+                            className="text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => removeExistingVariant(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {variants.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm">New Variants</h3>
+                  {variants.map((variant, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg bg-muted/50">
+                      <div>
+                        <Label className="text-xs">Variant Name</Label>
+                        <Input
+                          placeholder="e.g., Zodiac, Size"
+                          value={variant.name}
+                          onChange={(e) => updateVariant(index, "name", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Value</Label>
+                        <Input
+                          placeholder="e.g., Aries, 5cm"
+                          value={variant.value}
+                          onChange={(e) => updateVariant(index, "value", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Price Adj. (RM)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          value={variant.price_adjustment}
+                          onChange={(e) => updateVariant(index, "price_adjustment", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Stock Adj.</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={variant.stock_adjustment}
+                            onChange={(e) => updateVariant(index, "stock_adjustment", e.target.value)}
+                            className="text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => removeVariant(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button type="button" variant="outline" onClick={addVariant}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Variant
+              </Button>
+            </div>
+          )}
         </Card>
 
         <div className="flex flex-col sm:flex-row gap-3">

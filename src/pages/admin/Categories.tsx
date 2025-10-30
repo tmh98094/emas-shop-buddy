@@ -9,7 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Plus, Trash, Upload, X } from "lucide-react";
+import { Pencil, Plus, Trash, Upload, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Categories() {
   const { toast } = useToast();
@@ -25,13 +26,23 @@ export default function Categories() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
+  const [editingSubCategory, setEditingSubCategory] = useState<any>(null);
+  const [currentCategoryId, setCurrentCategoryId] = useState<string>("");
+  const [subCategoryFormData, setSubCategoryFormData] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    display_order: "0",
+  });
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select("*, sub_categories(count)")
+        .select("*, sub_categories(*)")
         .order("display_order");
       if (error) throw error;
       return data;
@@ -105,11 +116,63 @@ export default function Categories() {
     },
   });
 
+  const saveSubCategoryMutation = useMutation({
+    mutationFn: async () => {
+      const subCategoryData = {
+        name: subCategoryFormData.name,
+        slug: subCategoryFormData.slug || undefined,
+        description: subCategoryFormData.description || null,
+        display_order: parseInt(subCategoryFormData.display_order),
+        category_id: currentCategoryId,
+      };
+
+      if (editingSubCategory) {
+        const { error } = await supabase
+          .from("sub_categories")
+          .update(subCategoryData)
+          .eq("id", editingSubCategory.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("sub_categories").insert(subCategoryData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: `Sub-category ${editingSubCategory ? "updated" : "created"} successfully` });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsSubCategoryDialogOpen(false);
+      resetSubCategoryForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteSubCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sub_categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Sub-category deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setFormData({ name: "", slug: "", description: "", display_order: "0", image_url: "" });
     setEditingCategory(null);
     setImageFile(null);
     setImagePreview("");
+  };
+
+  const resetSubCategoryForm = () => {
+    setSubCategoryFormData({ name: "", slug: "", description: "", display_order: "0" });
+    setEditingSubCategory(null);
+    setCurrentCategoryId("");
   };
 
   const handleEdit = (category: any) => {
@@ -147,6 +210,39 @@ export default function Categories() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate();
+  };
+
+  const handleSubCategorySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSubCategoryMutation.mutate();
+  };
+
+  const handleAddSubCategory = (categoryId: string) => {
+    setCurrentCategoryId(categoryId);
+    resetSubCategoryForm();
+    setIsSubCategoryDialogOpen(true);
+  };
+
+  const handleEditSubCategory = (subCategory: any, categoryId: string) => {
+    setCurrentCategoryId(categoryId);
+    setEditingSubCategory(subCategory);
+    setSubCategoryFormData({
+      name: subCategory.name,
+      slug: subCategory.slug,
+      description: subCategory.description || "",
+      display_order: subCategory.display_order?.toString() || "0",
+    });
+    setIsSubCategoryDialogOpen(true);
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -254,43 +350,172 @@ export default function Categories() {
           </TableHeader>
           <TableBody>
             {categories?.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>
-                  {category.image_url ? (
-                    <img src={category.image_url} alt={category.name} className="w-16 h-16 object-cover rounded" />
-                  ) : (
-                    <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
-                      No Image
+              <>
+                <TableRow key={category.id}>
+                  <TableCell>
+                    {category.image_url ? (
+                      <img src={category.image_url} alt={category.name} className="w-16 h-16 object-cover rounded" />
+                    ) : (
+                      <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
+                        No Image
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {category.sub_categories && category.sub_categories.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => toggleCategory(category.id)}
+                        >
+                          {expandedCategories.has(category.id) ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      {category.name}
                     </div>
-                  )}
-                </TableCell>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>{category.slug}</TableCell>
-                <TableCell>{category.sub_categories?.[0]?.count || 0}</TableCell>
-                <TableCell>{category.display_order}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(category)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm("Are you sure you want to delete this category?")) {
-                          deleteMutation.mutate(category.id);
-                        }
-                      }}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+                  </TableCell>
+                  <TableCell>{category.slug}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{category.sub_categories?.length || 0}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddSubCategory(category.id)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>{category.display_order}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => handleEdit(category)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this category?")) {
+                            deleteMutation.mutate(category.id);
+                          }
+                        }}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {expandedCategories.has(category.id) && category.sub_categories && category.sub_categories.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="bg-muted/30 p-4">
+                      <div className="ml-8">
+                        <h4 className="font-semibold mb-2">Sub-Categories</h4>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Slug</TableHead>
+                              <TableHead>Display Order</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {category.sub_categories.map((subCat: any) => (
+                              <TableRow key={subCat.id}>
+                                <TableCell>{subCat.name}</TableCell>
+                                <TableCell>{subCat.slug}</TableCell>
+                                <TableCell>{subCat.display_order}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handleEditSubCategory(subCat, category.id)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="icon"
+                                      onClick={() => {
+                                        if (confirm("Are you sure you want to delete this sub-category?")) {
+                                          deleteSubCategoryMutation.mutate(subCat.id);
+                                        }
+                                      }}
+                                    >
+                                      <Trash className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             ))}
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSubCategory ? "Edit Sub-Category" : "Add New Sub-Category"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubCategorySubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="sub_name">Name *</Label>
+              <Input
+                id="sub_name"
+                value={subCategoryFormData.name}
+                onChange={(e) => setSubCategoryFormData({ ...subCategoryFormData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="sub_slug">Slug (optional)</Label>
+              <Input
+                id="sub_slug"
+                value={subCategoryFormData.slug}
+                onChange={(e) => setSubCategoryFormData({ ...subCategoryFormData, slug: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sub_description">Description</Label>
+              <Textarea
+                id="sub_description"
+                value={subCategoryFormData.description}
+                onChange={(e) => setSubCategoryFormData({ ...subCategoryFormData, description: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sub_display_order">Display Order</Label>
+              <Input
+                id="sub_display_order"
+                type="number"
+                value={subCategoryFormData.display_order}
+                onChange={(e) => setSubCategoryFormData({ ...subCategoryFormData, display_order: e.target.value })}
+              />
+            </div>
+            <Button type="submit" disabled={saveSubCategoryMutation.isPending}>
+              {editingSubCategory ? "Update" : "Create"} Sub-Category
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
