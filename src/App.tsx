@@ -47,6 +47,7 @@ import PreOrders from "./pages/admin/PreOrders";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -166,6 +167,7 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <ScrollToTop />
                 <AppContent />
               </BrowserRouter>
             </TooltipProvider>
