@@ -104,6 +104,37 @@ export default function TouchNGoPayment() {
 
       if (error) throw error;
 
+      // Send email notification to admin
+      try {
+        const { data: adminEmailSetting } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "admin_email")
+          .single();
+
+        const { data: order } = await supabase
+          .from("orders")
+          .select("order_number, full_name, total_amount")
+          .eq("id", orderId)
+          .single();
+
+        if (adminEmailSetting && order) {
+          await supabase.functions.invoke("send-admin-email", {
+            body: {
+              type: "new_touch_n_go_payment",
+              admin_email: (adminEmailSetting.value as any).email,
+              order_number: order.order_number,
+              customer_name: order.full_name,
+              total_amount: typeof order.total_amount === 'string' ? parseFloat(order.total_amount) : order.total_amount,
+              receipt_url: receiptUrl,
+            },
+          });
+        }
+      } catch (emailError) {
+        console.error("Failed to send admin email:", emailError);
+        // Don't block the user flow if email fails
+      }
+
       toast({ title: "Payment submitted for verification!" });
       navigate(`/order-confirmation/${orderId}`);
     } catch (error: any) {

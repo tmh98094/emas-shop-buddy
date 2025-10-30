@@ -354,6 +354,71 @@ export default function Checkout() {
         const { error: preOrderError } = await supabase.from("pre_orders").insert(preOrderRecords);
 
         if (preOrderError) throw preOrderError;
+
+        // Send email notification for pre-orders
+        try {
+          const { data: adminEmailSetting } = await supabase
+            .from("settings")
+            .select("value")
+            .eq("key", "admin_email")
+            .single();
+
+          if (adminEmailSetting) {
+            const fullPhoneNumber = normalizePhone(formData.phone_number.replace(/\D/g, ""), validCountryCode);
+            const totalDeposit = preOrderRecords.reduce((sum, record) => sum + record.deposit_paid, 0);
+            const totalBalance = preOrderRecords.reduce((sum, record) => sum + record.balance_due, 0);
+
+            await supabase.functions.invoke("send-admin-email", {
+              body: {
+                type: "new_pre_order",
+                admin_email: (adminEmailSetting.value as any).email,
+                order_number: orderNumber,
+                customer_name: formData.full_name,
+                customer_phone: fullPhoneNumber,
+                deposit_paid: totalDeposit,
+                balance_due: totalBalance,
+                order_id: orderId,
+              },
+            });
+          }
+        } catch (emailError) {
+          console.error("Failed to send pre-order email:", emailError);
+        }
+      }
+
+      // Check for out of stock products and send notifications
+      try {
+        const { data: adminEmailSetting } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "admin_email")
+          .single();
+
+        if (adminEmailSetting) {
+          const { data: updatedProducts } = await supabase
+            .from("products")
+            .select("id, name, gold_type, weight_grams, stock")
+            .in("id", productIds);
+
+          if (updatedProducts) {
+            for (const product of updatedProducts) {
+              if (product.stock === 0) {
+                await supabase.functions.invoke("send-admin-email", {
+                  body: {
+                    type: "out_of_stock",
+                    admin_email: (adminEmailSetting.value as any).email,
+                    product_id: product.id,
+                    product_name: product.name,
+                    gold_type: product.gold_type,
+                    weight_grams: product.weight_grams,
+                  },
+                });
+              }
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send out-of-stock email:", emailError);
       }
 
       await clearCart();
