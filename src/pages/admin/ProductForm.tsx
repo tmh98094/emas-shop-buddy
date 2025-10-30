@@ -317,7 +317,12 @@ export default function ProductForm() {
   };
 
   const addVariantGroup = () => {
-    setVariantGroups([...variantGroups, { name: "", values: "" }]);
+    // Restrict to only one variant type per product
+    if (existingVariants.length > 0 || variantGroups.length >= 1) {
+      toast({ title: "Only one variant type allowed", description: "This product can have only one variant type (e.g., Size OR Zodiac OR Color).", variant: "destructive" });
+      return;
+    }
+    setVariantGroups([{ name: "", values: "" }]);
   };
 
   const updateVariantGroup = (index: number, field: string, value: string) => {
@@ -332,6 +337,15 @@ export default function ProductForm() {
 
   const updateExistingVariant = (index: number, field: string, value: string) => {
     const updated = [...existingVariants];
+    if (field === "name") {
+      // Enforce single variant type by propagating name to all
+      const newName = value;
+      for (let i = 0; i < updated.length; i++) {
+        updated[i] = { ...updated[i], name: newName };
+      }
+      setExistingVariants(updated);
+      return;
+    }
     updated[index] = { ...updated[index], [field]: value };
     setExistingVariants(updated);
   };
@@ -639,7 +653,7 @@ export default function ProductForm() {
           {enableVariants && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Add variant groups with multiple values. For example: Variant Name: "Size", Values: "1cm, 5cm, 8cm, 10cm" (comma-separated).
+                Only one variant type per product is allowed (e.g., Size OR Zodiac OR Color). Enter values as comma-separated list.
               </p>
 
               {existingVariants.length > 0 && (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import { T } from "@/components/T";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { validateVariantSelection, SelectedVariantsMap } from "@/lib/cart-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+import { supabase } from "@/integrations/supabase/client";
 interface ProductQuickViewProps {
   product: any;
   goldPrice: number;
@@ -33,8 +33,30 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
     (a.display_order || 0) - (b.display_order || 0)
   );
 
+  // Fetch variants if not present
+  const [fetchedVariants, setFetchedVariants] = useState<any[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      if (!open) return;
+      if (product?.id && (!product.product_variants || product.product_variants.length === 0)) {
+        const { data, error } = await supabase
+          .from("product_variants")
+          .select("*")
+          .eq("product_id", product.id);
+        if (!error) {
+          setFetchedVariants(data || []);
+        }
+      }
+    };
+    load();
+  }, [open, product?.id, product?.product_variants]);
+
+  const variantsArray = (product.product_variants && product.product_variants.length > 0)
+    ? product.product_variants
+    : fetchedVariants;
+
   // Group variants by name
-  const variantGroups = (product.product_variants || []).reduce((acc: any, variant: any) => {
+  const variantGroups = (variantsArray || []).reduce((acc: any, variant: any) => {
     if (!acc[variant.name]) {
       acc[variant.name] = [];
     }
