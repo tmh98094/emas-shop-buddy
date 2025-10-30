@@ -48,6 +48,7 @@ import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { MobileBottomNav } from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,8 @@ const App = () => {
     return (
       <>
         <MaintenanceOverlay isAdminRoute={isAdminRoute} />
+        <ScrollToTop />
+        <MobileBottomNav />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />

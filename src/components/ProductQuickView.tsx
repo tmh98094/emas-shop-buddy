@@ -1,0 +1,192 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Minus, Plus, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "@/hooks/useCart";
+import { calculatePrice, formatPrice } from "@/lib/price-utils";
+import { T } from "@/components/T";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface ProductQuickViewProps {
+  product: any;
+  goldPrice: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ProductQuickView({ product, goldPrice, open, onOpenChange }: ProductQuickViewProps) {
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, { name: string; value: string; id: string }>>({});
+
+  const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
+  
+  const sortedImages = (product.product_images || []).sort((a: any, b: any) => 
+    (a.display_order || 0) - (b.display_order || 0)
+  );
+
+  // Group variants by name
+  const variantGroups = (product.product_variants || []).reduce((acc: any, variant: any) => {
+    if (!acc[variant.name]) {
+      acc[variant.name] = [];
+    }
+    acc[variant.name].push(variant);
+    return acc;
+  }, {});
+
+  const handleAddToCart = async () => {
+    await addItem(product.id, quantity);
+    onOpenChange(false);
+  };
+
+  const handleViewFullDetails = () => {
+    onOpenChange(false);
+    navigate(`/product/${product.slug}`);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">Quick View: {product.name}</DialogTitle>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          {/* Left: Images */}
+          <div className="space-y-3">
+            <AspectRatio ratio={1} className="bg-muted rounded-lg overflow-hidden">
+              <img 
+                src={sortedImages[selectedImageIndex]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </AspectRatio>
+            
+            {sortedImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {sortedImages.slice(0, 4).map((img: any, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded border-2 overflow-hidden transition-all ${
+                      selectedImageIndex === index 
+                        ? 'border-primary ring-2 ring-primary' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <img 
+                      src={img.image_url} 
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Details */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-primary mb-2">{product.name}</h2>
+              <Badge variant="secondary">{product.gold_type} Gold</Badge>
+            </div>
+
+            <div className="text-2xl font-bold text-primary">
+              RM {formatPrice(totalPrice)}
+            </div>
+
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
+              <p><T zh="库存" en="Stock" />: {product.stock} <T zh="件可用" en="available" /></p>
+            </div>
+
+            {/* Variants */}
+            {Object.keys(variantGroups).length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold"><T zh="选项" en="Options" /></h3>
+                {Object.keys(variantGroups).map((variantName) => (
+                  <div key={variantName}>
+                    <label className="text-sm font-medium mb-2 block">{variantName}</label>
+                    <Select
+                      value={selectedVariants[variantName]?.id || ""}
+                      onValueChange={(value) => {
+                        const variant = variantGroups[variantName].find((v: any) => v.id === value);
+                        if (variant) {
+                          setSelectedVariants(prev => ({
+                            ...prev,
+                            [variantName]: { name: variant.name, value: variant.value, id: variant.id }
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select ${variantName}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {variantGroups[variantName].map((variant: any) => (
+                          <SelectItem key={variant.id} value={variant.id}>
+                            {variant.value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Quantity */}
+            <div>
+              <h3 className="font-semibold mb-2"><T zh="数量" en="Quantity" /></h3>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2 pt-4">
+              <Button
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+                className="w-full"
+              >
+                {product.stock === 0 ? (
+                  <T zh="缺货" en="Out of Stock" />
+                ) : (
+                  <T zh="加入购物车" en="Add to Cart" />
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleViewFullDetails}
+                className="w-full"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                <T zh="查看完整详情" en="View Full Details" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

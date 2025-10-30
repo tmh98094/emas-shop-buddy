@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ImageZoomModal } from "@/components/ImageZoomModal";
 import { OutOfStockWhatsApp } from "@/components/OutOfStockWhatsApp";
 import { SEOHead } from "@/components/SEOHead";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -19,6 +20,9 @@ import { T } from "@/components/T";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ProductDetailSkeleton } from "@/components/LoadingSkeleton";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { generateProductSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
+import { Helmet } from "react-helmet-async";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -27,6 +31,10 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showZoom, setShowZoom] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, { name: string; value: string; id: string }>>({});
+  const [showStickyCart, setShowStickyCart] = useState(false);
+  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
+  const [showMagnifier, setShowMagnifier] = useState(false);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -52,14 +60,24 @@ export default function ProductDetail() {
         .from("products")
         .select(`
           *,
-          product_images (*)
+          product_images (*),
+          product_variants (*)
         `)
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  // Sticky cart bar visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyCart(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (isLoading) {
     return (
@@ -78,6 +96,15 @@ export default function ProductDetail() {
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
   const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
 
+  // Group variants by name
+  const variantGroups = (product.product_variants || []).reduce((acc: any, variant: any) => {
+    if (!acc[variant.name]) {
+      acc[variant.name] = [];
+    }
+    acc[variant.name].push(variant);
+    return acc;
+  }, {});
+
   const handleAddToCart = async () => {
     await addItem(product.id, quantity);
     navigate("/cart");
@@ -87,8 +114,44 @@ export default function ProductDetail() {
     (a.display_order || 0) - (b.display_order || 0)
   );
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setHoverPos({ x, y });
+  };
+
+  // Structured data for SEO
+  const productSchema = generateProductSchema(product, goldPrice);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: window.location.origin },
+    { name: "Categories", url: `${window.location.origin}/categories` },
+    { name: product.name, url: window.location.href }
+  ]);
+
+  // Selected variants display
+  const selectedVariantsDisplay = Object.values(selectedVariants).length > 0 && (
+    <div className="text-sm text-muted-foreground">
+      <span className="font-medium">Selected: </span>
+      {Object.values(selectedVariants).map((v, i) => (
+        <span key={i}>
+          {v.value}{i < Object.values(selectedVariants).length - 1 ? ' • ' : ''}
+        </span>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(productSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
+      </Helmet>
+
       <SEOHead
         title={product.name}
         description={product.description || `${product.gold_type} gold jewelry, ${product.weight_grams}g`}
@@ -100,24 +163,24 @@ export default function ProductDetail() {
       <Header />
       
       <main className="container mx-auto px-4 py-12">
-        {/* Breadcrumb */}
-        <nav className="mb-6 text-sm">
-          <ol className="flex items-center space-x-2">
-            <li><a href="/categories" className="text-muted-foreground hover:text-primary">Categories</a></li>
-            <li className="text-muted-foreground">/</li>
-            <li className="text-foreground font-medium">{product.name}</li>
-          </ol>
-        </nav>
+        <Breadcrumbs items={[
+          { label: "Home", href: "/" },
+          { label: "Categories", href: "/categories" },
+          { label: product.name, href: `/product/${product.slug}` }
+        ]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left side: Main image + Gallery */}
           <div className="space-y-4">
-            {/* Main Image - Smaller */}
+            {/* Main Image with hover zoom on desktop */}
             <Card 
-              className="overflow-hidden cursor-zoom-in" 
+              className="overflow-hidden cursor-zoom-in relative" 
               onClick={() => {
                 setShowZoom(true);
               }}
+              onMouseEnter={() => setShowMagnifier(true)}
+              onMouseLeave={() => setShowMagnifier(false)}
+              onMouseMove={handleMouseMove}
             >
               <AspectRatio ratio={1} className="bg-muted">
                 {sortedImages[selectedImageIndex]?.media_type === 'video' ? (
@@ -127,17 +190,31 @@ export default function ProductDetail() {
                     controls 
                   />
                 ) : (
-                  <img 
-                    src={sortedImages[selectedImageIndex]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"} 
-                    alt={`${product.name} - Main`} 
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  <>
+                    <img 
+                      src={sortedImages[selectedImageIndex]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"} 
+                      alt={`${product.name} - Main`} 
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    {/* Hover zoom overlay - desktop only */}
+                    {showMagnifier && sortedImages[selectedImageIndex]?.media_type !== 'video' && (
+                      <div 
+                        className="hidden lg:block absolute inset-0 pointer-events-none bg-no-repeat"
+                        style={{
+                          backgroundImage: `url(${sortedImages[selectedImageIndex]?.image_url})`,
+                          backgroundSize: '200%',
+                          backgroundPosition: `${hoverPos.x}% ${hoverPos.y}%`,
+                          opacity: 0.8,
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </AspectRatio>
             </Card>
 
-            {/* Product Image Gallery - Carousel on mobile, Grid on desktop */}
+            {/* Product Image Gallery */}
             {sortedImages.length > 1 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">
@@ -233,6 +310,7 @@ export default function ProductDetail() {
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-2">{product.name}</h1>
               <Badge variant="secondary">{product.gold_type} Gold</Badge>
+              {selectedVariantsDisplay}
             </div>
 
             <div className="text-2xl lg:text-3xl font-bold text-primary">
@@ -248,6 +326,41 @@ export default function ProductDetail() {
                 <T zh="库存" en="Stock" />: <span className="font-semibold">{product.stock} <T zh="件可用" en="available" /></span>
               </p>
             </div>
+
+            {/* Variants Selection */}
+            {Object.keys(variantGroups).length > 0 && (
+              <div className="space-y-4 border-t border-b py-4">
+                <h3 className="font-semibold"><T zh="选择选项" en="Select Options" /></h3>
+                {Object.keys(variantGroups).map((variantName) => (
+                  <div key={variantName} className="space-y-2">
+                    <label className="text-sm font-medium">{variantName}</label>
+                    <Select
+                      value={selectedVariants[variantName]?.id || ""}
+                      onValueChange={(value) => {
+                        const variant = variantGroups[variantName].find((v: any) => v.id === value);
+                        if (variant) {
+                          setSelectedVariants(prev => ({
+                            ...prev,
+                            [variantName]: { name: variant.name, value: variant.value, id: variant.id }
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select ${variantName}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {variantGroups[variantName].map((variant: any) => (
+                          <SelectItem key={variant.id} value={variant.id}>
+                            {variant.value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Quantity */}
             <div>
@@ -312,6 +425,43 @@ export default function ProductDetail() {
           </Card>
         </div>
       </main>
+
+      {/* Sticky Mobile Cart Bar */}
+      {showStickyCart && (
+        <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-background border-t border-border shadow-lg z-40 animate-slide-up">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div className="text-lg font-bold text-primary">
+              RM {formatPrice(totalPrice)}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-base font-semibold w-8 text-center">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={handleAddToCart}
+              disabled={product.stock <= 0}
+              className="flex-1 max-w-[150px]"
+            >
+              <T zh="加入购物车" en="Add to Cart" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Footer />
       <WhatsAppFloater />

@@ -226,6 +226,7 @@ export type Database = {
           quantity: number
           subtotal: number
           variant_name: string | null
+          variant_selection: string | null
           variant_value: string | null
           weight_grams: number
         }
@@ -242,6 +243,7 @@ export type Database = {
           quantity?: number
           subtotal: number
           variant_name?: string | null
+          variant_selection?: string | null
           variant_value?: string | null
           weight_grams: number
         }
@@ -258,6 +260,7 @@ export type Database = {
           quantity?: number
           subtotal?: number
           variant_name?: string | null
+          variant_selection?: string | null
           variant_value?: string | null
           weight_grams?: number
         }
