@@ -20,9 +20,9 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
       <DialogContent className="max-w-7xl w-[95vw] h-[85vh] md:h-[90vh] p-0">
         <VisuallyHidden>
           <DialogTitle>Product Image Gallery</DialogTitle>
-          <DialogDescription>View product images and videos in fullscreen. Use arrow buttons to navigate.</DialogDescription>
+          <DialogDescription>View product images and videos in fullscreen. Use arrow buttons or swipe to navigate.</DialogDescription>
         </VisuallyHidden>
-        <div className="relative w-full h-full bg-black/95 flex items-center justify-center">
+        <div className="relative w-full h-full bg-black/95 flex items-center justify-center touch-pan-y">
           <Button
             variant="ghost"
             size="icon"
@@ -63,12 +63,14 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
               controls
               className="max-w-full max-h-full object-contain px-2 md:px-0"
               autoPlay
+              preload="metadata"
             />
           ) : (
             <img
               src={currentImage?.image_url}
               alt={`Product image ${currentIndex + 1}`}
-              className="max-w-full max-h-full object-contain px-2 md:px-0"
+              className="max-w-full max-h-full object-contain px-2 md:px-0 select-none"
+              draggable="false"
             />
           )}
 

@@ -23,6 +23,7 @@ export default function Products() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedGoldTypes, setSelectedGoldTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [weightRange, setWeightRange] = useState<[number, number]>([0, 100]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [excludePreOrder, setExcludePreOrder] = useState(false);
   const [excludeOutOfStock, setExcludeOutOfStock] = useState(false);
@@ -53,7 +54,7 @@ export default function Products() {
 
   // Fetch products
   const { data: allProducts = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
+    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -85,6 +86,9 @@ export default function Products() {
 
       // Price filter - include NULL prices OR prices in range
       query = query.or(`cached_current_price.is.null,and(cached_current_price.gte.${priceRange[0]},cached_current_price.lte.${priceRange[1]})`);
+
+      // Weight filter
+      query = query.gte("weight_grams", weightRange[0]).lte("weight_grams", weightRange[1]);
 
       // Apply search
       if (searchQuery) {
@@ -183,6 +187,7 @@ export default function Products() {
     setSelectedCategories([]);
     setSelectedGoldTypes([]);
     setPriceRange([0, priceData || 10000]);
+    setWeightRange([0, 100]);
     setInStockOnly(false);
     setExcludePreOrder(false);
     setExcludeOutOfStock(false);
@@ -195,7 +200,21 @@ export default function Products() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy]);
+  }, [selectedCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy]);
+
+  // Get max weight for slider
+  const { data: maxWeightData } = useQuery({
+    queryKey: ["max-weight"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("weight_grams")
+        .order("weight_grams", { ascending: false })
+        .limit(1)
+        .single();
+      return data?.weight_grams ? Math.ceil(data.weight_grams) : 100;
+    },
+  });
 
   const FilterPanel = () => (
     <ProductFilters
@@ -204,6 +223,8 @@ export default function Products() {
       selectedGoldTypes={selectedGoldTypes}
       priceRange={priceRange}
       maxPrice={priceData || 10000}
+      weightRange={weightRange}
+      maxWeight={maxWeightData || 100}
       inStockOnly={inStockOnly}
       excludePreOrder={excludePreOrder}
       excludeOutOfStock={excludeOutOfStock}
@@ -211,6 +232,7 @@ export default function Products() {
       onCategoryChange={handleCategoryToggle}
       onGoldTypeChange={handleGoldTypeToggle}
       onPriceRangeChange={setPriceRange}
+      onWeightRangeChange={setWeightRange}
       onStockFilterChange={setInStockOnly}
       onPreOrderFilterChange={setExcludePreOrder}
       onOutOfStockFilterChange={setExcludeOutOfStock}

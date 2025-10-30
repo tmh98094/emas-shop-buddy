@@ -279,9 +279,24 @@ export default function OrderConfirmation() {
               </h3>
               <div className="space-y-3">
                 {order.order_items?.map((item: any) => (
-                  <div key={item.id} className="flex justify-between gap-4 text-sm md:text-base">
-                    <span className="flex-1">{item.product_name} x {item.quantity}</span>
-                    <span className="font-semibold">RM {formatPrice(parseFloat(item.subtotal))}</span>
+                  <div key={item.id} className="flex justify-between items-start gap-4 p-3 bg-muted rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm md:text-base">{item.product_name}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">
+                        {item.gold_type} Gold • {item.weight_grams}g
+                      </p>
+                      {item.variant_selection && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <T zh="选项：" en="Options: " />{item.variant_selection}
+                        </p>
+                      )}
+                      <p className="text-xs md:text-sm text-muted-foreground">
+                        <T zh="数量" en="Qty" />: {item.quantity}
+                      </p>
+                    </div>
+                    <p className="font-semibold text-sm md:text-base whitespace-nowrap">
+                      RM {formatPrice(parseFloat(item.subtotal))}
+                    </p>
                   </div>
                 ))}
               </div>

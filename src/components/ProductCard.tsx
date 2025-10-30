@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -8,6 +8,8 @@ import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { T } from "./T";
 import { Badge } from "./ui/badge";
+import { useState } from "react";
+import { ProductQuickView } from "./ProductQuickView";
 
 interface ProductCardProps {
   product: {
@@ -30,6 +32,7 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const { addItem } = useCart();
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
   
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -73,11 +76,29 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
     window.open(whatsappUrl, "_blank");
   };
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickViewOpen(true);
+  };
+
   return (
-    <Link to={`/product/${product.slug}`}>
-      <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
-        <div className="relative">
-          <div className="aspect-square overflow-hidden bg-muted">
+    <>
+      <Link to={`/product/${product.slug}`}>
+        <Card className="group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
+          <div className="relative">
+            {/* Quick View Button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+              onClick={handleQuickView}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              <T zh="快速查看" en="Quick View" />
+            </Button>
+            
+            <div className="aspect-square overflow-hidden bg-muted">
             <img
               src={displayImage}
               alt={product.name}
@@ -159,5 +180,13 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
         </CardFooter>
       </Card>
     </Link>
+    
+    <ProductQuickView
+      product={product}
+      goldPrice={goldPrice}
+      open={quickViewOpen}
+      onOpenChange={setQuickViewOpen}
+    />
+    </>
   );
 };

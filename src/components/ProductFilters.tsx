@@ -17,6 +17,8 @@ interface ProductFiltersProps {
   selectedGoldTypes: string[];
   priceRange: [number, number];
   maxPrice: number;
+  weightRange: [number, number];
+  maxWeight: number;
   inStockOnly: boolean;
   excludePreOrder: boolean;
   excludeOutOfStock: boolean;
@@ -24,6 +26,7 @@ interface ProductFiltersProps {
   onCategoryChange: (categoryId: string) => void;
   onGoldTypeChange: (goldType: string) => void;
   onPriceRangeChange: (range: [number, number]) => void;
+  onWeightRangeChange: (range: [number, number]) => void;
   onStockFilterChange: (checked: boolean) => void;
   onPreOrderFilterChange: (checked: boolean) => void;
   onOutOfStockFilterChange: (checked: boolean) => void;
@@ -37,6 +40,8 @@ export const ProductFilters = ({
   selectedGoldTypes,
   priceRange,
   maxPrice,
+  weightRange,
+  maxWeight,
   inStockOnly,
   excludePreOrder,
   excludeOutOfStock,
@@ -44,6 +49,7 @@ export const ProductFilters = ({
   onCategoryChange,
   onGoldTypeChange,
   onPriceRangeChange,
+  onWeightRangeChange,
   onStockFilterChange,
   onPreOrderFilterChange,
   onOutOfStockFilterChange,
@@ -153,6 +159,41 @@ export const ProductFilters = ({
         </div>
         <div className="text-xs text-muted-foreground">
           当前：RM {priceRange[0]} - RM {priceRange[1]}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Weight Range */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">重量区间 (g)</Label>
+        <div className="flex gap-2 items-center">
+          <Input
+            type="number"
+            placeholder="最小"
+            value={weightRange[0]}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value) || 0;
+              onWeightRangeChange([val, weightRange[1]]);
+            }}
+            step="0.1"
+            className="w-24"
+          />
+          <span className="text-muted-foreground">至</span>
+          <Input
+            type="number"
+            placeholder="最大"
+            value={weightRange[1]}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value) || maxWeight;
+              onWeightRangeChange([weightRange[0], val]);
+            }}
+            step="0.1"
+            className="w-24"
+          />
+        </div>
+        <div className="text-xs text-muted-foreground">
+          当前：{weightRange[0]}g - {weightRange[1]}g
         </div>
       </div>
 

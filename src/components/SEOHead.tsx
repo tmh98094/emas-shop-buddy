@@ -23,7 +23,7 @@ export function SEOHead({
   const canonicalUrl = canonical || window.location.href;
 
   return (
-    <Helmet>
+    <Helmet prioritizeSeoTags>
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
@@ -41,21 +41,23 @@ export function SEOHead({
       <meta property="og:image" content={`${siteUrl}${ogImage}`} />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="en_MY" />
+      <meta property="og:locale:alternate" content="zh_CN" />
       
       {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={canonicalUrl} />
-      <meta property="twitter:title" content={fullTitle} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={`${siteUrl}${ogImage}`} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content={canonicalUrl} />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
       
       {/* Additional */}
-      <meta name="robots" content="index, follow" />
+      <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
       <meta name="language" content="English" />
       <meta name="revisit-after" content="7 days" />
       <meta name="author" content={siteName} />
       <meta name="geo.region" content="MY" />
       <meta name="geo.placename" content="Malaysia" />
+      <meta name="format-detection" content="telephone=no" />
       
       {/* Structured Data - Organization Schema */}
       <script type="application/ld+json">

@@ -37,6 +37,14 @@ export const HeroCarousel = () => {
     },
   ];
 
+  // Preload images
+  useEffect(() => {
+    slides.forEach((slide) => {
+      const img = new Image();
+      img.src = slide.image;
+    });
+  }, []);
+
   return (
     <div className="overflow-hidden">
       <Carousel 
