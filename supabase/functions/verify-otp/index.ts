@@ -203,6 +203,7 @@ serve(async (req) => {
         userId,
         isNewUser: isNewUser || !existingProfile,
         tempPassword: otpCode, // Return OTP as temp password for frontend to auto-login
+        phoneNumber, // Return normalized phone for consistency
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

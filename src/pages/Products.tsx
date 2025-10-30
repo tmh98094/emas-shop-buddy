@@ -23,6 +23,8 @@ export default function Products() {
   const [selectedGoldTypes, setSelectedGoldTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [excludePreOrder, setExcludePreOrder] = useState(false);
+  const [excludeOutOfStock, setExcludeOutOfStock] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
@@ -50,7 +52,7 @@ export default function Products() {
 
   // Fetch products
   const { data: allProducts = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, sortBy],
+    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -69,6 +71,14 @@ export default function Products() {
       }
 
       if (inStockOnly) {
+        query = query.gt("stock", 0);
+      }
+
+      if (excludePreOrder) {
+        query = query.eq("is_preorder", false);
+      }
+
+      if (excludeOutOfStock) {
         query = query.gt("stock", 0);
       }
 
@@ -173,6 +183,8 @@ export default function Products() {
     setSelectedGoldTypes([]);
     setPriceRange([0, priceData || 10000]);
     setInStockOnly(false);
+    setExcludePreOrder(false);
+    setExcludeOutOfStock(false);
     setSortBy("newest");
     setSearchQuery("");
     setSearchParams({});
@@ -182,7 +194,7 @@ export default function Products() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, sortBy]);
+  }, [selectedCategories, selectedGoldTypes, priceRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy]);
 
   const FilterPanel = () => (
     <ProductFilters
@@ -192,11 +204,15 @@ export default function Products() {
       priceRange={priceRange}
       maxPrice={priceData || 10000}
       inStockOnly={inStockOnly}
+      excludePreOrder={excludePreOrder}
+      excludeOutOfStock={excludeOutOfStock}
       sortBy={sortBy}
       onCategoryChange={handleCategoryToggle}
       onGoldTypeChange={handleGoldTypeToggle}
       onPriceRangeChange={setPriceRange}
       onStockFilterChange={setInStockOnly}
+      onPreOrderFilterChange={setExcludePreOrder}
+      onOutOfStockFilterChange={setExcludeOutOfStock}
       onSortChange={setSortBy}
       onClearAll={handleClearAll}
     />

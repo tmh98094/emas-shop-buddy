@@ -3,6 +3,11 @@
 
 export type CountryCode = "+60" | "+65" | "+62" | string;
 
+export interface ParsedPhone {
+  countryCode: "+60" | "+65";
+  national: string;
+}
+
 // Keep only digits
 export const digitsOnly = (input: string) => (input || "").replace(/\D+/g, "");
 
@@ -83,9 +88,59 @@ export function formatDisplayPhone(e164: string, countryCode: CountryCode = "+60
     }
   }
 
-  // Generic fallback: +CC [chunks of 3-4]
+// Generic fallback: +CC [chunks of 3-4]
   if (national.length > 0) {
     return `+${ccNoPlus} ${national}`;
   }
   return e164;
+}
+
+/**
+ * Parse an E.164 phone number into country code and national number
+ * @param e164 - Phone number in E.164 format (e.g., "+6512345678")
+ * @returns Parsed country code and national number
+ */
+export function parseE164(e164: string): ParsedPhone {
+  const phone = (e164 || "").trim();
+  
+  if (!phone.startsWith("+")) {
+    // If no leading +, assume +60
+    return {
+      countryCode: "+60",
+      national: phone.replace(/\D/g, ""),
+    };
+  }
+  
+  // Check for known country codes
+  if (phone.startsWith("+65")) {
+    return {
+      countryCode: "+65",
+      national: phone.slice(3), // Everything after +65
+    };
+  }
+  
+  if (phone.startsWith("+60")) {
+    return {
+      countryCode: "+60",
+      national: phone.slice(3), // Everything after +60
+    };
+  }
+  
+  // Unknown country code - default to +60 but keep all digits
+  return {
+    countryCode: "+60",
+    national: phone.slice(1), // Remove + but keep all digits
+  };
+}
+
+/**
+ * Combined normalize and parse for consistency
+ * @param input - Raw phone input
+ * @param selectedCode - Selected country code from UI
+ * @returns Both normalized E.164 and parsed components
+ */
+export function normalizeAndParse(input: string, selectedCode: "+60" | "+65") {
+  const normalized = normalizePhone(input, selectedCode);
+  const parsed = parseE164(normalized);
+  return { normalized, ...parsed };
 }

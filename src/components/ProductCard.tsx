@@ -21,6 +21,8 @@ interface ProductCardProps {
     description?: string;
     is_preorder?: boolean | null;
     preorder_deposit?: number | null;
+    is_best_seller?: boolean | null;
+    is_new_arrival?: boolean | null;
     product_images?: Array<{ image_url: string; media_type?: string; display_order?: number }>;
   };
   imageUrl?: string;
@@ -89,9 +91,25 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <span className="text-white font-semibold text-sm"><T zh="缺货" en="Out of Stock" /></span>
               </div>
-          )}
+            )}
+            {/* Hot label for best sellers */}
+            {product.is_best_seller && product.stock > 0 && (
+              <div className="absolute top-2 right-2">
+                <Badge variant="destructive" className="bg-red-600 text-white font-bold shadow-lg">
+                  <T zh="热" en="Hot" />
+                </Badge>
+              </div>
+            )}
+            {/* New label for new arrivals */}
+            {product.is_new_arrival && product.stock > 0 && !product.is_best_seller && (
+              <div className="absolute top-2 right-2">
+                <Badge variant="default" className="bg-green-600 text-white font-bold shadow-lg">
+                  <T zh="新" en="New" />
+                </Badge>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       <CardContent className="p-3 md:p-4 space-y-2 flex-1 flex flex-col">
         <h3 className="font-semibold text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] text-foreground">{product.name}</h3>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">

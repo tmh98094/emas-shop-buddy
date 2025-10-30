@@ -11,15 +11,14 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Minus, Plus, Loader2 } from "lucide-react";
+import { Minus, Plus, Play } from "lucide-react";
 import { T } from "@/components/T";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ProductDetailSkeleton } from "@/components/LoadingSkeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -84,6 +83,10 @@ export default function ProductDetail() {
     navigate("/cart");
   };
 
+  const sortedImages = (product.product_images || []).sort((a: any, b: any) => 
+    (a.display_order || 0) - (b.display_order || 0)
+  );
+
   return (
     <div className="min-h-screen">
       <SEOHead
@@ -106,60 +109,93 @@ export default function ProductDetail() {
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image Carousel - 1:1 Aspect Ratio */}
-          <div>
-            <Carousel className="w-full">
-              <CarouselContent>
-                {product.product_images?.map((img: any, index: number) => (
-                  <CarouselItem key={index}>
-                    <Card 
-                      className="overflow-hidden cursor-zoom-in" 
-                      onClick={() => {
-                        setSelectedImageIndex(index);
-                        setShowZoom(true);
-                      }}
-                    >
-                      <AspectRatio ratio={1}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Left side: Main image + Gallery */}
+          <div className="space-y-4">
+            {/* Main Image - Smaller */}
+            <Card 
+              className="overflow-hidden cursor-zoom-in" 
+              onClick={() => {
+                setShowZoom(true);
+              }}
+            >
+              <AspectRatio ratio={1} className="bg-muted">
+                {sortedImages[selectedImageIndex]?.media_type === 'video' ? (
+                  <video 
+                    src={sortedImages[selectedImageIndex]?.image_url} 
+                    className="w-full h-full object-cover" 
+                    controls 
+                  />
+                ) : (
+                  <img 
+                    src={sortedImages[selectedImageIndex]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"} 
+                    alt={`${product.name} - Main`} 
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+              </AspectRatio>
+            </Card>
+
+            {/* Product Image Gallery - Horizontal on mobile, Grid on desktop */}
+            {sortedImages.length > 1 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">
+                  <T zh="产品图库" en="Product Image Gallery" />
+                </h3>
+                <ScrollArea className="w-full">
+                  <div className="flex lg:grid lg:grid-cols-4 gap-2 pb-2">
+                    {sortedImages.map((img: any, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`relative flex-shrink-0 w-20 h-20 lg:w-full lg:aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedImageIndex === index 
+                            ? 'border-primary ring-2 ring-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
                         {img.media_type === 'video' ? (
-                          <video 
-                            src={img.image_url} 
-                            className="w-full h-full object-cover" 
-                            controls 
-                          />
+                          <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                            <Play className="h-6 w-6 text-primary" />
+                            <video 
+                              src={img.image_url} 
+                              className="absolute inset-0 w-full h-full object-cover opacity-50"
+                              preload="metadata"
+                            />
+                          </div>
                         ) : (
                           <img 
                             src={img.image_url} 
-                            alt={`${product.name} - Image ${index + 1}`} 
+                            alt={`Thumbnail ${index + 1}`} 
                             className="w-full h-full object-cover"
                             loading="lazy"
                           />
                         )}
-                      </AspectRatio>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2 md:left-4 h-8 w-8 md:h-10 md:w-10" />
-              <CarouselNext className="right-2 md:right-4 h-8 w-8 md:h-10 md:w-10" />
-            </Carousel>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+            
             <ImageZoomModal
-              images={product.product_images || []}
+              images={sortedImages || []}
               currentIndex={selectedImageIndex}
               open={showZoom}
               onOpenChange={setShowZoom}
-              onNavigate={(dir) => setSelectedImageIndex(prev => dir === 'prev' ? Math.max(0, prev - 1) : Math.min(product.product_images.length - 1, prev + 1))}
+              onNavigate={(dir) => setSelectedImageIndex(prev => dir === 'prev' ? Math.max(0, prev - 1) : Math.min(sortedImages.length - 1, prev + 1))}
             />
           </div>
 
-          {/* Product Details */}
+          {/* Right side: Product Details */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-4xl font-bold text-primary mb-2">{product.name}</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-2">{product.name}</h1>
               <Badge variant="secondary">{product.gold_type} Gold</Badge>
             </div>
 
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-2xl lg:text-3xl font-bold text-primary">
               RM {formatPrice(totalPrice)}
             </div>
 
@@ -224,7 +260,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Product Details */}
+        {/* Product Description */}
         <div className="mt-16">
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-4">

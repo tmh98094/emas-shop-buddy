@@ -171,16 +171,40 @@ export default function Auth() {
         throw new Error(data?.error || "Failed to verify OTP");
       }
 
-      // Sign in with phone and temporary password (the OTP code)
-      if (data.tempPassword) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          phone: normalizedPhone,
-          password: data.tempPassword,
-        });
+      // Use the phone number returned by the server to ensure consistency
+      const serverPhone = data.phoneNumber || normalizedPhone;
 
-        if (signInError) {
-          console.error("Auto sign-in error:", signInError);
-          throw signInError;
+      // Sign in with phone and temporary password (the OTP code) with retry
+      if (data.tempPassword) {
+        let signInSuccess = false;
+        let lastError = null;
+
+        // Retry up to 3 times with exponential backoff
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) {
+            // Wait before retry: 500ms, 1000ms, 2000ms
+            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
+            console.log(`[OTP] Retry sign-in attempt ${attempt + 1}`);
+          }
+
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            phone: serverPhone,
+            password: data.tempPassword,
+          });
+
+          if (!signInError) {
+            signInSuccess = true;
+            console.log(`[OTP] Sign-in successful on attempt ${attempt + 1}`);
+            break;
+          }
+
+          lastError = signInError;
+          console.error(`[OTP] Sign-in attempt ${attempt + 1} failed:`, signInError);
+        }
+
+        if (!signInSuccess) {
+          console.error("[OTP] All sign-in attempts failed:", lastError);
+          throw new Error("登录失败，请重试或重新获取验证码。");
         }
       }
 

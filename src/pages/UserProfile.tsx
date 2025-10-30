@@ -12,7 +12,7 @@ import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { PhoneInput } from "@/components/PhoneInput";
-import { normalizePhone } from "@/lib/phone-utils";
+import { normalizePhone, parseE164 } from "@/lib/phone-utils";
 import { T } from "@/components/T";
 
 export default function UserProfile() {
@@ -60,21 +60,9 @@ export default function UserProfile() {
         const phone = data.phone_number || "";
         
         if (phone) {
-          // Check for specific country codes first (+60, +65)
-          if (phone.startsWith('+60')) {
-            setCountryCode('+60');
-            setPhoneNumber(phone.slice(3)); // Everything after +60
-          } else if (phone.startsWith('+65')) {
-            setCountryCode('+65');
-            setPhoneNumber(phone.slice(3)); // Everything after +65
-          } else {
-            // Fallback: extract all digits and assume +60
-            const digits = phone.replace(/\D/g, "");
-            if (digits) {
-              setCountryCode("+60");
-              setPhoneNumber(digits);
-            }
-          }
+          const { countryCode: parsedCC, national } = parseE164(phone);
+          setCountryCode(parsedCC);
+          setPhoneNumber(national);
         }
         
         setProfile({

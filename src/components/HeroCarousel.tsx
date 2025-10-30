@@ -11,6 +11,8 @@ import { T } from "./T";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
+import goldBraceletImg from "@/assets/hero/Gold_Bracelet.png";
+import goldNecklaceImg from "@/assets/hero/Gold_Necklace.jpg";
 
 export const HeroCarousel = () => {
   const [api, setApi] = useState<CarouselApi>();
@@ -20,20 +22,18 @@ export const HeroCarousel = () => {
 
   const slides = [
     {
-      title: "999纯金项链",
-      titleEn: "999 Pure Gold Necklace",
-      description: "传统与现代的完美结合",
-      descriptionEn: "Perfect blend of tradition and modernity",
-      image: "https://images.unsplash.com/photo-1721807550942-a218261a4896?w=800&q=40&fm=webp&auto=format",
-      srcset: "https://images.unsplash.com/photo-1721807550942-a218261a4896?w=400&q=40&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1721807550942-a218261a4896?w=800&q=40&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1721807550942-a218261a4896?w=1200&q=40&fm=webp&auto=format 1200w",
+      title: "999黄金",
+      titleEn: "999 Gold",
+      description: "纯净之选，臻于至美",
+      descriptionEn: "Purest choice, crafted to perfection",
+      image: goldNecklaceImg,
     },
     {
-      title: "典雅黄金项链",
-      titleEn: "Elegant Gold Necklaces",
-      description: "匠心独运，打造永恒优雅",
-      descriptionEn: "Timeless elegance crafted to perfection",
-      image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80&fm=webp&auto=format",
-      srcset: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=80&fm=webp&auto=format 400w, https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80&fm=webp&auto=format 800w, https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&q=80&fm=webp&auto=format 1200w",
+      title: "916黄金",
+      titleEn: "916 Gold",
+      description: "耐用与优雅的平衡",
+      descriptionEn: "Durability meets elegance",
+      image: goldBraceletImg,
     },
   ];
 
@@ -51,12 +51,9 @@ export const HeroCarousel = () => {
             <div className="relative h-[300px] md:h-[500px] lg:h-[600px]">
               <img
                 src={slide.image}
-                srcSet={slide.srcset}
-                sizes="100vw"
                 alt={slide.title}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "low"}
                 decoding="async"
                 width="1200"
                 height="600"

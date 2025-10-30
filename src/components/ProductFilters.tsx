@@ -18,11 +18,15 @@ interface ProductFiltersProps {
   priceRange: [number, number];
   maxPrice: number;
   inStockOnly: boolean;
+  excludePreOrder: boolean;
+  excludeOutOfStock: boolean;
   sortBy: string;
   onCategoryChange: (categoryId: string) => void;
   onGoldTypeChange: (goldType: string) => void;
   onPriceRangeChange: (range: [number, number]) => void;
   onStockFilterChange: (checked: boolean) => void;
+  onPreOrderFilterChange: (checked: boolean) => void;
+  onOutOfStockFilterChange: (checked: boolean) => void;
   onSortChange: (value: string) => void;
   onClearAll: () => void;
 }
@@ -34,11 +38,15 @@ export const ProductFilters = ({
   priceRange,
   maxPrice,
   inStockOnly,
+  excludePreOrder,
+  excludeOutOfStock,
   sortBy,
   onCategoryChange,
   onGoldTypeChange,
   onPriceRangeChange,
   onStockFilterChange,
+  onPreOrderFilterChange,
+  onOutOfStockFilterChange,
   onSortChange,
   onClearAll,
 }: ProductFiltersProps) => {
@@ -153,15 +161,37 @@ export const ProductFilters = ({
       {/* Stock Status */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">库存状态</Label>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="in-stock"
-            checked={inStockOnly}
-            onCheckedChange={onStockFilterChange}
-          />
-          <label htmlFor="in-stock" className="text-sm cursor-pointer">
-            仅显示有货
-          </label>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="in-stock"
+              checked={inStockOnly}
+              onCheckedChange={onStockFilterChange}
+            />
+            <label htmlFor="in-stock" className="text-sm cursor-pointer">
+              仅显示有货
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="exclude-preorder"
+              checked={excludePreOrder}
+              onCheckedChange={onPreOrderFilterChange}
+            />
+            <label htmlFor="exclude-preorder" className="text-sm cursor-pointer">
+              排除预购商品
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="exclude-out-of-stock"
+              checked={excludeOutOfStock}
+              onCheckedChange={onOutOfStockFilterChange}
+            />
+            <label htmlFor="exclude-out-of-stock" className="text-sm cursor-pointer">
+              排除缺货商品
+            </label>
+          </div>
         </div>
       </div>
     </div>

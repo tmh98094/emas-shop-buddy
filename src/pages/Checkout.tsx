@@ -18,7 +18,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { T } from "@/components/T";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { normalizePhone } from "@/lib/phone-utils";
+import { normalizePhone, parseE164 } from "@/lib/phone-utils";
 import {
   Dialog,
   DialogContent,
@@ -70,21 +70,13 @@ export default function Checkout() {
         
         if (profile) {
           // Parse phone number properly - extract country code and format number
-          let extractedCountryCode = "+60";
+          let extractedCountryCode: "+60" | "+65" = "+60";
           let extractedPhone = "";
           
           if (profile.phone_number) {
-            // Check for specific country codes first (+60, +65)
-            if (profile.phone_number.startsWith('+60')) {
-              extractedCountryCode = '+60';
-              extractedPhone = profile.phone_number.slice(3); // Everything after +60
-            } else if (profile.phone_number.startsWith('+65')) {
-              extractedCountryCode = '+65';
-              extractedPhone = profile.phone_number.slice(3); // Everything after +65
-            } else {
-              // Fallback: extract all digits and assume +60
-              extractedPhone = profile.phone_number.replace(/\D/g, "");
-            }
+            const { countryCode: parsedCC, national } = parseE164(profile.phone_number);
+            extractedCountryCode = parsedCC;
+            extractedPhone = national;
           }
           
           setCountryCodePhone(extractedCountryCode);
