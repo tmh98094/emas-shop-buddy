@@ -155,17 +155,60 @@ serve(async (req) => {
       logStep("Found existing auth user by phone", { userId });
     }
 
-    // Create or update profile for this user
-    const { error: profileError } = await supabase
+    // Handle profile creation/update with orphaned profile cleanup
+    // First, check if there's an existing profile with this phone but different user_id
+    const { data: existingProfile } = await supabase
       .from("profiles")
-      .upsert({
-        id: userId,
-        phone_number: phoneNumber,
-        full_name: fullName || "",
-      }, { onConflict: "id" });
+      .select("*")
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
 
-    if (profileError) {
-      logStep("Failed to create/update profile", { error: profileError });
+    // If profile exists with different user_id, migrate the data (orphaned profile cleanup)
+    if (existingProfile && existingProfile.id !== userId) {
+      logStep("Migrating orphaned profile data", { orphanedId: existingProfile.id, currentUserId: userId });
+      
+      // Delete the orphaned profile first
+      await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", existingProfile.id);
+      
+      // Create new profile with migrated data, but override with new fullName if provided
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          phone_number: phoneNumber,
+          full_name: fullName || existingProfile.full_name || "",
+          email: existingProfile.email,
+          address_line1: existingProfile.address_line1,
+          address_line2: existingProfile.address_line2,
+          city: existingProfile.city,
+          state: existingProfile.state,
+          postcode: existingProfile.postcode,
+          country: existingProfile.country,
+        }, { onConflict: "id" });
+
+      if (profileError) {
+        logStep("Failed to migrate profile", { error: profileError });
+      } else {
+        logStep("Profile migrated successfully", { userId });
+      }
+    } else {
+      // No orphaned profile, just upsert normally
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          phone_number: phoneNumber,
+          full_name: fullName || "",
+        }, { onConflict: "id" });
+
+      if (profileError) {
+        logStep("Failed to create/update profile", { error: profileError });
+      } else {
+        logStep("Profile created/updated successfully", { userId });
+      }
     }
 
     // Update user's phone to be confirmed and set temporary password
