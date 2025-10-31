@@ -114,7 +114,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       });
 
       const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
-      const weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
+      let weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
+      
+      // Use variant weight adjustment if available
+      if (selectedVariants) {
+        const firstVariant = Object.values(selectedVariants)[0];
+        if (firstVariant?.weight_adjustment) {
+          weightGrams = firstVariant.weight_adjustment;
+        }
+      }
+      
       const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
       const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
 
@@ -131,7 +140,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
       await fetchCart();
-      toast({ title: "Added to cart!" });
+      toast({ title: "Added!", duration: 2000 });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }

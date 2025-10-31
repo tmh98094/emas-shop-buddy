@@ -31,7 +31,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showZoom, setShowZoom] = useState(false);
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, { name: string; value: string; id: string }>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, { name: string; value: string; id: string; weight_adjustment?: number }>>({});
   const [showStickyCart, setShowStickyCart] = useState(false);
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
   const [showMagnifier, setShowMagnifier] = useState(false);
@@ -94,7 +94,14 @@ export default function ProductDetail() {
   if (!product) return <div>Product not found</div>;
 
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
-  const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
+  
+  // Calculate price with variant weight adjustment if applicable
+  const getEffectiveWeight = () => {
+    const firstVariant = Object.values(selectedVariants)[0];
+    return firstVariant?.weight_adjustment ?? Number(product.weight_grams);
+  };
+  
+  const totalPrice = calculatePrice(goldPrice, getEffectiveWeight(), Number(product.labour_fee));
 
   // Group variants by name
   const variantGroups = (product.product_variants || []).reduce((acc: any, variant: any) => {
@@ -106,7 +113,7 @@ export default function ProductDetail() {
   }, {});
 
   const handleAddToCart = async () => {
-    await addItem(product.id, quantity);
+    await addItem(product.id, quantity, selectedVariants);
     navigate("/cart");
   };
 
@@ -377,7 +384,12 @@ export default function ProductDetail() {
                         if (variant) {
                           setSelectedVariants(prev => ({
                             ...prev,
-                            [variantName]: { name: variant.name, value: variant.value, id: variant.id }
+                            [variantName]: { 
+                              name: variant.name, 
+                              value: variant.value, 
+                              id: variant.id,
+                              weight_adjustment: variant.weight_adjustment 
+                            }
                           }));
                         }
                       }}

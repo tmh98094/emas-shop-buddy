@@ -4,6 +4,7 @@ export interface SelectedVariant {
   name: string;
   value: string;
   id: string;
+  weight_adjustment?: number; // Optional weight adjustment in grams
 }
 
 export type SelectedVariantsMap = Record<string, SelectedVariant>;

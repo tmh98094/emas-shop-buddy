@@ -46,7 +46,7 @@ export default function ProductForm() {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [enableVariants, setEnableVariants] = useState(false);
-  const [variantGroups, setVariantGroups] = useState<Array<{ name: string; values: string }>>([]);
+  const [newVariants, setNewVariants] = useState<Array<{ name: string; value: string; weight_adjustment: string }>>([]);
   const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
@@ -234,20 +234,19 @@ export default function ProductForm() {
             await supabase.from("product_variants").update({
               name: variant.name,
               value: variant.value,
+              weight_adjustment: variant.weight_adjustment ? parseFloat(variant.weight_adjustment) : null,
             }).eq("id", variant.id);
           }
         }
         
-        // Insert new variant groups (each group can have multiple values)
-        for (const group of variantGroups) {
-          // Split comma-separated values
-          const values = group.values.split(',').map(v => v.trim()).filter(v => v);
-          
-          for (const value of values) {
+        // Insert new variants
+        for (const variant of newVariants) {
+          if (variant.name && variant.value) {
             await supabase.from("product_variants").insert({
               product_id: productId,
-              name: group.name,
-              value: value,
+              name: variant.name,
+              value: variant.value,
+              weight_adjustment: variant.weight_adjustment ? parseFloat(variant.weight_adjustment) : null,
             });
           }
         }
@@ -316,23 +315,18 @@ export default function ProductForm() {
     setExistingImages(existingImages.filter((img) => img.id !== imageId));
   };
 
-  const addVariantGroup = () => {
-    // Restrict to only one variant type per product
-    if (existingVariants.length > 0 || variantGroups.length >= 1) {
-      toast({ title: "Only one variant type allowed", description: "This product can have only one variant type (e.g., Size OR Zodiac OR Color).", variant: "destructive" });
-      return;
-    }
-    setVariantGroups([{ name: "", values: "" }]);
+  const addNewVariant = () => {
+    setNewVariants([...newVariants, { name: "", value: "", weight_adjustment: "" }]);
   };
 
-  const updateVariantGroup = (index: number, field: string, value: string) => {
-    const updated = [...variantGroups];
+  const updateNewVariant = (index: number, field: string, value: string) => {
+    const updated = [...newVariants];
     updated[index] = { ...updated[index], [field]: value };
-    setVariantGroups(updated);
+    setNewVariants(updated);
   };
 
-  const removeVariantGroup = (index: number) => {
-    setVariantGroups(variantGroups.filter((_, i) => i !== index));
+  const removeNewVariant = (index: number) => {
+    setNewVariants(newVariants.filter((_, i) => i !== index));
   };
 
   const updateExistingVariant = (index: number, field: string, value: string) => {
@@ -653,18 +647,18 @@ export default function ProductForm() {
           {enableVariants && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Only one variant type per product is allowed (e.g., Size OR Zodiac OR Color). Enter values as comma-separated list.
+                Add individual variant options. Each variant can have an optional weight adjustment (in grams). If weight is not specified, the product's default weight will be used for price calculation.
               </p>
 
               {existingVariants.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-sm">Existing Variants (Edit individually)</h3>
+                  <h3 className="font-medium text-sm">Existing Variants</h3>
                   {existingVariants.map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg">
+                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg">
                       <div>
                         <Label className="text-xs">Variant Name</Label>
                         <Input
-                          placeholder="e.g., Zodiac, Size"
+                          placeholder="e.g., Size"
                           value={variant.name}
                           onChange={(e) => updateExistingVariant(index, "name", e.target.value)}
                           className="text-sm"
@@ -673,9 +667,20 @@ export default function ProductForm() {
                       <div>
                         <Label className="text-xs">Value</Label>
                         <Input
-                          placeholder="e.g., Aries, 5cm"
+                          placeholder="e.g., 10"
                           value={variant.value}
                           onChange={(e) => updateExistingVariant(index, "value", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Weight (grams) - Optional</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g., 0.52"
+                          value={variant.weight_adjustment || ""}
+                          onChange={(e) => updateExistingVariant(index, "weight_adjustment", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -695,26 +700,37 @@ export default function ProductForm() {
                 </div>
               )}
 
-              {variantGroups.length > 0 && (
+              {newVariants.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-sm">New Variant Groups</h3>
-                  {variantGroups.map((group, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/50">
+                  <h3 className="font-medium text-sm">New Variants</h3>
+                  {newVariants.map((variant, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg bg-muted/50">
                       <div>
                         <Label className="text-xs">Variant Name</Label>
                         <Input
-                          placeholder="e.g., Size, Zodiac"
-                          value={group.name}
-                          onChange={(e) => updateVariantGroup(index, "name", e.target.value)}
+                          placeholder="e.g., Size"
+                          value={variant.name}
+                          onChange={(e) => updateNewVariant(index, "name", e.target.value)}
                           className="text-sm"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Values (comma-separated)</Label>
+                        <Label className="text-xs">Value</Label>
                         <Input
-                          placeholder="e.g., 1cm, 5cm, 8cm, 10cm"
-                          value={group.values}
-                          onChange={(e) => updateVariantGroup(index, "values", e.target.value)}
+                          placeholder="e.g., 10"
+                          value={variant.value}
+                          onChange={(e) => updateNewVariant(index, "value", e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Weight (grams) - Optional</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g., 0.52"
+                          value={variant.weight_adjustment}
+                          onChange={(e) => updateNewVariant(index, "weight_adjustment", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -723,7 +739,7 @@ export default function ProductForm() {
                           type="button"
                           variant="destructive"
                           size="sm"
-                          onClick={() => removeVariantGroup(index)}
+                          onClick={() => removeNewVariant(index)}
                           className="w-full"
                         >
                           <X className="h-4 w-4 mr-1" /> Remove
@@ -734,9 +750,9 @@ export default function ProductForm() {
                 </div>
               )}
 
-              <Button type="button" variant="outline" onClick={addVariantGroup}>
+              <Button type="button" variant="outline" onClick={addNewVariant}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Variant Group
+                Add Variant Option
               </Button>
             </div>
           )}

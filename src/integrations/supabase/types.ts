@@ -534,6 +534,7 @@ export type Database = {
           product_id: string
           stock_adjustment: number | null
           value: string
+          weight_adjustment: number | null
         }
         Insert: {
           created_at?: string
@@ -543,6 +544,7 @@ export type Database = {
           product_id: string
           stock_adjustment?: number | null
           value: string
+          weight_adjustment?: number | null
         }
         Update: {
           created_at?: string
@@ -552,6 +554,7 @@ export type Database = {
           product_id?: string
           stock_adjustment?: number | null
           value?: string
+          weight_adjustment?: number | null
         }
         Relationships: [
           {

@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
-import { HeroCarousel } from "@/components/HeroCarousel";
 import { WhatsAppFloater } from "@/components/WhatsAppFloater";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -37,8 +36,6 @@ const Index = () => {
       <Header />
       
       <main>
-        <HeroCarousel />
-        
         <Suspense fallback={<SectionSkeleton />}>
           <ProductSection title="精选系列" filter="featured" />
         </Suspense>

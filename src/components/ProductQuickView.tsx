@@ -27,7 +27,13 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
   const [selectedVariants, setSelectedVariants] = useState<SelectedVariantsMap>({});
   const [variantError, setVariantError] = useState("");
 
-  const totalPrice = calculatePrice(goldPrice, Number(product.weight_grams), Number(product.labour_fee));
+  // Calculate price with variant weight adjustment if applicable
+  const getEffectiveWeight = () => {
+    const firstVariant = Object.values(selectedVariants)[0];
+    return firstVariant?.weight_adjustment ?? Number(product.weight_grams);
+  };
+
+  const totalPrice = calculatePrice(goldPrice, getEffectiveWeight(), Number(product.labour_fee));
   
   const sortedImages = (product.product_images || []).sort((a: any, b: any) => 
     (a.display_order || 0) - (b.display_order || 0)
@@ -160,7 +166,12 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
                         if (variant) {
                           setSelectedVariants(prev => ({
                             ...prev,
-                            [variantName]: { name: variant.name, value: variant.value, id: variant.id }
+                            [variantName]: { 
+                              name: variant.name, 
+                              value: variant.value, 
+                              id: variant.id,
+                              weight_adjustment: variant.weight_adjustment 
+                            }
                           }));
                           setVariantError(""); // Clear error on selection
                         }
