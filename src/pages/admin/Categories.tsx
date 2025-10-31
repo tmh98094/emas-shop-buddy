@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Plus, Trash, Upload, X, ChevronDown, ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Categories() {
   const { toast } = useToast();
@@ -35,6 +37,7 @@ export default function Categories() {
     slug: "",
     description: "",
     display_order: "0",
+    featured_on_homepage: false,
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -74,7 +77,7 @@ export default function Categories() {
 
       const categoryData = {
         name: formData.name,
-        slug: formData.slug || undefined,
+        slug: formData.slug?.trim() || undefined,
         description: formData.description || null,
         display_order: parseInt(formData.display_order),
         image_url: imageUrl || null,
@@ -124,6 +127,7 @@ export default function Categories() {
         description: subCategoryFormData.description || null,
         display_order: parseInt(subCategoryFormData.display_order),
         category_id: currentCategoryId,
+        featured_on_homepage: subCategoryFormData.featured_on_homepage,
       };
 
       if (editingSubCategory) {
@@ -170,7 +174,7 @@ export default function Categories() {
   };
 
   const resetSubCategoryForm = () => {
-    setSubCategoryFormData({ name: "", slug: "", description: "", display_order: "0" });
+    setSubCategoryFormData({ name: "", slug: "", description: "", display_order: "0", featured_on_homepage: false });
     setEditingSubCategory(null);
     setCurrentCategoryId("");
   };
@@ -231,6 +235,7 @@ export default function Categories() {
       slug: subCategory.slug,
       description: subCategory.description || "",
       display_order: subCategory.display_order?.toString() || "0",
+      featured_on_homepage: subCategory.featured_on_homepage || false,
     });
     setIsSubCategoryDialogOpen(true);
   };
@@ -420,11 +425,12 @@ export default function Categories() {
                       <div className="ml-8">
                         <h4 className="font-semibold mb-2">Sub-Categories</h4>
                         <Table>
-                          <TableHeader>
+                           <TableHeader>
                             <TableRow>
                               <TableHead>Name</TableHead>
                               <TableHead>Slug</TableHead>
                               <TableHead>Display Order</TableHead>
+                              <TableHead>Featured</TableHead>
                               <TableHead>Actions</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -434,6 +440,13 @@ export default function Categories() {
                                 <TableCell>{subCat.name}</TableCell>
                                 <TableCell>{subCat.slug}</TableCell>
                                 <TableCell>{subCat.display_order}</TableCell>
+                                <TableCell>
+                                  {subCat.featured_on_homepage ? (
+                                    <Badge variant="default">Featured</Badge>
+                                  ) : (
+                                    <Badge variant="outline">Not Featured</Badge>
+                                  )}
+                                </TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
                                     <Button
@@ -509,6 +522,18 @@ export default function Categories() {
                 value={subCategoryFormData.display_order}
                 onChange={(e) => setSubCategoryFormData({ ...subCategoryFormData, display_order: e.target.value })}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="featured_on_homepage"
+                checked={subCategoryFormData.featured_on_homepage}
+                onCheckedChange={(checked) => 
+                  setSubCategoryFormData({ ...subCategoryFormData, featured_on_homepage: checked as boolean })
+                }
+              />
+              <Label htmlFor="featured_on_homepage" className="cursor-pointer">
+                Featured on Homepage
+              </Label>
             </div>
             <Button type="submit" disabled={saveSubCategoryMutation.isPending}>
               {editingSubCategory ? "Update" : "Create"} Sub-Category

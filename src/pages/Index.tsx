@@ -8,9 +8,9 @@ import { SEOHead } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load below-the-fold components for better initial load
-const AboutSection = lazy(() => import("@/components/AboutSection").then(m => ({ default: m.AboutSection })));
 const ProductSection = lazy(() => import("@/components/ProductSection").then(m => ({ default: m.ProductSection })));
 const CategorySection = lazy(() => import("@/components/CategorySection").then(m => ({ default: m.CategorySection })));
+const FeaturedSubCategorySection = lazy(() => import("@/components/FeaturedSubCategorySection").then(m => ({ default: m.FeaturedSubCategorySection })));
 
 const SectionSkeleton = () => (
   <div className="py-12">
@@ -40,15 +40,15 @@ const Index = () => {
         <HeroCarousel />
         
         <Suspense fallback={<SectionSkeleton />}>
-          <AboutSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionSkeleton />}>
           <ProductSection title="精选系列" filter="featured" />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
           <CategorySection />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <FeaturedSubCategorySection />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>

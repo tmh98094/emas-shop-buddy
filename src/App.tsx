@@ -20,7 +20,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Auth from "./pages/Auth";
 import UserProfile from "./pages/UserProfile";
 import UserDashboard from "./pages/UserDashboard";
-import About from "./pages/About";
+
 import Contact from "./pages/Contact";
 import CategoriesPage from "./pages/Categories";
 import FAQ from "./pages/FAQ";
@@ -121,7 +121,7 @@ const App = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/about" element={<About />} />
+          
           <Route path="/contact" element={<Contact />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/faq" element={<FAQ />} />

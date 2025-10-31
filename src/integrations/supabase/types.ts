@@ -784,6 +784,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number | null
+          featured_on_homepage: boolean | null
           id: string
           name: string
           slug: string
@@ -793,6 +794,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          featured_on_homepage?: boolean | null
           id?: string
           name: string
           slug: string
@@ -802,6 +804,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          featured_on_homepage?: boolean | null
           id?: string
           name?: string
           slug?: string

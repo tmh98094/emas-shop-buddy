@@ -362,11 +362,6 @@ export default function ProductDetail() {
               <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
             </div>
 
-            <div>
-              <p className="text-sm">
-                <T zh="库存" en="Stock" />: <span className="font-semibold">{product.stock} <T zh="件可用" en="available" /></span>
-              </p>
-            </div>
 
             {/* Variants Selection */}
             {Object.keys(variantGroups).length > 0 && (

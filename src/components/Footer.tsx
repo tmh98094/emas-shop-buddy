@@ -7,15 +7,7 @@ export const Footer = () => {
   return (
     <footer className="bg-secondary mt-16 border-t border-border">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* About Column */}
-          <div className="lg:col-span-1">
-            <h3 className="font-bold text-lg mb-4 text-primary">JJ Emas</h3>
-            <p className="text-sm text-muted-foreground">
-              <T zh="您在马来西亚值得信赖的黄金珠宝目的地。自成立以来，我们致力于提供优质工艺。" en="Your trusted gold jewelry destination in Malaysia. Quality craftsmanship since establishment." />
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Quick Links */}
           <div>
             <h4 className="font-semibold mb-4 text-primary"><T zh="快速链接" en="Quick Links" /></h4>
@@ -28,11 +20,6 @@ export const Footer = () => {
               <li>
                 <Link to="/categories" className="text-foreground hover:text-primary transition-colors">
                   <T zh="分类" en="Categories" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-foreground hover:text-primary transition-colors">
-                  <T zh="关于我们" en="About Us" />
                 </Link>
               </li>
               <li>
