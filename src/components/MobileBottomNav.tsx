@@ -4,11 +4,13 @@ import { useCart } from "@/hooks/useCart";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { items } = useCart();
+  const isMobile = useIsMobile();
 
   const { data: user } = useQuery({
     queryKey: ["user"],
@@ -31,6 +33,8 @@ export function MobileBottomNav() {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
+
+  if (!isMobile) return null;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-inset-bottom">

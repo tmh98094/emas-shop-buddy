@@ -49,6 +49,7 @@ import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { MobileBottomNav } from "./components/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,12 +104,13 @@ const App = () => {
   const AppContent = () => {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith('/admin');
-    
+    const isMobile = useIsMobile();
+
     return (
       <>
         <MaintenanceOverlay isAdminRoute={isAdminRoute} />
         <ScrollToTop />
-        <MobileBottomNav />
+        {!isAdminRoute && isMobile && <MobileBottomNav />}
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />
