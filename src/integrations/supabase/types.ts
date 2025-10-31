@@ -887,11 +887,50 @@ export type Database = {
         }
         Relationships: []
       }
+      variant_stock: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          stock: number
+          updated_at: string | null
+          variant_combination: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          stock?: number
+          updated_at?: string | null
+          variant_combination: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          stock?: number
+          updated_at?: string | null
+          variant_combination?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variant_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      calculate_product_total_stock: {
+        Args: { p_product_id: string }
+        Returns: number
+      }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       expire_unpaid_orders: { Args: never; Returns: undefined }
       get_next_order_sequence: { Args: never; Returns: number }

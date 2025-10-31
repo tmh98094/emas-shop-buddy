@@ -95,10 +95,12 @@ export default function ProductDetail() {
 
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
   
-  // Calculate price with variant weight adjustment if applicable
+  // Calculate price with combined variant weight adjustments
   const getEffectiveWeight = () => {
-    const firstVariant = Object.values(selectedVariants)[0];
-    return firstVariant?.weight_adjustment ?? Number(product.weight_grams);
+    const totalAdjustment = Object.values(selectedVariants).reduce((sum, v) => {
+      return sum + (v.weight_adjustment || 0);
+    }, 0);
+    return Number(product.weight_grams) + totalAdjustment;
   };
   
   const totalPrice = calculatePrice(goldPrice, getEffectiveWeight(), Number(product.labour_fee));

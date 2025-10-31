@@ -21,6 +21,7 @@ export default function Products() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   const [selectedGoldTypes, setSelectedGoldTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [weightRange, setWeightRange] = useState<[number, number]>([0, 100]);
@@ -34,8 +35,12 @@ export default function Products() {
   // Load initial filters from URL
   useEffect(() => {
     const category = searchParams.get("category");
+    const subCategory = searchParams.get("subCategory");
     if (category) {
       setSelectedCategories([category]);
+    }
+    if (subCategory) {
+      setSelectedSubCategories([subCategory]);
     }
   }, [searchParams]);
 
@@ -54,7 +59,7 @@ export default function Products() {
 
   // Fetch products
   const { data: allProducts = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
+    queryKey: ["products", selectedCategories, selectedSubCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -66,6 +71,10 @@ export default function Products() {
       // Apply filters
       if (selectedCategories.length > 0) {
         query = query.in("category_id", selectedCategories);
+      }
+
+      if (selectedSubCategories.length > 0) {
+        query = query.in("sub_category_id", selectedSubCategories);
       }
 
       if (selectedGoldTypes.length > 0) {

@@ -26,7 +26,7 @@ export const Header = () => {
     <header className="bg-secondary border-b border-border sticky top-[44px] md:top-[52px] z-40 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary hover:text-gold-light transition-colors">
+          <Link to="/" className="text-2xl font-bold text-primary hover:text-gold-light transition-colors" style={{ fontFamily: 'Playfair Display, serif' }}>
             JJ Emas
           </Link>
 

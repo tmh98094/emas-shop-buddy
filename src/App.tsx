@@ -23,6 +23,7 @@ import UserDashboard from "./pages/UserDashboard";
 
 import Contact from "./pages/Contact";
 import CategoriesPage from "./pages/Categories";
+import SubCategoryList from "./pages/SubCategoryList";
 import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -111,7 +112,7 @@ const App = () => {
       <>
         <MaintenanceOverlay isAdminRoute={isAdminRoute} />
         <ScrollToTop />
-        {!isAdminRoute && isMobile && <MobileBottomNav />}
+        {isMobile && <MobileBottomNav />}
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />
@@ -127,6 +128,7 @@ const App = () => {
           
           <Route path="/contact" element={<Contact />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/categories/:categoryId/subcategories" element={<SubCategoryList />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />

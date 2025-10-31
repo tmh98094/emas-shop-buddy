@@ -46,8 +46,7 @@ export default function ProductForm() {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [enableVariants, setEnableVariants] = useState(false);
-  const [variantName, setVariantName] = useState("");
-  const [variantValues, setVariantValues] = useState<Array<{ value: string; weight: string }>>([]);
+  const [variantGroups, setVariantGroups] = useState<Array<{ id: string; name: string; values: Array<{ id: string; value: string; weight: string; dbId?: string }> }>>([]);
   const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
@@ -119,11 +118,30 @@ export default function ProductForm() {
       const thumbnail = product.product_images?.find((img: any) => img.is_thumbnail);
       if (thumbnail) setThumbnailId(thumbnail.id);
       
+      
       if (product.product_variants && product.product_variants.length > 0) {
         setEnableVariants(true);
-        setExistingVariants(product.product_variants);
-        // Derive variant name from first variant
-        setVariantName(product.product_variants[0]?.name || "");
+        // Group variants by name
+        const groups = product.product_variants.reduce((acc: any, v: any) => {
+          if (!acc[v.name]) {
+            acc[v.name] = [];
+          }
+          acc[v.name].push(v);
+          return acc;
+        }, {});
+        
+        const groupsArray = Object.keys(groups).map((name, idx) => ({
+          id: `group-${idx}`,
+          name,
+          values: groups[name].map((v: any, vidx: number) => ({
+            id: `value-${idx}-${vidx}`,
+            value: v.value,
+            weight: v.weight_adjustment?.toString() || "",
+            dbId: v.id
+          }))
+        }));
+        
+        setVariantGroups(groupsArray);
       }
     }
   }, [product]);
@@ -215,33 +233,23 @@ export default function ProductForm() {
       }
 
       // Handle variants
-      if (enableVariants && variantName) {
+      if (enableVariants && variantGroups.length > 0) {
         // Delete all existing variants for this product first
-        const { data: currentVariants } = await supabase
-          .from("product_variants")
-          .select("id")
-          .eq("product_id", productId);
+        await supabase.from("product_variants").delete().eq("product_id", productId);
         
-        if (currentVariants && currentVariants.length > 0) {
-          for (const v of currentVariants) {
-            await supabase.from("product_variants").delete().eq("id", v.id);
-          }
-        }
-        
-        // Insert all variants from existing + new
-        const allValues = [
-          ...existingVariants.map(v => ({ value: v.value, weight: v.weight_adjustment })),
-          ...variantValues
-        ];
-        
-        for (const v of allValues) {
-          if (v.value) {
-            await supabase.from("product_variants").insert({
-              product_id: productId,
-              name: variantName,
-              value: v.value,
-              weight_adjustment: v.weight && v.weight !== "" ? parseFloat(v.weight) : null,
-            });
+        // Insert all variants from all groups
+        for (const group of variantGroups) {
+          if (group.name && group.values.length > 0) {
+            for (const v of group.values) {
+              if (v.value) {
+                await supabase.from("product_variants").insert({
+                  product_id: productId,
+                  name: group.name,
+                  value: v.value,
+                  weight_adjustment: v.weight && v.weight !== "" ? parseFloat(v.weight) : null,
+                });
+              }
+            }
           }
         }
       } else if (!enableVariants) {
@@ -271,6 +279,9 @@ export default function ProductForm() {
       const filesArray = Array.from(files);
       setPendingImages(filesArray);
       setCurrentImageIndex(0);
+      
+      // Reset input to allow re-selecting same files
+      e.target.value = '';
       
       // Start with first image
       const reader = new FileReader();
@@ -312,18 +323,48 @@ export default function ProductForm() {
     setExistingImages(existingImages.filter((img) => img.id !== imageId));
   };
 
-  const addVariantValue = () => {
-    setVariantValues([...variantValues, { value: "", weight: "" }]);
+  const addVariantGroup = () => {
+    const newId = `group-${Date.now()}`;
+    setVariantGroups([...variantGroups, { id: newId, name: "", values: [{ id: `${newId}-val-0`, value: "", weight: "" }] }]);
   };
 
-  const updateVariantValue = (index: number, field: "value" | "weight", val: string) => {
-    const updated = [...variantValues];
-    updated[index][field] = val;
-    setVariantValues(updated);
+  const removeVariantGroup = (groupId: string) => {
+    setVariantGroups(variantGroups.filter(g => g.id !== groupId));
   };
 
-  const removeVariantValue = (index: number) => {
-    setVariantValues(variantValues.filter((_, i) => i !== index));
+  const updateGroupName = (groupId: string, name: string) => {
+    setVariantGroups(variantGroups.map(g => g.id === groupId ? { ...g, name } : g));
+  };
+
+  const addValueToGroup = (groupId: string) => {
+    setVariantGroups(variantGroups.map(g => {
+      if (g.id === groupId) {
+        const newValueId = `${groupId}-val-${g.values.length}`;
+        return { ...g, values: [...g.values, { id: newValueId, value: "", weight: "" }] };
+      }
+      return g;
+    }));
+  };
+
+  const updateGroupValue = (groupId: string, valueId: string, field: "value" | "weight", val: string) => {
+    setVariantGroups(variantGroups.map(g => {
+      if (g.id === groupId) {
+        return {
+          ...g,
+          values: g.values.map(v => v.id === valueId ? { ...v, [field]: val } : v)
+        };
+      }
+      return g;
+    }));
+  };
+
+  const removeGroupValue = (groupId: string, valueId: string) => {
+    setVariantGroups(variantGroups.map(g => {
+      if (g.id === groupId) {
+        return { ...g, values: g.values.filter(v => v.id !== valueId) };
+      }
+      return g;
+    }));
   };
 
   const updateExistingVariantValue = (index: number, field: "value" | "weight", val: string) => {
@@ -469,14 +510,6 @@ export default function ProductForm() {
           </div>
 
           <div className="flex flex-wrap gap-3 md:gap-4 mt-3 md:mt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="featured"
-                checked={formData.is_featured}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked as boolean })}
-              />
-              <Label htmlFor="featured" className="text-sm">精选</Label>
-            </div>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="bestseller"
@@ -638,106 +671,99 @@ export default function ProductForm() {
 
           {enableVariants && (
             <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium">Variant Name *</Label>
-                <Input
-                  placeholder="e.g., Size"
-                  value={variantName}
-                  onChange={(e) => setVariantName(e.target.value)}
-                  className="text-sm"
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This is the type of variant (e.g., "Size", "Length", "Zodiac"). All values will use this name.
-                </p>
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">Variant Groups</h3>
+                <Button type="button" variant="outline" size="sm" onClick={addVariantGroup}>
+                  <Plus className="h-4 w-4 mr-1" /> Add Group
+                </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Create multiple variant groups (e.g., Color, Size). Each group can have multiple values with optional weight adjustments.
+              </p>
 
-              {existingVariants.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-medium text-sm">Existing Variant Values</h3>
-                  {existingVariants.map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg">
-                      <div>
-                        <Label className="text-xs">Value</Label>
-                        <Input
-                          placeholder="e.g., 10cm"
-                          value={variant.value}
-                          onChange={(e) => updateExistingVariantValue(index, "value", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Weight (grams) - Optional</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g., 0.52"
-                          value={variant.weight_adjustment || ""}
-                          onChange={(e) => updateExistingVariantValue(index, "weight", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeExistingVariant(index)}
-                          className="w-full"
-                        >
-                          <X className="h-4 w-4 mr-1" /> Remove
-                        </Button>
-                      </div>
+              {variantGroups.map((group, groupIdx) => (
+                <div key={group.id} className="p-4 border rounded-lg space-y-3 bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium">Group Name *</Label>
+                      <Input
+                        placeholder="e.g., Color or Size"
+                        value={group.name}
+                        onChange={(e) => updateGroupName(group.id, e.target.value)}
+                        className="text-sm"
+                        required
+                      />
                     </div>
-                  ))}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeVariantGroup(group.id)}
+                      className="mt-6"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Values</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addValueToGroup(group.id)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Value
+                      </Button>
+                    </div>
+
+                    {group.values.map((value) => (
+                      <div key={value.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 border rounded bg-background">
+                        <div>
+                          <Label className="text-xs">Value *</Label>
+                          <Input
+                            placeholder="e.g., Blue or 10cm"
+                            value={value.value}
+                            onChange={(e) => updateGroupValue(group.id, value.id, "value", e.target.value)}
+                            className="text-sm"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Weight (grams) - Optional</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="e.g., 0.52"
+                            value={value.weight}
+                            onChange={(e) => updateGroupValue(group.id, value.id, "weight", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeGroupValue(group.id, value.id)}
+                            className="w-full"
+                            disabled={group.values.length === 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {variantGroups.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No variant groups added. Click "Add Group" to create one.
                 </div>
               )}
-
-              {variantValues.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-medium text-sm">New Variant Values</h3>
-                  {variantValues.map((v, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/50">
-                      <div>
-                        <Label className="text-xs">Value</Label>
-                        <Input
-                          placeholder="e.g., 12cm"
-                          value={v.value}
-                          onChange={(e) => updateVariantValue(index, "value", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Weight (grams) - Optional</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g., 0.55"
-                          value={v.weight}
-                          onChange={(e) => updateVariantValue(index, "weight", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeVariantValue(index)}
-                          className="w-full"
-                        >
-                          <X className="h-4 w-4 mr-1" /> Remove
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <Button type="button" variant="outline" onClick={addVariantValue}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Variant Value
-              </Button>
             </div>
           )}
         </Card>

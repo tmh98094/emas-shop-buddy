@@ -37,10 +37,6 @@ const Index = () => {
       
       <main>
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="精选系列" filter="featured" />
-        </Suspense>
-        
-        <Suspense fallback={<SectionSkeleton />}>
           <CategorySection />
         </Suspense>
         

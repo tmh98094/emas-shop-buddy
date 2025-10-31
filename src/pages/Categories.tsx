@@ -54,7 +54,7 @@ export default function Categories() {
   });
 
   const handleCategoryClick = (categoryId: string) => {
-    navigate(`/products?category=${categoryId}`);
+    navigate(`/categories/${categoryId}/subcategories`);
   };
 
   return (
