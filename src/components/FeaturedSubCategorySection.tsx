@@ -56,6 +56,7 @@ export const FeaturedSubCategorySection = () => {
             opts={{
               align: "start",
               loop: true,
+              containScroll: "trimSnaps",
             }}
             className="w-full"
           >
@@ -67,9 +68,19 @@ export const FeaturedSubCategorySection = () => {
                     onClick={() => handleSubCategoryClick(subCategory.id)}
                   >
                     <CardContent className="p-4 text-center">
-                      <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
-                        ✨
-                      </div>
+                      {subCategory.image_url ? (
+                        <div className="aspect-square rounded-lg mb-3 overflow-hidden group-hover:scale-105 transition-transform">
+                          <img 
+                            src={subCategory.image_url} 
+                            alt={subCategory.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
+                          ✨
+                        </div>
+                      )}
                       <h3 className="font-semibold text-sm group-hover:text-primary transition-colors mb-1">
                         {subCategory.name}
                       </h3>

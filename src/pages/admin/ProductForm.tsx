@@ -46,7 +46,8 @@ export default function ProductForm() {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [enableVariants, setEnableVariants] = useState(false);
-  const [newVariants, setNewVariants] = useState<Array<{ name: string; value: string; weight_adjustment: string }>>([]);
+  const [variantName, setVariantName] = useState("");
+  const [variantValues, setVariantValues] = useState<Array<{ value: string; weight: string }>>([]);
   const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
@@ -121,6 +122,8 @@ export default function ProductForm() {
       if (product.product_variants && product.product_variants.length > 0) {
         setEnableVariants(true);
         setExistingVariants(product.product_variants);
+        // Derive variant name from first variant
+        setVariantName(product.product_variants[0]?.name || "");
       }
     }
   }, [product]);
@@ -212,44 +215,38 @@ export default function ProductForm() {
       }
 
       // Handle variants
-      if (enableVariants) {
-        // First, get all current variant IDs from database
+      if (enableVariants && variantName) {
+        // Delete all existing variants for this product first
         const { data: currentVariants } = await supabase
           .from("product_variants")
           .select("id")
           .eq("product_id", productId);
         
-        const currentVariantIds = currentVariants?.map(v => v.id) || [];
-        const keptVariantIds = existingVariants.map(v => v.id).filter(id => id);
-        
-        // Delete variants that were removed
-        const deletedVariantIds = currentVariantIds.filter(id => !keptVariantIds.includes(id));
-        for (const variantId of deletedVariantIds) {
-          await supabase.from("product_variants").delete().eq("id", variantId);
-        }
-        
-        // Update existing variants
-        for (const variant of existingVariants) {
-          if (variant.id) {
-            await supabase.from("product_variants").update({
-              name: variant.name,
-              value: variant.value,
-              weight_adjustment: variant.weight_adjustment ? parseFloat(variant.weight_adjustment) : null,
-            }).eq("id", variant.id);
+        if (currentVariants && currentVariants.length > 0) {
+          for (const v of currentVariants) {
+            await supabase.from("product_variants").delete().eq("id", v.id);
           }
         }
         
-        // Insert new variants
-        for (const variant of newVariants) {
-          if (variant.name && variant.value) {
+        // Insert all variants from existing + new
+        const allValues = [
+          ...existingVariants.map(v => ({ value: v.value, weight: v.weight_adjustment })),
+          ...variantValues
+        ];
+        
+        for (const v of allValues) {
+          if (v.value) {
             await supabase.from("product_variants").insert({
               product_id: productId,
-              name: variant.name,
-              value: variant.value,
-              weight_adjustment: variant.weight_adjustment ? parseFloat(variant.weight_adjustment) : null,
+              name: variantName,
+              value: v.value,
+              weight_adjustment: v.weight && v.weight !== "" ? parseFloat(v.weight) : null,
             });
           }
         }
+      } else if (!enableVariants) {
+        // If variants are disabled, delete all variants
+        await supabase.from("product_variants").delete().eq("product_id", productId);
       }
     },
     onSuccess: () => {
@@ -315,32 +312,27 @@ export default function ProductForm() {
     setExistingImages(existingImages.filter((img) => img.id !== imageId));
   };
 
-  const addNewVariant = () => {
-    setNewVariants([...newVariants, { name: "", value: "", weight_adjustment: "" }]);
+  const addVariantValue = () => {
+    setVariantValues([...variantValues, { value: "", weight: "" }]);
   };
 
-  const updateNewVariant = (index: number, field: string, value: string) => {
-    const updated = [...newVariants];
-    updated[index] = { ...updated[index], [field]: value };
-    setNewVariants(updated);
+  const updateVariantValue = (index: number, field: "value" | "weight", val: string) => {
+    const updated = [...variantValues];
+    updated[index][field] = val;
+    setVariantValues(updated);
   };
 
-  const removeNewVariant = (index: number) => {
-    setNewVariants(newVariants.filter((_, i) => i !== index));
+  const removeVariantValue = (index: number) => {
+    setVariantValues(variantValues.filter((_, i) => i !== index));
   };
 
-  const updateExistingVariant = (index: number, field: string, value: string) => {
+  const updateExistingVariantValue = (index: number, field: "value" | "weight", val: string) => {
     const updated = [...existingVariants];
-    if (field === "name") {
-      // Enforce single variant type by propagating name to all
-      const newName = value;
-      for (let i = 0; i < updated.length; i++) {
-        updated[i] = { ...updated[i], name: newName };
-      }
-      setExistingVariants(updated);
-      return;
+    if (field === "value") {
+      updated[index].value = val;
+    } else {
+      updated[index].weight_adjustment = val;
     }
-    updated[index] = { ...updated[index], [field]: value };
     setExistingVariants(updated);
   };
 
@@ -646,30 +638,31 @@ export default function ProductForm() {
 
           {enableVariants && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Add individual variant options. Each variant can have an optional weight adjustment (in grams). If weight is not specified, the product's default weight will be used for price calculation.
-              </p>
+              <div>
+                <Label className="text-sm font-medium">Variant Name *</Label>
+                <Input
+                  placeholder="e.g., Size"
+                  value={variantName}
+                  onChange={(e) => setVariantName(e.target.value)}
+                  className="text-sm"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This is the type of variant (e.g., "Size", "Length", "Zodiac"). All values will use this name.
+                </p>
+              </div>
 
               {existingVariants.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-sm">Existing Variants</h3>
+                  <h3 className="font-medium text-sm">Existing Variant Values</h3>
                   {existingVariants.map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg">
-                      <div>
-                        <Label className="text-xs">Variant Name</Label>
-                        <Input
-                          placeholder="e.g., Size"
-                          value={variant.name}
-                          onChange={(e) => updateExistingVariant(index, "name", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
+                    <div key={variant.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg">
                       <div>
                         <Label className="text-xs">Value</Label>
                         <Input
-                          placeholder="e.g., 10"
+                          placeholder="e.g., 10cm"
                           value={variant.value}
-                          onChange={(e) => updateExistingVariant(index, "value", e.target.value)}
+                          onChange={(e) => updateExistingVariantValue(index, "value", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -680,7 +673,7 @@ export default function ProductForm() {
                           step="0.01"
                           placeholder="e.g., 0.52"
                           value={variant.weight_adjustment || ""}
-                          onChange={(e) => updateExistingVariant(index, "weight_adjustment", e.target.value)}
+                          onChange={(e) => updateExistingVariantValue(index, "weight", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -700,26 +693,17 @@ export default function ProductForm() {
                 </div>
               )}
 
-              {newVariants.length > 0 && (
+              {variantValues.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-sm">New Variants</h3>
-                  {newVariants.map((variant, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg bg-muted/50">
-                      <div>
-                        <Label className="text-xs">Variant Name</Label>
-                        <Input
-                          placeholder="e.g., Size"
-                          value={variant.name}
-                          onChange={(e) => updateNewVariant(index, "name", e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
+                  <h3 className="font-medium text-sm">New Variant Values</h3>
+                  {variantValues.map((v, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border rounded-lg bg-muted/50">
                       <div>
                         <Label className="text-xs">Value</Label>
                         <Input
-                          placeholder="e.g., 10"
-                          value={variant.value}
-                          onChange={(e) => updateNewVariant(index, "value", e.target.value)}
+                          placeholder="e.g., 12cm"
+                          value={v.value}
+                          onChange={(e) => updateVariantValue(index, "value", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -728,9 +712,9 @@ export default function ProductForm() {
                         <Input
                           type="number"
                           step="0.01"
-                          placeholder="e.g., 0.52"
-                          value={variant.weight_adjustment}
-                          onChange={(e) => updateNewVariant(index, "weight_adjustment", e.target.value)}
+                          placeholder="e.g., 0.55"
+                          value={v.weight}
+                          onChange={(e) => updateVariantValue(index, "weight", e.target.value)}
                           className="text-sm"
                         />
                       </div>
@@ -739,7 +723,7 @@ export default function ProductForm() {
                           type="button"
                           variant="destructive"
                           size="sm"
-                          onClick={() => removeNewVariant(index)}
+                          onClick={() => removeVariantValue(index)}
                           className="w-full"
                         >
                           <X className="h-4 w-4 mr-1" /> Remove
@@ -750,9 +734,9 @@ export default function ProductForm() {
                 </div>
               )}
 
-              <Button type="button" variant="outline" onClick={addNewVariant}>
+              <Button type="button" variant="outline" onClick={addVariantValue}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Variant Option
+                Add Variant Value
               </Button>
             </div>
           )}

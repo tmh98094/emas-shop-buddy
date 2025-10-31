@@ -38,6 +38,7 @@ import AdminSettings from "./pages/admin/Settings";
 import StockManagement from "./pages/admin/StockManagement";
 import ProductForm from "./pages/admin/ProductForm";
 import Categories from "./pages/admin/Categories";
+import CategoryDetail from "./pages/admin/CategoryDetail";
 import OrderDetail from "./pages/admin/OrderDetail";
 import AdminNotifications from "./pages/admin/Notifications";
 import CustomerDetail from "./pages/admin/CustomerDetail";
@@ -139,6 +140,7 @@ const App = () => {
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id" element={<ProductForm />} />
             <Route path="categories" element={<Categories />} />
+            <Route path="categories/:id" element={<CategoryDetail />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="pre-orders" element={<PreOrders />} />

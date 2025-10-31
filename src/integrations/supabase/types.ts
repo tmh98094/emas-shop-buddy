@@ -789,6 +789,7 @@ export type Database = {
           display_order: number | null
           featured_on_homepage: boolean | null
           id: string
+          image_url: string | null
           name: string
           slug: string
         }
@@ -799,6 +800,7 @@ export type Database = {
           display_order?: number | null
           featured_on_homepage?: boolean | null
           id?: string
+          image_url?: string | null
           name: string
           slug: string
         }
@@ -809,6 +811,7 @@ export type Database = {
           display_order?: number | null
           featured_on_homepage?: boolean | null
           id?: string
+          image_url?: string | null
           name?: string
           slug?: string
         }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Categories() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
@@ -121,9 +123,13 @@ export default function Categories() {
 
   const saveSubCategoryMutation = useMutation({
     mutationFn: async () => {
+      if (!currentCategoryId) {
+        throw new Error("Category ID is required");
+      }
+
       const subCategoryData = {
         name: subCategoryFormData.name,
-        slug: subCategoryFormData.slug || undefined,
+        slug: subCategoryFormData.slug?.trim() || undefined,
         description: subCategoryFormData.description || null,
         display_order: parseInt(subCategoryFormData.display_order),
         category_id: currentCategoryId,
@@ -402,6 +408,9 @@ export default function Categories() {
                   <TableCell>{category.display_order}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => navigate(`/admin/categories/${category.id}`)}>
+                        Manage
+                      </Button>
                       <Button variant="outline" size="icon" onClick={() => handleEdit(category)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
