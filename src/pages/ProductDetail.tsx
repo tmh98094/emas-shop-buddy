@@ -145,7 +145,7 @@ export default function ProductDetail() {
         .from("categories")
         .select("name")
         .eq("id", product.category_id)
-        .single();
+        .maybeSingle();
       if (error) return null;
       return data;
     },
@@ -160,7 +160,7 @@ export default function ProductDetail() {
         .from("sub_categories")
         .select("name")
         .eq("id", product.sub_category_id)
-        .single();
+        .maybeSingle();
       if (error) return null;
       return data;
     },
