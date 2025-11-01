@@ -28,7 +28,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <img src={logo} alt="JJ Emas Logo" className="h-10 w-auto" />
+            <img src={logo} alt="JJ Emas Logo" className="h-16 md:h-20 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
