@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { LanguageToggle } from "./LanguageToggle";
 import { T } from "./T";
+import logo from "@/assets/jj-emas-logo.png";
 
 export const Header = () => {
   const { items } = useCart();
@@ -26,8 +27,8 @@ export const Header = () => {
     <header className="bg-secondary border-b border-border sticky top-[44px] md:top-[52px] z-40 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary hover:text-gold-light transition-colors" style={{ fontFamily: 'Playfair Display, serif' }}>
-            JJ Emas
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <img src={logo} alt="JJ Emas Logo" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
