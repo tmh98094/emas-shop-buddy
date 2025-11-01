@@ -27,12 +27,18 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
   const [selectedVariants, setSelectedVariants] = useState<SelectedVariantsMap>({});
   const [variantError, setVariantError] = useState("");
 
-  // Calculate price with variant weight adjustment if applicable
+  // Calculate price with variant weight replacement (not addition)
   const getEffectiveWeight = () => {
-    const totalAdjustment = Object.values(selectedVariants).reduce((sum, v) => {
-      return sum + (v.weight_adjustment || 0);
-    }, 0);
-    return Number(product.weight_grams) + totalAdjustment;
+    const selectedVariantsArray = Object.values(selectedVariants);
+    
+    // If any variant has weight_adjustment, use it as replacement
+    const variantWithWeight = selectedVariantsArray.find(v => v.weight_adjustment && v.weight_adjustment > 0);
+    
+    if (variantWithWeight) {
+      return variantWithWeight.weight_adjustment;
+    }
+    
+    return Number(product.weight_grams);
   };
 
   const totalPrice = calculatePrice(goldPrice, getEffectiveWeight(), Number(product.labour_fee));

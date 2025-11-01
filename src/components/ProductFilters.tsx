@@ -11,9 +11,16 @@ interface Category {
   name: string;
 }
 
+interface SubCategory {
+  id: string;
+  name: string;
+}
+
 interface ProductFiltersProps {
   categories: Category[];
+  subCategories: SubCategory[];
   selectedCategories: string[];
+  selectedSubCategories: string[];
   selectedGoldTypes: string[];
   priceRange: [number, number];
   maxPrice: number;
@@ -24,6 +31,7 @@ interface ProductFiltersProps {
   excludeOutOfStock: boolean;
   sortBy: string;
   onCategoryChange: (categoryId: string) => void;
+  onSubCategoryChange: (subCategoryId: string) => void;
   onGoldTypeChange: (goldType: string) => void;
   onPriceRangeChange: (range: [number, number]) => void;
   onWeightRangeChange: (range: [number, number]) => void;
@@ -36,7 +44,9 @@ interface ProductFiltersProps {
 
 export const ProductFilters = ({
   categories,
+  subCategories,
   selectedCategories,
+  selectedSubCategories,
   selectedGoldTypes,
   priceRange,
   maxPrice,
@@ -47,6 +57,7 @@ export const ProductFilters = ({
   excludeOutOfStock,
   sortBy,
   onCategoryChange,
+  onSubCategoryChange,
   onGoldTypeChange,
   onPriceRangeChange,
   onWeightRangeChange,
@@ -109,6 +120,33 @@ export const ProductFilters = ({
       </div>
 
       <Separator />
+
+      {/* Sub Categories */}
+      {subCategories.length > 0 && (
+        <>
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">子分类</Label>
+            <div className="space-y-2">
+              {subCategories.map((subCategory) => (
+                <div key={subCategory.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`subcategory-${subCategory.id}`}
+                    checked={selectedSubCategories.includes(subCategory.id)}
+                    onCheckedChange={() => onSubCategoryChange(subCategory.id)}
+                  />
+                  <label
+                    htmlFor={`subcategory-${subCategory.id}`}
+                    className="text-sm cursor-pointer"
+                  >
+                    {subCategory.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Separator />
+        </>
+      )}
 
       {/* Gold Type */}
       <div className="space-y-3">

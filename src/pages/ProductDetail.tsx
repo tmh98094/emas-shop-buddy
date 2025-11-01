@@ -95,12 +95,18 @@ export default function ProductDetail() {
 
   const goldPrice = goldPrices?.[product.gold_type as "916" | "999"] || 0;
   
-  // Calculate price with combined variant weight adjustments
+  // Calculate price with variant weight replacement (not addition)
   const getEffectiveWeight = () => {
-    const totalAdjustment = Object.values(selectedVariants).reduce((sum, v) => {
-      return sum + (v.weight_adjustment || 0);
-    }, 0);
-    return Number(product.weight_grams) + totalAdjustment;
+    const selectedVariantsArray = Object.values(selectedVariants);
+    
+    // If any variant has weight_adjustment, use it as replacement
+    const variantWithWeight = selectedVariantsArray.find(v => v.weight_adjustment && v.weight_adjustment > 0);
+    
+    if (variantWithWeight) {
+      return variantWithWeight.weight_adjustment;
+    }
+    
+    return Number(product.weight_grams);
   };
   
   const totalPrice = calculatePrice(goldPrice, getEffectiveWeight(), Number(product.labour_fee));
@@ -131,12 +137,62 @@ export default function ProductDetail() {
   };
 
   // Structured data for SEO
+  const { data: categoryData } = useQuery({
+    queryKey: ["category", product.category_id],
+    queryFn: async () => {
+      if (!product.category_id) return null;
+      const { data, error } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("id", product.category_id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!product.category_id,
+  });
+
+  const { data: subCategoryData } = useQuery({
+    queryKey: ["subCategory", product.sub_category_id],
+    queryFn: async () => {
+      if (!product.sub_category_id) return null;
+      const { data, error } = await supabase
+        .from("sub_categories")
+        .select("name")
+        .eq("id", product.sub_category_id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!product.sub_category_id,
+  });
+
   const productSchema = generateProductSchema(product, goldPrice);
-  const breadcrumbSchema = generateBreadcrumbSchema([
+  
+  const breadcrumbItems = [
     { name: "Home", url: window.location.origin },
-    { name: "Categories", url: `${window.location.origin}/categories` },
-    { name: product.name, url: window.location.href }
-  ]);
+  ];
+  
+  if (categoryData?.name && product.category_id) {
+    breadcrumbItems.push({
+      name: categoryData.name,
+      url: `${window.location.origin}/categories/${product.category_id}/subcategories`
+    });
+  }
+  
+  if (subCategoryData?.name && product.sub_category_id) {
+    breadcrumbItems.push({
+      name: subCategoryData.name,
+      url: `${window.location.origin}/products?subCategory=${product.sub_category_id}`
+    });
+  }
+  
+  breadcrumbItems.push({
+    name: product.name,
+    url: window.location.href
+  });
+  
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
 
   // Selected variants display
   const selectedVariantsDisplay = Object.values(selectedVariants).length > 0 && (
@@ -172,11 +228,14 @@ export default function ProductDetail() {
       <Header />
       
       <main className="container mx-auto px-4 py-12">
-        <Breadcrumbs items={[
-          { label: "Home", href: "/" },
-          { label: "Categories", href: "/categories" },
-          { label: product.name, href: `/product/${product.slug}` }
-        ]} />
+        <Breadcrumbs items={
+          breadcrumbItems.map((item, index) => ({
+            label: item.name,
+            href: index === breadcrumbItems.length - 1 
+              ? `/product/${product.slug}` 
+              : item.url.replace(window.location.origin, '')
+          }))
+        } />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left side: Main image + Gallery */}
@@ -368,7 +427,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
+              <p><T zh="重量" en="Weight" />: {getEffectiveWeight()}g</p>
             </div>
 
 

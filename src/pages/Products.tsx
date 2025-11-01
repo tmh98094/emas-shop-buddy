@@ -57,6 +57,26 @@ export default function Products() {
     },
   });
 
+  // Fetch sub-categories
+  const { data: subCategories = [] } = useQuery({
+    queryKey: ["subCategories", selectedCategories],
+    queryFn: async () => {
+      let query = supabase
+        .from("sub_categories")
+        .select("id, name")
+        .order("display_order");
+      
+      // If categories are selected, filter sub-categories
+      if (selectedCategories.length > 0) {
+        query = query.in("category_id", selectedCategories);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch products
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ["products", selectedCategories, selectedSubCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy],
@@ -184,6 +204,14 @@ export default function Products() {
     );
   };
 
+  const handleSubCategoryToggle = (subCategoryId: string) => {
+    setSelectedSubCategories(prev =>
+      prev.includes(subCategoryId)
+        ? prev.filter(id => id !== subCategoryId)
+        : [...prev, subCategoryId]
+    );
+  };
+
   const handleGoldTypeToggle = (goldType: string) => {
     setSelectedGoldTypes(prev =>
       prev.includes(goldType)
@@ -194,6 +222,7 @@ export default function Products() {
 
   const handleClearAll = () => {
     setSelectedCategories([]);
+    setSelectedSubCategories([]);
     setSelectedGoldTypes([]);
     setPriceRange([0, priceData || 10000]);
     setWeightRange([0, 100]);
@@ -209,7 +238,7 @@ export default function Products() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy]);
+  }, [selectedCategories, selectedSubCategories, selectedGoldTypes, priceRange, weightRange, searchQuery, inStockOnly, excludePreOrder, excludeOutOfStock, sortBy]);
 
   // Get max weight for slider
   const { data: maxWeightData } = useQuery({
@@ -228,7 +257,9 @@ export default function Products() {
   const FilterPanel = () => (
     <ProductFilters
       categories={categories}
+      subCategories={subCategories}
       selectedCategories={selectedCategories}
+      selectedSubCategories={selectedSubCategories}
       selectedGoldTypes={selectedGoldTypes}
       priceRange={priceRange}
       maxPrice={priceData || 10000}
@@ -239,6 +270,7 @@ export default function Products() {
       excludeOutOfStock={excludeOutOfStock}
       sortBy={sortBy}
       onCategoryChange={handleCategoryToggle}
+      onSubCategoryChange={handleSubCategoryToggle}
       onGoldTypeChange={handleGoldTypeToggle}
       onPriceRangeChange={setPriceRange}
       onWeightRangeChange={setWeightRange}

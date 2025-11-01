@@ -116,11 +116,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
       let weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
       
-      // Use variant weight adjustment if available
+      // Use variant weight replacement if available (not addition)
       if (selectedVariants) {
-        const firstVariant = Object.values(selectedVariants)[0];
-        if (firstVariant?.weight_adjustment) {
-          weightGrams = firstVariant.weight_adjustment;
+        const variantWithWeight = Object.values(selectedVariants).find(v => v.weight_adjustment && v.weight_adjustment > 0);
+        if (variantWithWeight) {
+          weightGrams = variantWithWeight.weight_adjustment;
         }
       }
       
@@ -223,7 +223,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (!product) continue;
 
         const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
-        const weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
+        let weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
+        
+        // Apply variant weight replacement if exists
+        if (item.selected_variants) {
+          const variantWithWeight = Object.values(item.selected_variants).find((v: any) => v.weight_adjustment && v.weight_adjustment > 0);
+          if (variantWithWeight) {
+            weightGrams = variantWithWeight.weight_adjustment;
+          }
+        }
+        
         const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
         const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
 

@@ -57,7 +57,7 @@ export const CategorySection = () => {
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
                   <Card
                     className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all"
-                    onClick={() => navigate(`/products?category=${category.id}`)}
+                    onClick={() => navigate(`/categories/${category.id}/subcategories`)}
                   >
                     <div className="aspect-square relative bg-secondary">
                       {category.image_url ? (

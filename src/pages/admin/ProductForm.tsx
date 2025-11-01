@@ -428,7 +428,18 @@ export default function ProductForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-3 md:mt-4">
             <div>
               <Label htmlFor="category">分类</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value, sub_category_id: "" })}>
+              <Select 
+                value={formData.category_id} 
+                onValueChange={(value) => {
+                  // Only clear sub_category_id if category actually changed
+                  const shouldClearSubCategory = value !== formData.category_id;
+                  setFormData({ 
+                    ...formData, 
+                    category_id: value, 
+                    sub_category_id: shouldClearSubCategory ? "" : formData.sub_category_id 
+                  });
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="选择分类" />
                 </SelectTrigger>
@@ -442,11 +453,21 @@ export default function ProductForm() {
 
             <div>
               <Label htmlFor="sub_category">子分类</Label>
-              <Select value={formData.sub_category_id} onValueChange={(value) => setFormData({ ...formData, sub_category_id: value })} disabled={!formData.category_id}>
+              <Select 
+                value={formData.sub_category_id} 
+                onValueChange={(value) => setFormData({ ...formData, sub_category_id: value })} 
+                disabled={!formData.category_id}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="选择子分类" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Show existing sub_category if it's not in the current list (preserves value during loading) */}
+                  {formData.sub_category_id && !subCategories?.find(sc => sc.id === formData.sub_category_id) && (
+                    <SelectItem key={formData.sub_category_id} value={formData.sub_category_id}>
+                      Current Selection
+                    </SelectItem>
+                  )}
                   {subCategories?.map((subCat) => (
                     <SelectItem key={subCat.id} value={subCat.id}>{subCat.name}</SelectItem>
                   ))}
