@@ -70,6 +70,37 @@ export default function ProductDetail() {
     },
   });
 
+  // Fetch category and subcategory data for breadcrumbs (before early returns)
+  const { data: categoryData } = useQuery({
+    queryKey: ["category", product?.category_id],
+    queryFn: async () => {
+      if (!product?.category_id) return null;
+      const { data, error } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("id", product.category_id)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!product?.category_id,
+  });
+
+  const { data: subCategoryData } = useQuery({
+    queryKey: ["subCategory", product?.sub_category_id],
+    queryFn: async () => {
+      if (!product?.sub_category_id) return null;
+      const { data, error } = await supabase
+        .from("sub_categories")
+        .select("name")
+        .eq("id", product.sub_category_id)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!product?.sub_category_id,
+  });
+
   // Sticky cart bar visibility
   useEffect(() => {
     const handleScroll = () => {
@@ -137,36 +168,6 @@ export default function ProductDetail() {
   };
 
   // Structured data for SEO
-  const { data: categoryData } = useQuery({
-    queryKey: ["category", product.category_id],
-    queryFn: async () => {
-      if (!product.category_id) return null;
-      const { data, error } = await supabase
-        .from("categories")
-        .select("name")
-        .eq("id", product.category_id)
-        .maybeSingle();
-      if (error) return null;
-      return data;
-    },
-    enabled: !!product.category_id,
-  });
-
-  const { data: subCategoryData } = useQuery({
-    queryKey: ["subCategory", product.sub_category_id],
-    queryFn: async () => {
-      if (!product.sub_category_id) return null;
-      const { data, error } = await supabase
-        .from("sub_categories")
-        .select("name")
-        .eq("id", product.sub_category_id)
-        .maybeSingle();
-      if (error) return null;
-      return data;
-    },
-    enabled: !!product.sub_category_id,
-  });
-
   const productSchema = generateProductSchema(product, goldPrice);
   
   const breadcrumbItems = [
