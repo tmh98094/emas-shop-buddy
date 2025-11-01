@@ -141,7 +141,7 @@ export default function Checkout() {
 
     if (shippingRegion === "singapore") return 40;
     if (shippingRegion === "east_malaysia") return 15;
-    return 10; // west_malaysia
+    return 0; // west_malaysia - Free shipping
   };
 
   const calculateSubtotal = () => {
