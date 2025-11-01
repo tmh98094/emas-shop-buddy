@@ -710,7 +710,7 @@ export default function Checkout() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="west_malaysia">
-                          <T zh="西马 (RM10)" en="West Malaysia (RM10)" />
+                          <T zh="西马 (免邮)" en="West Malaysia (Free)" />
                         </SelectItem>
                         <SelectItem value="east_malaysia">
                           <T zh="东马 (RM15)" en="East Malaysia (RM15)" />
