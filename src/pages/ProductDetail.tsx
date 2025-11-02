@@ -116,6 +116,31 @@ export default function ProductDetail() {
     enabled: !!product?.id && (product.product_variants?.length || 0) > 0,
   });
 
+  // Auto-select first variant value for each group if variants exist
+  useEffect(() => {
+    if (!product || !product.product_variants || Object.keys(selectedVariants).length > 0) return;
+    const groups: Record<string, any[]> = {};
+    (product.product_variants || []).forEach((v: any) => {
+      if (!groups[v.name]) groups[v.name] = [];
+      groups[v.name].push(v);
+    });
+    const initial: Record<string, any> = {};
+    Object.keys(groups).forEach((groupName) => {
+      const first = groups[groupName][0];
+      if (first) {
+        initial[groupName] = {
+          name: first.name,
+          value: first.value,
+          id: first.id,
+          weight_adjustment: first.weight_adjustment,
+        };
+      }
+    });
+    if (Object.keys(initial).length > 0) {
+      setSelectedVariants(initial);
+    }
+  }, [product?.id]);
+
   // Sticky cart bar visibility
   useEffect(() => {
     const handleScroll = () => {
@@ -188,24 +213,6 @@ export default function ProductDetail() {
     ? getCurrentVariantStock() 
     : product.stock;
   
-  // Auto-select first variant value for each group if variants exist
-  useEffect(() => {
-    if (variantGroups && Object.keys(variantGroups).length > 0 && Object.keys(selectedVariants).length === 0) {
-      const initialVariants: Record<string, any> = {};
-      Object.keys(variantGroups).forEach(groupName => {
-        const firstVariant = variantGroups[groupName][0];
-        if (firstVariant) {
-          initialVariants[groupName] = {
-            name: firstVariant.name,
-            value: firstVariant.value,
-            id: firstVariant.id,
-            weight_adjustment: firstVariant.weight_adjustment
-          };
-        }
-      });
-      setSelectedVariants(initialVariants);
-    }
-  }, [product?.id]);
 
   const handleAddToCart = async () => {
     await addItem(product.id, quantity, selectedVariants);
