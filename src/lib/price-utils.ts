@@ -13,7 +13,7 @@ export const calculatePrice = (
   labourFee: number
 ): number => {
   const total = goldPrice * weight + labourFee;
-  return Math.round(total * 100) / 100;
+  return Math.ceil(total); // Round up to nearest whole number
 };
 
 /**
@@ -36,5 +36,5 @@ export const calculateItemTotal = (
   quantity: number
 ): number => {
   const unitPrice = calculatePrice(goldPrice, weight, labourFee);
-  return Math.round(unitPrice * quantity * 100) / 100;
+  return Math.ceil(unitPrice * quantity); // Round up to nearest whole number
 };

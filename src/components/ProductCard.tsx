@@ -69,6 +69,9 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
 
   const goldPrice = goldPrices?.[product.gold_type] || 0;
   const totalPrice = calculatePrice(goldPrice, product.weight_grams, product.labour_fee);
+  
+  // Check if product has variants
+  const hasVariants = productVariants && productVariants.length > 0;
 
   const displayImage = imageUrl || product.product_images?.find(img => img.display_order === 0)?.image_url || product.product_images?.[0]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format";
 
@@ -128,9 +131,16 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               width="400"
               height="400"
             />
-            {product.stock === 0 && (
+            {product.stock === 0 && !hasVariants && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <span className="text-white font-semibold text-sm"><T zh="缺货" en="Out of Stock" /></span>
+              </div>
+            )}
+            {hasVariants && (
+              <div className="absolute bottom-2 left-2 right-2">
+                <Badge variant="secondary" className="w-full justify-center text-xs">
+                  <T zh="多种选项" en="Multiple Options" />
+                </Badge>
               </div>
             )}
             {/* Hot label for best sellers */}
@@ -166,7 +176,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
         </div>
       </CardContent>
         <CardFooter className="p-3 md:p-4 pt-0">
-          {product.stock === 0 ? (
+          {product.stock === 0 && !hasVariants ? (
             <Button 
               className="w-full text-xs md:text-sm h-9 md:h-10 touch-manipulation" 
               size="sm"

@@ -46,7 +46,7 @@ export default function ProductForm() {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [enableVariants, setEnableVariants] = useState(false);
-  const [variantGroups, setVariantGroups] = useState<Array<{ id: string; name: string; values: Array<{ id: string; value: string; weight: string; dbId?: string }> }>>([]);
+  const [variantGroups, setVariantGroups] = useState<Array<{ id: string; name: string; values: Array<{ id: string; value: string; weight: string; stock: string; dbId?: string }> }>>([]);
   const [existingVariants, setExistingVariants] = useState<any[]>([]);
 
   // Fetch categories
@@ -97,7 +97,8 @@ export default function ProductForm() {
 
   // Populate form when editing
   useEffect(() => {
-    if (product) {
+    const loadProductData = async () => {
+      if (!product) return;
       setFormData({
         name: product.name || "",
         description: product.description || "",
@@ -137,18 +138,55 @@ export default function ProductForm() {
             id: `value-${idx}-${vidx}`,
             value: v.value,
             weight: v.weight_adjustment?.toString() || "",
+            stock: "0", // Will be loaded from variant_stock
             dbId: v.id
           }))
         }));
         
         setVariantGroups(groupsArray);
+        
+        // Fetch variant stock for each variant combination
+        const { data: variantStocks } = await supabase
+          .from("variant_stock")
+          .select("*")
+          .eq("product_id", id);
+        
+        // Update stock values in variant groups
+        if (variantStocks && variantStocks.length > 0) {
+          setVariantGroups(prev => prev.map(group => ({
+            ...group,
+            values: group.values.map(val => {
+              // Find matching stock for this variant value
+              const matchingStock = variantStocks.find(vs => {
+                const combo = vs.variant_combination as any;
+                return combo[group.name] === val.value;
+              });
+              return {
+                ...val,
+                stock: matchingStock?.stock?.toString() || "0"
+              };
+            })
+          })));
+        }
       }
-    }
-  }, [product]);
+    };
+    
+    loadProductData();
+  }, [product, id]);
 
   // Save product mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Calculate total stock from variants if enabled
+      let totalStock = parseInt(formData.stock);
+      if (enableVariants && variantGroups.length > 0) {
+        totalStock = variantGroups.reduce((sum, group) => {
+          return sum + group.values.reduce((valSum, val) => {
+            return valSum + (parseInt(val.stock) || 0);
+          }, 0);
+        }, 0);
+      }
+      
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -156,7 +194,7 @@ export default function ProductForm() {
         gold_type: formData.gold_type,
         weight_grams: parseFloat(formData.weight_grams),
         labour_fee: parseFloat(formData.labour_fee),
-        stock: parseInt(formData.stock),
+        stock: totalStock,
         category_id: formData.category_id || null,
         sub_category_id: formData.sub_category_id || null,
         is_featured: formData.is_featured,
@@ -232,10 +270,11 @@ export default function ProductForm() {
         });
       }
 
-      // Handle variants
+      // Handle variants and variant stock
       if (enableVariants && variantGroups.length > 0) {
-        // Delete all existing variants for this product first
+        // Delete all existing variants and variant_stock for this product first
         await supabase.from("product_variants").delete().eq("product_id", productId);
+        await supabase.from("variant_stock").delete().eq("product_id", productId);
         
         // Insert all variants from all groups
         for (const group of variantGroups) {
@@ -248,13 +287,62 @@ export default function ProductForm() {
                   value: v.value,
                   weight_adjustment: v.weight && v.weight !== "" ? parseFloat(v.weight) : null,
                 });
+                
+                // Create variant_stock entry for single-variant products
+                if (variantGroups.length === 1) {
+                  const variantCombination = { [group.name]: v.value };
+                  await supabase.from("variant_stock").insert({
+                    product_id: productId,
+                    variant_combination: variantCombination,
+                    stock: parseInt(v.stock) || 0,
+                  });
+                }
               }
             }
           }
         }
+        
+        // For multi-variant products, create all combinations
+        if (variantGroups.length > 1) {
+          const generateCombinations = (groups: typeof variantGroups): any[] => {
+            if (groups.length === 0) return [{}];
+            const [first, ...rest] = groups;
+            const restCombos = generateCombinations(rest);
+            const combos: any[] = [];
+            for (const val of first.values) {
+              if (val.value) {
+                for (const combo of restCombos) {
+                  combos.push({ [first.name]: val.value, ...combo });
+                }
+              }
+            }
+            return combos;
+          };
+          
+          const combinations = generateCombinations(variantGroups);
+          for (const combo of combinations) {
+            // Calculate stock for this combination (use minimum of all values in combo)
+            let comboStock = Infinity;
+            for (const group of variantGroups) {
+              const val = group.values.find(v => v.value === combo[group.name]);
+              if (val) {
+                const valStock = parseInt(val.stock) || 0;
+                if (valStock < comboStock) comboStock = valStock;
+              }
+            }
+            comboStock = comboStock === Infinity ? 0 : comboStock;
+            
+            await supabase.from("variant_stock").insert({
+              product_id: productId,
+              variant_combination: combo,
+              stock: comboStock,
+            });
+          }
+        }
       } else if (!enableVariants) {
-        // If variants are disabled, delete all variants
+        // If variants are disabled, delete all variants and variant_stock
         await supabase.from("product_variants").delete().eq("product_id", productId);
+        await supabase.from("variant_stock").delete().eq("product_id", productId);
       }
     },
     onSuccess: () => {
@@ -325,7 +413,7 @@ export default function ProductForm() {
 
   const addVariantGroup = () => {
     const newId = `group-${Date.now()}`;
-    setVariantGroups([...variantGroups, { id: newId, name: "", values: [{ id: `${newId}-val-0`, value: "", weight: "" }] }]);
+    setVariantGroups([...variantGroups, { id: newId, name: "", values: [{ id: `${newId}-val-0`, value: "", weight: "", stock: "0" }] }]);
   };
 
   const removeVariantGroup = (groupId: string) => {
@@ -340,13 +428,13 @@ export default function ProductForm() {
     setVariantGroups(variantGroups.map(g => {
       if (g.id === groupId) {
         const newValueId = `${groupId}-val-${g.values.length}`;
-        return { ...g, values: [...g.values, { id: newValueId, value: "", weight: "" }] };
+        return { ...g, values: [...g.values, { id: newValueId, value: "", weight: "", stock: "0" }] };
       }
       return g;
     }));
   };
 
-  const updateGroupValue = (groupId: string, valueId: string, field: "value" | "weight", val: string) => {
+  const updateGroupValue = (groupId: string, valueId: string, field: "value" | "weight" | "stock", val: string) => {
     setVariantGroups(variantGroups.map(g => {
       if (g.id === groupId) {
         return {
@@ -518,16 +606,30 @@ export default function ProductForm() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="stock">Stock *</Label>
-              <Input
-                id="stock"
-                type="number"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                required
-              />
-            </div>
+            {!enableVariants && (
+              <div>
+                <Label htmlFor="stock">Stock *</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                  required
+                />
+              </div>
+            )}
+            
+            {enableVariants && (
+              <div>
+                <Label className="text-muted-foreground">Total Stock (Calculated from Variants)</Label>
+                <Input
+                  type="number"
+                  value={variantGroups.reduce((sum, g) => sum + g.values.reduce((s, v) => s + (parseInt(v.stock) || 0), 0), 0)}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3 md:gap-4 mt-3 md:mt-4">
@@ -740,7 +842,7 @@ export default function ProductForm() {
                     </div>
 
                     {group.values.map((value) => (
-                      <div key={value.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 border rounded bg-background">
+                      <div key={value.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 border rounded bg-background">
                         <div>
                           <Label className="text-xs">Value *</Label>
                           <Input
@@ -760,6 +862,17 @@ export default function ProductForm() {
                             value={value.weight}
                             onChange={(e) => updateGroupValue(group.id, value.id, "weight", e.target.value)}
                             className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Stock *</Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={value.stock}
+                            onChange={(e) => updateGroupValue(group.id, value.id, "stock", e.target.value)}
+                            className="text-sm"
+                            required
                           />
                         </div>
                         <div className="flex items-end">

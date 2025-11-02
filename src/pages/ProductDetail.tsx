@@ -101,6 +101,21 @@ export default function ProductDetail() {
     enabled: !!product?.sub_category_id,
   });
 
+  // Fetch variant stock
+  const { data: variantStock } = useQuery({
+    queryKey: ["variant-stock", product?.id],
+    queryFn: async () => {
+      if (!product?.id) return [];
+      const { data, error } = await supabase
+        .from("variant_stock")
+        .select("*")
+        .eq("product_id", product.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!product?.id && (product.product_variants?.length || 0) > 0,
+  });
+
   // Sticky cart bar visibility
   useEffect(() => {
     const handleScroll = () => {
@@ -150,6 +165,47 @@ export default function ProductDetail() {
     acc[variant.name].push(variant);
     return acc;
   }, {});
+
+  // Get current variant stock based on selection
+  const getCurrentVariantStock = () => {
+    if (!variantStock || variantStock.length === 0) return product.stock;
+    
+    // If no variants selected, default to first variant combination
+    if (Object.keys(selectedVariants).length === 0 && variantStock.length > 0) {
+      return variantStock[0].stock;
+    }
+    
+    // Find matching variant combination
+    const matchingStock = variantStock.find((vs: any) => {
+      const combo = vs.variant_combination;
+      return Object.keys(selectedVariants).every(key => combo[key] === selectedVariants[key].value);
+    });
+    
+    return matchingStock?.stock ?? 0;
+  };
+
+  const currentStock = variantGroups && Object.keys(variantGroups).length > 0 
+    ? getCurrentVariantStock() 
+    : product.stock;
+  
+  // Auto-select first variant value for each group if variants exist
+  useEffect(() => {
+    if (variantGroups && Object.keys(variantGroups).length > 0 && Object.keys(selectedVariants).length === 0) {
+      const initialVariants: Record<string, any> = {};
+      Object.keys(variantGroups).forEach(groupName => {
+        const firstVariant = variantGroups[groupName][0];
+        if (firstVariant) {
+          initialVariants[groupName] = {
+            name: firstVariant.name,
+            value: firstVariant.value,
+            id: firstVariant.id,
+            weight_adjustment: firstVariant.weight_adjustment
+          };
+        }
+      });
+      setSelectedVariants(initialVariants);
+    }
+  }, [product?.id]);
 
   const handleAddToCart = async () => {
     await addItem(product.id, quantity, selectedVariants);
@@ -474,7 +530,12 @@ export default function ProductDetail() {
 
             {/* Quantity */}
             <div>
-              <h3 className="font-semibold mb-3"><T zh="数量" en="Quantity" /></h3>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <T zh="数量" en="Quantity" />
+                <span className="text-sm font-normal text-muted-foreground">
+                  (<T zh="库存" en="Stock" />: {currentStock})
+                </span>
+              </h3>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -489,7 +550,7 @@ export default function ProductDetail() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
                   className="h-11 w-11 md:h-10 md:w-10"
                   aria-label="Increase quantity"
                 >
@@ -501,19 +562,19 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock <= 0}
+                disabled={currentStock <= 0}
                 size="lg"
                 className="w-full h-12 text-base md:h-10"
-                aria-label={product.stock === 0 ? "Out of stock" : "Add to cart"}
+                aria-label={currentStock === 0 ? "Out of stock" : "Add to cart"}
               >
-                {product.stock === 0 ? (
+                {currentStock === 0 ? (
                   <T zh="缺货" en="Out of Stock" />
                 ) : (
                   <T zh="加入购物车" en="Add to Cart" />
                 )}
               </Button>
               
-              {product.stock <= 0 && (
+              {currentStock <= 0 && (
                 <OutOfStockWhatsApp
                   productName={product.name}
                   productSlug={product.slug}
@@ -557,7 +618,7 @@ export default function ProductDetail() {
                 variant="outline"
                 size="icon"
                 className="h-9 w-9 touch-manipulation"
-                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -566,9 +627,9 @@ export default function ProductDetail() {
           <Button 
             className="w-full h-11 text-base touch-manipulation" 
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
+            disabled={currentStock === 0}
           >
-            {product.stock === 0 ? (
+            {currentStock === 0 ? (
               <T zh="缺货" en="Out of Stock" />
             ) : product.is_preorder ? (
               <>

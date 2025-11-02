@@ -112,10 +112,25 @@ export default function SubCategoryList() {
         )}
 
         {!isLoading && (!subCategories || subCategories.length === 0) && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              <T zh="此分类暂无子分类" en="No sub-categories available in this category" />
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
+            <Card
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 group overflow-hidden w-full max-w-sm"
+              onClick={() => navigate(`/products?category=${categoryId}`)}
+            >
+              <div className="aspect-square overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="text-4xl mb-4">🛍️</div>
+                  <h3 className="text-2xl font-bold text-primary group-hover:scale-110 transition-transform">
+                    <T zh="全部商品" en="All Products" />
+                  </h3>
+                </div>
+              </div>
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  <T zh="浏览此分类下的所有产品" en="Browse all products in this category" />
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </main>

@@ -8,20 +8,20 @@ export default function Dashboard() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [ordersRes, productsRes, pendingOrdersRes] = await Promise.all([
-        supabase.from("orders").select("total_amount", { count: "exact" }),
+      const [paidOrdersRes, productsRes, pendingOrdersRes] = await Promise.all([
+        supabase.from("orders").select("total_amount", { count: "exact" }).eq("payment_status", "completed"),
         supabase.from("products").select("*", { count: "exact" }),
         supabase.from("orders").select("*", { count: "exact" }).eq("order_status", "pending"),
       ]);
 
-      const totalRevenue = ordersRes.data?.reduce(
+      const totalRevenue = paidOrdersRes.data?.reduce(
         (sum, order) => sum + Number(order.total_amount),
         0
       ) || 0;
 
       return {
         totalRevenue,
-        totalOrders: ordersRes.count || 0,
+        totalOrders: paidOrdersRes.count || 0,
         totalProducts: productsRes.count || 0,
         pendingOrders: pendingOrdersRes.count || 0,
       };
@@ -36,7 +36,7 @@ export default function Dashboard() {
       color: "text-green-500",
     },
     {
-      title: "Total Orders",
+      title: "Paid Orders",
       value: stats?.totalOrders || 0,
       icon: ShoppingCart,
       color: "text-primary",

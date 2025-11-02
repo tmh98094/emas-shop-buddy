@@ -125,7 +125,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
-      const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
+      const calculatedPrice = Math.ceil(goldPrice * weightGrams + labourFee);
 
       const { error } = await supabase.from("cart_items").insert([{
         product_id: productId,
@@ -234,7 +234,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
         
         const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
-        const calculatedPrice = Math.round((goldPrice * weightGrams + labourFee) * 100) / 100;
+        const calculatedPrice = Math.ceil(goldPrice * weightGrams + labourFee);
 
         await supabase
           .from("cart_items")
