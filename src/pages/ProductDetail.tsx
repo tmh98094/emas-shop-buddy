@@ -539,9 +539,15 @@ export default function ProductDetail() {
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <T zh="数量" en="Quantity" />
-                <span className="text-sm font-normal text-muted-foreground">
-                  (<T zh="库存" en="Stock" />: {currentStock})
-                </span>
+                {currentStock > 0 ? (
+                  <Badge variant="secondary" className="text-xs">
+                    <T zh="有货" en="In Stock" />
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="text-xs">
+                    <T zh="缺货" en="Out of Stock" />
+                  </Badge>
+                )}
               </h3>
               <div className="flex items-center gap-3">
                 <Button
