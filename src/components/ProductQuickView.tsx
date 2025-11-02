@@ -151,7 +151,9 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
 
             <div className="space-y-1 text-sm text-muted-foreground">
               <p><T zh="重量" en="Weight" />: {product.weight_grams}g</p>
-              <p><T zh="库存" en="Stock" />: {product.stock} <T zh="件可用" en="available" /></p>
+              {product.stock === 0 && (
+                <p className="text-destructive font-medium"><T zh="缺货" en="Out of Stock" /></p>
+              )}
             </div>
 
             {/* Variants */}
