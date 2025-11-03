@@ -845,12 +845,14 @@ export default function Checkout() {
         </form>
 
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0">
+            <DialogHeader className="px-6 pt-6 pb-4">
               <DialogTitle className="text-2xl">
                 <T zh="确认订单" en="Confirm Order" />
               </DialogTitle>
-              <DialogDescription className="space-y-3 text-left pt-4">
+            </DialogHeader>
+            <div className="overflow-y-auto px-6 py-2 flex-1">
+              <DialogDescription className="space-y-3 text-left">
                 <p className="text-amber-600 dark:text-amber-400 font-semibold">
                   ⚠️
                   <T
@@ -897,7 +899,7 @@ export default function Checkout() {
                   <p>
                     -
                     <T
-                      zh="点击“下订单”后，若是没有完成付款，订单会在2小时后自动取消，请再次下单。"
+                      zh='点击"下订单"后，若是没有完成付款，订单会在2小时后自动取消，请再次下单。'
                       en="After proceed with checkout, if payment is not completed, the order will be auto-cancelled after 2 hours. Please order again."
                     />
                   </p>
@@ -932,8 +934,8 @@ export default function Checkout() {
                   <p className="text-center mt-2">🙏🏻💕🙏🏻💕</p>
                 </div>
               </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2">
+            </div>
+            <DialogFooter className="px-6 py-4 border-t gap-2 flex-row justify-end">
               <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
                 <T zh="取消" en="Cancel" />
               </Button>
