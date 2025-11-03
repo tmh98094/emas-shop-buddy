@@ -72,16 +72,18 @@ export default function Orders() {
         name: item.product_name,
         quantity: item.quantity,
         goldType: item.gold_type,
-        weight: parseFloat(item.weight_grams),
+        weight_grams: parseFloat(item.weight_grams),
         goldPrice: parseFloat(item.gold_price_at_purchase),
         labourFee: parseFloat(item.labour_fee),
         subtotal: parseFloat(item.subtotal),
+        variant_selection: item.variant_selection,
       })) || [],
       subtotal: itemsTotal,
       shippingFee: shippingFee,
       total: parseFloat(order.total_amount),
       paymentMethod: order.payment_method.replace("_", " ").toUpperCase(),
       paymentStatus: order.payment_status,
+      notes: order.notes,
     });
   };
 

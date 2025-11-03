@@ -323,16 +323,18 @@ export default function UserDashboard() {
                                     name: item.product_name,
                                     quantity: item.quantity,
                                     goldType: item.gold_type,
-                                    weight: item.weight_grams,
+                                    weight_grams: item.weight_grams,
                                     goldPrice: item.gold_price_at_purchase,
                                     labourFee: item.labour_fee,
                                     subtotal: parseFloat(item.subtotal),
+                                    variant_selection: item.variant_selection,
                                   })),
                                   subtotal: itemsTotal,
                                   shippingFee: shippingFee,
                                   total: parseFloat(order.total_amount),
                                   paymentMethod: order.payment_method,
                                   paymentStatus: order.payment_status,
+                                  notes: order.notes,
                                 };
                                 generateInvoicePDF(invoiceData);
                               }}

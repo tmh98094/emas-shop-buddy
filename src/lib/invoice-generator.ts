@@ -18,16 +18,18 @@ export interface InvoiceData {
     name: string;
     quantity: number;
     goldType: string;
-    weight: number;
+    weight_grams: number;
     goldPrice: number;
     labourFee: number;
     subtotal: number;
+    variant_selection?: string;
   }>;
   subtotal: number;
   shippingFee: number;
   total: number;
   paymentMethod: string;
   paymentStatus: string;
+  notes?: string;
 }
 
 export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void> {
@@ -101,6 +103,7 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
         <thead>
           <tr>
             <th>Product</th>
+            <th>Weight</th>
             <th>Qty</th>
             <th>Cost (Unit)</th>
             <th>Total</th>
@@ -111,7 +114,8 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
             const unit = item.quantity ? item.subtotal / item.quantity : item.subtotal;
             return `
               <tr>
-                <td>${item.name}</td>
+                <td>${item.name}${item.variant_selection ? `<br/><small style="color: #666;">${item.variant_selection}</small>` : ''}</td>
+                <td>${item.weight_grams}g (${item.goldType})</td>
                 <td>${item.quantity}</td>
                 <td>RM ${unit.toFixed(2)}</td>
                 <td>RM ${item.subtotal.toFixed(2)}</td>
@@ -120,6 +124,13 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
           }).join("")}
         </tbody>
       </table>
+
+      ${invoiceData.notes ? `
+      <div class="info-section">
+        <h2>Order Remarks</h2>
+        <div class="info-row">${invoiceData.notes}</div>
+      </div>
+      ` : ''}
 
       <div class="totals">
         <div class="totals-row">Subtotal: RM ${invoiceData.subtotal.toFixed(2)}</div>
