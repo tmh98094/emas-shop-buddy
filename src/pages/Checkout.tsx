@@ -214,7 +214,7 @@ export default function Checkout() {
 
     const { validateICNumber, formatICNumber } = await import("@/lib/utils");
     const formattedIC = formatICNumber(formData.ic_number);
-    
+
     if (!validateICNumber(formattedIC)) {
       toast({
         title: "Invalid IC Number",
@@ -635,7 +635,7 @@ export default function Checkout() {
                       value={formData.ic_number}
                       onChange={(e) => setFormData({ ...formData, ic_number: e.target.value })}
                       disabled={profileLoading}
-                      placeholder="930521015112"
+                      placeholder="ex: 930521015112"
                       pattern="[0-9]{12}"
                       maxLength={12}
                       title="IC number must be exactly 12 digits"
