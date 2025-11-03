@@ -292,6 +292,7 @@ export type Database = {
           full_name: string
           guest_name: string | null
           guest_phone: string | null
+          ic_number: string
           id: string
           notes: string | null
           order_number: string
@@ -318,6 +319,7 @@ export type Database = {
           full_name: string
           guest_name?: string | null
           guest_phone?: string | null
+          ic_number?: string
           id?: string
           notes?: string | null
           order_number: string
@@ -344,6 +346,7 @@ export type Database = {
           full_name?: string
           guest_name?: string | null
           guest_phone?: string | null
+          ic_number?: string
           id?: string
           notes?: string | null
           order_number?: string
@@ -656,6 +659,7 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
+          ic_number: string | null
           id: string
           phone_number: string
           postcode: string | null
@@ -670,6 +674,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          ic_number?: string | null
           id: string
           phone_number: string
           postcode?: string | null
@@ -684,6 +689,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          ic_number?: string | null
           id?: string
           phone_number?: string
           postcode?: string | null

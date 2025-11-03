@@ -311,6 +311,7 @@ export default function UserDashboard() {
                                   customerName: order.full_name,
                                   customerPhone: order.phone_number,
                                   customerEmail: order.email,
+                                  customerIC: order.ic_number || "N/A",
                                   shippingAddress: {
                                     line1: order.shipping_address_line1,
                                     line2: order.shipping_address_line2,

@@ -46,6 +46,7 @@ export default function Checkout() {
     full_name: "",
     phone_number: "",
     email: "",
+    ic_number: "",
     notes: "",
     address_line1: "",
     address_line2: "",
@@ -85,6 +86,7 @@ export default function Checkout() {
             full_name: profile.full_name || "",
             phone_number: extractedPhone,
             email: profile.email || "",
+            ic_number: profile.ic_number || "",
             notes: "",
             address_line1: profile.address_line1 || "",
             address_line2: profile.address_line2 || "",
@@ -200,6 +202,28 @@ export default function Checkout() {
       return;
     }
 
+    // Validate IC number
+    if (!formData.ic_number || !formData.ic_number.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter your IC number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { validateICNumber, formatICNumber } = await import("@/lib/utils");
+    const formattedIC = formatICNumber(formData.ic_number);
+    
+    if (!validateICNumber(formattedIC)) {
+      toast({
+        title: "Invalid IC Number",
+        description: "IC number must be exactly 12 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.address_line1 || !formData.city || !formData.state || !formData.postcode) {
       toast({
         title: "Missing Information",
@@ -264,6 +288,7 @@ export default function Checkout() {
           full_name: formData.full_name,
           phone_number: normalizedPhone,
           email: formData.email || null,
+          ic_number: formData.ic_number,
           notes: formData.notes || null,
           shipping_address_line1: formData.address_line1,
           shipping_address_line2: formData.address_line2 || null,
@@ -281,7 +306,7 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Save shipping address to user profile for logged in users
+      // Save shipping address and IC to user profile for logged in users
       if (user?.id) {
         await supabase
           .from("profiles")
@@ -292,6 +317,7 @@ export default function Checkout() {
             state: formData.state,
             postcode: formData.postcode,
             country: formData.country,
+            ic_number: formData.ic_number,
           })
           .eq("id", user.id);
       }
@@ -400,6 +426,27 @@ export default function Checkout() {
           .single();
 
         if (adminEmailSetting) {
+          // Send new order notification email for ALL orders
+          try {
+            const itemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+            await supabase.functions.invoke("send-admin-email", {
+              body: {
+                type: "new_order",
+                admin_email: (adminEmailSetting.value as any).email,
+                order_number: orderNumber,
+                customer_name: formData.full_name,
+                customer_phone: normalizedPhone,
+                total_amount: totalAmount,
+                order_id: orderId,
+                payment_method: paymentMethod === "touch_n_go" ? "Touch N Go" : "Online Banking/Card",
+                items_count: itemsCount,
+              },
+            });
+          } catch (emailError) {
+            console.error("Failed to send new order email:", emailError);
+          }
+
+          // Check for out of stock products
           const { data: updatedProducts } = await supabase
             .from("products")
             .select("id, name, gold_type, weight_grams, stock")
@@ -423,7 +470,7 @@ export default function Checkout() {
           }
         }
       } catch (emailError) {
-        console.error("Failed to send out-of-stock email:", emailError);
+        console.error("Failed to send email notifications:", emailError);
       }
 
       await clearCart();
@@ -577,9 +624,31 @@ export default function Checkout() {
                       </div>
                     )}
                   </div>
-                  <div>
+                  <div className="relative">
+                    <Label htmlFor="ic_number">
+                      <T zh="身份证号码" en="IC Number" /> *
+                    </Label>
+                    <Input
+                      id="ic_number"
+                      type="text"
+                      required
+                      value={formData.ic_number}
+                      onChange={(e) => setFormData({ ...formData, ic_number: e.target.value })}
+                      disabled={profileLoading}
+                      placeholder="930521015112"
+                      pattern="[0-9]{12}"
+                      maxLength={12}
+                      title="IC number must be exactly 12 digits"
+                    />
+                    {profileLoading && (
+                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded mt-8">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative">
                     <Label htmlFor="notes">
-                      <T zh="订单备注" en="Order Notes" />
+                      <T zh="订单备注（可选）" en="Order Notes (Optional)" />
                     </Label>
                     <Textarea
                       id="notes"

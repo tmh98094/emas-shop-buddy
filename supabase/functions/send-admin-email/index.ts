@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: "out_of_stock" | "new_pre_order" | "new_touch_n_go_payment";
+  type: "out_of_stock" | "new_pre_order" | "new_touch_n_go_payment" | "new_order";
   admin_email: string;
   // Out of stock fields
   product_id?: string;
@@ -26,6 +26,9 @@ interface EmailRequest {
   // Touch N Go fields
   total_amount?: number;
   receipt_url?: string;
+  // New order fields
+  payment_method?: string;
+  items_count?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -87,6 +90,25 @@ const handler = async (req: Request): Promise<Response> => {
           </ul>
           <p><strong>Receipt Image:</strong> <a href="${data.receipt_url}">View Receipt</a></p>
           <p><a href="https://0cf0a8a6-18c7-41f6-b527-9d28858fbafe.lovableproject.com/admin/touch-ngo" style="background: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Verify Payment</a></p>
+        `;
+        break;
+
+      case "new_order":
+        subject = `🛍️ New Order Received: Order #${data.order_number}`;
+        html = `
+          <h2>New Order Notification</h2>
+          <p>A new order has been placed in your store.</p>
+          <h3>Order Details:</h3>
+          <ul>
+            <li><strong>Order Number:</strong> ${data.order_number}</li>
+            <li><strong>Customer:</strong> ${data.customer_name}</li>
+            <li><strong>Phone:</strong> ${data.customer_phone}</li>
+            <li><strong>Total Amount:</strong> RM ${data.total_amount?.toFixed(2)}</li>
+            <li><strong>Payment Method:</strong> ${data.payment_method}</li>
+            <li><strong>Items Count:</strong> ${data.items_count}</li>
+            <li><strong>Payment Status:</strong> Pending</li>
+          </ul>
+          <p><a href="https://0cf0a8a6-18c7-41f6-b527-9d28858fbafe.lovableproject.com/admin/orders/${data.order_id}" style="background: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View Order Details</a></p>
         `;
         break;
 

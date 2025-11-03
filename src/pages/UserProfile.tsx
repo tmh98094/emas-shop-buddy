@@ -35,6 +35,7 @@ export default function UserProfile() {
     full_name: "",
     email: "",
     phone_number: "",
+    ic_number: "",
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -83,6 +84,7 @@ export default function UserProfile() {
           full_name: data.full_name || "",
           email: data.email || "",
           phone_number: phone,
+          ic_number: data.ic_number || "",
         });
       }
     } catch (error: any) {
@@ -150,6 +152,7 @@ export default function UserProfile() {
           full_name: profile.full_name,
           email: profile.email,
           phone_number: normalizedPhone,
+          ic_number: profile.ic_number || null,
         });
 
       if (error) {
@@ -305,6 +308,21 @@ export default function UserProfile() {
                           setProfile({ ...profile, email: e.target.value })
                         }
                         disabled={loading}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ic_number"><T zh="身份证号码（可选）" en="IC Number (Optional)" /></Label>
+                      <Input
+                        id="ic_number"
+                        type="text"
+                        value={profile.ic_number}
+                        onChange={(e) =>
+                          setProfile({ ...profile, ic_number: e.target.value })
+                        }
+                        disabled={loading}
+                        placeholder="930521015112"
+                        maxLength={12}
                       />
                     </div>
 

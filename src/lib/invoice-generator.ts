@@ -6,6 +6,7 @@ export interface InvoiceData {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
+  customerIC: string;
   shippingAddress: {
     line1: string;
     line2?: string;
@@ -88,6 +89,7 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<void
         <h2>Customer Information</h2>
         <div class="info-row"><span class="label">Name:</span> ${invoiceData.customerName}</div>
         <div class="info-row"><span class="label">Phone:</span> ${invoiceData.customerPhone}</div>
+        <div class="info-row"><span class="label">IC Number:</span> ${invoiceData.customerIC}</div>
         ${invoiceData.customerEmail ? `<div class="info-row"><span class="label">Email:</span> ${invoiceData.customerEmail}</div>` : ""}
       </div>
 
