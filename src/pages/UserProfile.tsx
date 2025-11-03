@@ -55,31 +55,29 @@ export default function UserProfile() {
   const loadProfile = async () => {
     setInitialLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
       if (error) throw error;
       if (data) {
         console.log("Loaded profile data:", data);
-        
+
         // Parse existing phone number for country code and number
         const phone = data.phone_number || "";
-        
+
         if (phone) {
           const { countryCode: parsedCC, national } = parseE164(phone);
           setCountryCode(parsedCC);
           setPhoneNumber(national);
         }
-        
+
         setProfile({
           full_name: data.full_name || "",
           email: data.email || "",
@@ -104,7 +102,9 @@ export default function UserProfile() {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
@@ -116,7 +116,7 @@ export default function UserProfile() {
         .eq("phone_number", normalizedPhone)
         .limit(1);
       if (phoneConflictError) throw phoneConflictError;
-      
+
       if (phoneConflict && phoneConflict.length > 0 && phoneConflict[0]?.id !== user?.id) {
         setDuplicateDialog({
           open: true,
@@ -134,7 +134,7 @@ export default function UserProfile() {
           .eq("email", profile.email.trim())
           .limit(1);
         if (emailConflictError) throw emailConflictError;
-        
+
         if (emailConflict && emailConflict.length > 0 && emailConflict[0]?.id !== user?.id) {
           setDuplicateDialog({
             open: true,
@@ -145,15 +145,13 @@ export default function UserProfile() {
         }
       }
 
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          id: user!.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          phone_number: normalizedPhone,
-          ic_number: profile.ic_number || null,
-        });
+      const { error } = await supabase.from("profiles").upsert({
+        id: user!.id,
+        full_name: profile.full_name,
+        email: profile.email,
+        phone_number: normalizedPhone,
+        ic_number: profile.ic_number || null,
+      });
 
       if (error) {
         let errorMessage = "更新失败，请稍后重试";
@@ -189,7 +187,7 @@ export default function UserProfile() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: "错误",
@@ -255,30 +253,40 @@ export default function UserProfile() {
     <div className="min-h-screen bg-background">
       <GoldPriceBanner />
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6"><T zh="我的个人资料" en="My Profile" /></h1>
+        <h1 className="text-3xl font-bold mb-6">
+          <T zh="我的个人资料" en="My Profile" />
+        </h1>
 
         {initialLoading ? (
           <Card>
             <CardContent className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground"><T zh="正在加载您的个人资料..." en="Loading your profile..." /></p>
+                <p className="text-muted-foreground">
+                  <T zh="正在加载您的个人资料..." en="Loading your profile..." />
+                </p>
               </div>
             </CardContent>
           </Card>
         ) : (
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile"><T zh="个人资料信息" en="Profile Information" /></TabsTrigger>
-              <TabsTrigger value="password"><T zh="更改密码" en="Change Password" /></TabsTrigger>
+              <TabsTrigger value="profile">
+                <T zh="个人资料信息" en="Profile Information" />
+              </TabsTrigger>
+              <TabsTrigger value="password">
+                <T zh="更改密码" en="Change Password" />
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
-                  <CardTitle><T zh="个人资料信息" en="Profile Information" /></CardTitle>
+                  <CardTitle>
+                    <T zh="个人资料信息" en="Profile Information" />
+                  </CardTitle>
                   <CardDescription>
                     <T zh="更新您的个人信息" en="Update your personal information" />
                   </CardDescription>
@@ -286,42 +294,42 @@ export default function UserProfile() {
                 <CardContent>
                   <form onSubmit={handleProfileUpdate} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="full_name"><T zh="全名" en="Full Name" /></Label>
+                      <Label htmlFor="full_name">
+                        <T zh="全名" en="Full Name" />
+                      </Label>
                       <Input
                         id="full_name"
                         value={profile.full_name}
-                        onChange={(e) =>
-                          setProfile({ ...profile, full_name: e.target.value })
-                        }
+                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                         disabled={loading}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
+                      <Label htmlFor="email">
+                        <T zh="电子邮件（可选）" en="Email (Optional)" />
+                      </Label>
                       <Input
                         id="email"
                         type="email"
                         value={profile.email}
-                        onChange={(e) =>
-                          setProfile({ ...profile, email: e.target.value })
-                        }
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                         disabled={loading}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="ic_number"><T zh="身份证号码（可选）" en="IC Number (Optional)" /></Label>
+                      <Label htmlFor="ic_number">
+                        <T zh="身份证号码（可选）" en="IC Number (Optional)" />
+                      </Label>
                       <Input
                         id="ic_number"
                         type="text"
                         value={profile.ic_number}
-                        onChange={(e) =>
-                          setProfile({ ...profile, ic_number: e.target.value })
-                        }
+                        onChange={(e) => setProfile({ ...profile, ic_number: e.target.value })}
                         disabled={loading}
-                        placeholder="930521015112"
+                        placeholder="ex: 930521015112"
                         maxLength={12}
                       />
                     </div>
@@ -347,7 +355,9 @@ export default function UserProfile() {
             <TabsContent value="password">
               <Card>
                 <CardHeader>
-                  <CardTitle><T zh="更改密码" en="Change Password" /></CardTitle>
+                  <CardTitle>
+                    <T zh="更改密码" en="Change Password" />
+                  </CardTitle>
                   <CardDescription>
                     <T zh="更新您的密码以保护您的帐户安全" en="Update your password to keep your account secure" />
                   </CardDescription>
@@ -355,7 +365,9 @@ export default function UserProfile() {
                 <CardContent>
                   <form onSubmit={handlePasswordChange} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword"><T zh="新密码" en="New Password" /></Label>
+                      <Label htmlFor="newPassword">
+                        <T zh="新密码" en="New Password" />
+                      </Label>
                       <Input
                         id="newPassword"
                         type="password"
@@ -372,7 +384,9 @@ export default function UserProfile() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword"><T zh="确认新密码" en="Confirm New Password" /></Label>
+                      <Label htmlFor="confirmPassword">
+                        <T zh="确认新密码" en="Confirm New Password" />
+                      </Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -401,25 +415,30 @@ export default function UserProfile() {
       </div>
       <Footer />
 
-      <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog({ ...duplicateDialog, open })}>
+      <AlertDialog
+        open={duplicateDialog.open}
+        onOpenChange={(open) => setDuplicateDialog({ ...duplicateDialog, open })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              <T 
-                zh={duplicateDialog.type === "phone" ? "手机号码已存在" : "电子邮件已存在"} 
-                en={duplicateDialog.type === "phone" ? "Phone Number Already Exists" : "Email Already Exists"} 
+              <T
+                zh={duplicateDialog.type === "phone" ? "手机号码已存在" : "电子邮件已存在"}
+                en={duplicateDialog.type === "phone" ? "Phone Number Already Exists" : "Email Already Exists"}
               />
             </AlertDialogTitle>
             <AlertDialogDescription>
-              <T 
-                zh={duplicateDialog.type === "phone" 
-                  ? `手机号码 ${duplicateDialog.value} 已被另一个账户使用。请使用其他号码。` 
-                  : `电子邮件 ${duplicateDialog.value} 已被另一个账户使用。请使用其他邮箱。`
-                } 
-                en={duplicateDialog.type === "phone"
-                  ? `The phone number ${duplicateDialog.value} is already in use by another account. Please use a different number.`
-                  : `The email ${duplicateDialog.value} is already in use by another account. Please use a different email.`
-                } 
+              <T
+                zh={
+                  duplicateDialog.type === "phone"
+                    ? `手机号码 ${duplicateDialog.value} 已被另一个账户使用。请使用其他号码。`
+                    : `电子邮件 ${duplicateDialog.value} 已被另一个账户使用。请使用其他邮箱。`
+                }
+                en={
+                  duplicateDialog.type === "phone"
+                    ? `The phone number ${duplicateDialog.value} is already in use by another account. Please use a different number.`
+                    : `The email ${duplicateDialog.value} is already in use by another account. Please use a different email.`
+                }
               />
             </AlertDialogDescription>
           </AlertDialogHeader>
