@@ -110,7 +110,8 @@ export default function Categories() {
                       </p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      {category.productCount} 件商品
+                      {(category as any).productCount || 0}{" "}
+                      <T zh="件商品" en="Products" />
                     </p>
                   </CardContent>
                 </Card>
