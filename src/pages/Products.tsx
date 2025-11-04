@@ -31,6 +31,7 @@ export default function Products() {
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+  const [selectedSubCategoryName, setSelectedSubCategoryName] = useState<string>("");
 
   // Load initial filters from URL
   useEffect(() => {
@@ -76,6 +77,25 @@ export default function Products() {
       return data;
     },
   });
+
+  // Fetch selected subcategory name for mobile indicator
+  useEffect(() => {
+    const fetchSubCategoryName = async () => {
+      if (selectedSubCategories.length === 1) {
+        const { data } = await supabase
+          .from("sub_categories")
+          .select("name")
+          .eq("id", selectedSubCategories[0])
+          .single();
+        if (data) {
+          setSelectedSubCategoryName(data.name);
+        }
+      } else {
+        setSelectedSubCategoryName("");
+      }
+    };
+    fetchSubCategoryName();
+  }, [selectedSubCategories]);
 
   // Fetch products
   const { data: allProducts = [], isLoading } = useQuery({
@@ -324,6 +344,24 @@ export default function Products() {
                 <FilterPanel />
               </SheetContent>
             </Sheet>
+
+            {/* Mobile Subcategory Filter Indicator */}
+            {selectedSubCategories.length === 1 && selectedSubCategoryName && (
+              <div className="mt-4 bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center justify-between gap-3">
+                <span className="text-sm flex-1">
+                  <T 
+                    zh={`目前正在显示${selectedSubCategoryName}的商品`}
+                    en={`Currently showing ${selectedSubCategoryName} products`}
+                  />
+                </span>
+                <button 
+                  onClick={handleClearAll}
+                  className="text-sm text-primary font-medium hover:underline whitespace-nowrap"
+                >
+                  <T zh="显示全部" en="Show All" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Products Grid */}
