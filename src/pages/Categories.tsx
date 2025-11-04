@@ -25,10 +25,14 @@ export default function Categories() {
       // Fetch product counts for each category
       const categoriesWithCounts = await Promise.all(
         data.map(async (category) => {
-          const { count } = await supabase
+          const { count, error } = await supabase
             .from("products")
-            .select("*", { count: "exact", head: true })
+            .select("id", { count: "exact", head: true })
             .eq("category_id", category.id);
+          
+          if (error) {
+            console.error("Error fetching count for category:", category.name, error);
+          }
           
           return {
             ...category,
