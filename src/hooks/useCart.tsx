@@ -86,29 +86,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addItem = async (productId: string, quantity = 1, selectedVariants?: SelectedVariantsMap) => {
+    // Show immediate feedback
+    toast({ title: "Added!", duration: 2000 });
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const sessionId = getSessionId();
 
-      // Fetch product details to calculate locked price
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .select("gold_type, weight_grams, labour_fee")
-        .eq("id", productId)
-        .single();
+      // Fetch data in parallel
+      const [productResult, settingsResult] = await Promise.all([
+        supabase
+          .from("products")
+          .select("gold_type, weight_grams, labour_fee")
+          .eq("id", productId)
+          .single(),
+        supabase
+          .from("settings")
+          .select("key, value")
+          .in("key", ["gold_price_916", "gold_price_999"])
+      ]);
 
-      if (productError) throw productError;
+      if (productResult.error) throw productResult.error;
+      if (settingsResult.error) throw settingsResult.error;
 
-      // Fetch current gold prices
-      const { data: settings, error: settingsError } = await supabase
-        .from("settings")
-        .select("key, value")
-        .in("key", ["gold_price_916", "gold_price_999"]);
-
-      if (settingsError) throw settingsError;
-
+      const product = productResult.data;
       const goldPrices: Record<string, number> = {};
-      settings?.forEach(item => {
+      settingsResult.data?.forEach(item => {
         if (item.key === "gold_price_916") goldPrices["916"] = (item.value as any).price;
         else if (item.key === "gold_price_999") goldPrices["999"] = (item.value as any).price;
       });
@@ -116,7 +119,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const goldPrice = goldPrices[product.gold_type as "916" | "999"] || 0;
       let weightGrams = typeof product.weight_grams === 'number' ? product.weight_grams : parseFloat(product.weight_grams as string);
       
-      // Use variant weight replacement if available (not addition)
+      // Use variant weight replacement if available
       if (selectedVariants) {
         const variantWithWeight = Object.values(selectedVariants).find(v => v.weight_adjustment && v.weight_adjustment > 0);
         if (variantWithWeight) {
@@ -127,7 +130,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const labourFee = typeof product.labour_fee === 'number' ? product.labour_fee : parseFloat(product.labour_fee as string);
       const calculatedPrice = Math.ceil(goldPrice * weightGrams + labourFee);
 
-      const { error } = await supabase.from("cart_items").insert([{
+      // Insert and fetch cart in parallel
+      const insertPromise = supabase.from("cart_items").insert([{
         product_id: productId,
         quantity,
         user_id: user?.id,
@@ -138,11 +142,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         selected_variants: JSON.parse(JSON.stringify(selectedVariants || {})),
       }]);
 
+      const { error } = await insertPromise;
       if (error) throw error;
-      await fetchCart();
-      toast({ title: "Added!", duration: 2000 });
+
+      // Fetch cart in background (don't await)
+      fetchCart();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive", duration: 3000 });
+      // Refresh cart to show accurate state
+      fetchCart();
     }
   };
 
