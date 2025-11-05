@@ -327,7 +327,8 @@ export default function ProductDetail() {
                       src={sortedImages[selectedImageIndex]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format"} 
                       alt={`${product.name} - Main`} 
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      loading="eager"
+                      fetchPriority="high"
                     />
                     {/* Hover zoom overlay - desktop only */}
                     {showMagnifier && sortedImages[selectedImageIndex]?.media_type !== 'video' && (

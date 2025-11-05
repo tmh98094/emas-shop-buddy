@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
+import { logImageLoadError } from "@/lib/error-logger";
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
   placeholder?: string;
+  onError?: () => void;
 }
 
-export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", className = "", ...props }: LazyImageProps) => {
+export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", className = "", onError, ...props }: LazyImageProps) => {
   const [imageSrc, setImageSrc] = useState(placeholder);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -22,7 +25,7 @@ export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", classNam
         });
       },
       {
-        rootMargin: "50px",
+        rootMargin: "100px", // Increased preload distance
       }
     );
 
@@ -37,13 +40,34 @@ export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", classNam
     };
   }, [src]);
 
+  const handleError = () => {
+    setHasError(true);
+    setIsLoading(false);
+    logImageLoadError(src);
+    onError?.();
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  if (hasError) {
+    return (
+      <div className={`flex items-center justify-center bg-muted ${className}`}>
+        <span className="text-xs text-muted-foreground">Image unavailable</span>
+      </div>
+    );
+  }
+
   return (
     <img
       ref={imgRef}
       src={imageSrc}
       alt={alt}
       className={`transition-opacity duration-300 ${isLoading ? "opacity-50" : "opacity-100"} ${className}`}
-      onLoad={() => setIsLoading(false)}
+      onLoad={handleLoad}
+      onError={handleError}
       {...props}
     />
   );

@@ -54,14 +54,16 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { PerformanceMonitor } from "./components/PerformanceMonitor";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000, // 5 minutes - cache static data longer
+      gcTime: 10 * 60 * 1000, // 10 minutes cache time
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: 3, // Increased retry for network resilience
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
 });
@@ -178,6 +180,7 @@ const App = () => {
         <LanguageProvider>
           <CartProvider>
             <TooltipProvider>
+              <PerformanceMonitor />
               <Toaster />
               <Sonner />
               <BrowserRouter>

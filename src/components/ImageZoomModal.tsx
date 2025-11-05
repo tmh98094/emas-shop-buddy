@@ -1,8 +1,10 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ImageZoomModalProps {
   images: Array<{ image_url: string; media_type?: string }>;
@@ -16,6 +18,43 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
   const currentImage = images[currentIndex];
   const isVideo = currentImage?.media_type === 'video';
   const { toast } = useToast();
+  const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>({});
+  const [errorStates, setErrorStates] = useState<Record<number, boolean>>({});
+  const [retryKey, setRetryKey] = useState(0);
+
+  // Preload next and previous images
+  useEffect(() => {
+    if (!open) return;
+    
+    const preloadImage = (index: number) => {
+      if (index < 0 || index >= images.length || images[index]?.media_type === 'video') return;
+      
+      const img = new Image();
+      img.src = images[index].image_url;
+    };
+
+    // Preload current, next, and previous
+    if (currentIndex > 0) preloadImage(currentIndex - 1);
+    if (currentIndex < images.length - 1) preloadImage(currentIndex + 1);
+    preloadImage(currentIndex);
+  }, [currentIndex, open, images]);
+
+  const handleImageLoad = (index: number) => {
+    setLoadingStates(prev => ({ ...prev, [index]: false }));
+    setErrorStates(prev => ({ ...prev, [index]: false }));
+  };
+
+  const handleImageError = (index: number, url: string) => {
+    console.error("Image failed to load:", url);
+    setLoadingStates(prev => ({ ...prev, [index]: false }));
+    setErrorStates(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handleRetry = () => {
+    setRetryKey(prev => prev + 1);
+    setErrorStates(prev => ({ ...prev, [currentIndex]: false }));
+    setLoadingStates(prev => ({ ...prev, [currentIndex]: true }));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,7 +98,26 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
             </Button>
           )}
 
-          {isVideo ? (
+          {loadingStates[currentIndex] !== false && !errorStates[currentIndex] && !isVideo && (
+            <Skeleton className="max-w-full max-h-full w-96 h-96" />
+          )}
+
+          {errorStates[currentIndex] ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-white">
+              <div className="text-center">
+                <p className="text-lg mb-2">Failed to load image</p>
+                <p className="text-sm text-white/60">Please check your connection and try again</p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={handleRetry}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </Button>
+            </div>
+          ) : isVideo ? (
             <video
               src={currentImage.image_url}
               controls
@@ -68,6 +126,7 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
               preload="metadata"
               onError={(e) => {
                 console.error("Video failed to load:", currentImage.image_url);
+                handleImageError(currentIndex, currentImage.image_url);
                 toast({
                   title: "Video Load Error",
                   description: "Failed to load video. Please try again.",
@@ -77,20 +136,15 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
             />
           ) : (
             <img
+              key={`${currentIndex}-${retryKey}`}
               src={currentImage?.image_url}
               alt={`Product image ${currentIndex + 1}`}
-              className="max-w-full max-h-full object-contain px-2 md:px-0 select-none"
+              className={`max-w-full max-h-full object-contain px-2 md:px-0 select-none transition-opacity ${
+                loadingStates[currentIndex] === false ? 'opacity-100' : 'opacity-0'
+              }`}
               draggable="false"
-              onError={(e) => {
-                console.error("Image failed to load:", currentImage?.image_url);
-                const img = e.target as HTMLImageElement;
-                img.style.display = 'none';
-                toast({
-                  title: "Image Load Error",
-                  description: "Failed to load image. Please try again.",
-                  variant: "destructive"
-                });
-              }}
+              onLoad={() => handleImageLoad(currentIndex)}
+              onError={() => handleImageError(currentIndex, currentImage?.image_url)}
             />
           )}
 
