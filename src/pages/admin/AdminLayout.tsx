@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut, AlertTriangle, Menu } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Wallet, Settings, LogOut, AlertTriangle, Menu, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ export default function AdminLayout() {
     { name: "分析", href: "/admin/analytics", icon: LayoutDashboard, en: "Analytics" },
     { name: "库存", href: "/admin/stock", icon: AlertTriangle, en: "Stock" },
     { name: "Touch N Go", href: "/admin/touch-n-go", icon: Wallet, en: "Touch N Go" },
+    { name: "错误日志", href: "/admin/error-logs", icon: Bug, en: "Error Logs" },
     { name: "设置", href: "/admin/settings", icon: Settings, en: "Settings" },
   ];
 

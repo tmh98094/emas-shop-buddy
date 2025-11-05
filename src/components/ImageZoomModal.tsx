@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useToast } from "@/hooks/use-toast";
 
 interface ImageZoomModalProps {
   images: Array<{ image_url: string; media_type?: string }>;
@@ -14,6 +15,7 @@ interface ImageZoomModalProps {
 export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNavigate }: ImageZoomModalProps) => {
   const currentImage = images[currentIndex];
   const isVideo = currentImage?.media_type === 'video';
+  const { toast } = useToast();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,6 +66,14 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
               className="max-w-full max-h-full object-contain px-2 md:px-0"
               autoPlay
               preload="metadata"
+              onError={(e) => {
+                console.error("Video failed to load:", currentImage.image_url);
+                toast({
+                  title: "Video Load Error",
+                  description: "Failed to load video. Please try again.",
+                  variant: "destructive"
+                });
+              }}
             />
           ) : (
             <img
@@ -71,6 +81,16 @@ export const ImageZoomModal = ({ images, currentIndex, open, onOpenChange, onNav
               alt={`Product image ${currentIndex + 1}`}
               className="max-w-full max-h-full object-contain px-2 md:px-0 select-none"
               draggable="false"
+              onError={(e) => {
+                console.error("Image failed to load:", currentImage?.image_url);
+                const img = e.target as HTMLImageElement;
+                img.style.display = 'none';
+                toast({
+                  title: "Image Load Error",
+                  description: "Failed to load image. Please try again.",
+                  variant: "destructive"
+                });
+              }}
             />
           )}
 

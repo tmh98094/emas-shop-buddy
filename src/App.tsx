@@ -46,12 +46,14 @@ import CustomerDetail from "./pages/admin/CustomerDetail";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminContent from "./pages/admin/Content";
 import PreOrders from "./pages/admin/PreOrders";
+import ErrorLogs from "./pages/admin/ErrorLogs";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,7 +115,8 @@ const App = () => {
         <MaintenanceOverlay isAdminRoute={isAdminRoute} />
         <ScrollToTop />
         {isMobile && <MobileBottomNav />}
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
@@ -154,11 +157,13 @@ const App = () => {
             <Route path="touch-n-go" element={<AdminTouchNGo />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="content" element={<AdminContent />} />
+            <Route path="error-logs" element={<ErrorLogs />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
         
         {/* Show WhatsApp floater everywhere except admin routes */}
         {!isAdminRoute && <WhatsAppFloater />}

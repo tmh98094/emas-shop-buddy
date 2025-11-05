@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "@/components/ImageCropper";
+import { logProductCreationError } from "@/lib/error-logger";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -351,13 +352,14 @@ export default function ProductForm() {
       navigate("/admin/products");
     },
     onError: (error: any) => {
+      logProductCreationError(error, formData);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (saveMutation.isPending) return;
+    if (saveMutation.isPending) return; // Prevent double submission
     saveMutation.mutate();
   };
 

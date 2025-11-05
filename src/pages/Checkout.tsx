@@ -30,6 +30,7 @@ import {
 import { PhoneInput } from "@/components/PhoneInput";
 import { Loader2 } from "lucide-react";
 import { formatVariantsForDisplay } from "@/lib/cart-utils";
+import { logCheckoutError } from "@/lib/error-logger";
 
 export default function Checkout() {
   const { items, clearCart, refreshPrices } = useCart();
@@ -242,6 +243,33 @@ export default function Checkout() {
     setLoading(true);
     setCheckoutLoading(true);
 
+    // Create timeout wrapper for entire checkout process
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Checkout timeout - please try again')), 30000);
+    });
+
+    try {
+      await Promise.race([
+        executeCheckout(),
+        timeoutPromise
+      ]);
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      setLoading(false);
+      setCheckoutLoading(false);
+      
+      // Log error for debugging
+      await logCheckoutError(error);
+      
+      toast({
+        title: "Checkout Failed",
+        description: error.message || "An error occurred during checkout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const executeCheckout = async () => {
     try {
       const {
         data: { user },
@@ -500,14 +528,8 @@ export default function Checkout() {
         }
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setCheckoutLoading(false);
-    } finally {
-      setLoading(false);
+      console.error("Execute checkout error:", error);
+      throw error; // Re-throw to be caught by proceedWithOrder
     }
   };
 
