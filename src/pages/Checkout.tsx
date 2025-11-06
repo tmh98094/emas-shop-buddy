@@ -501,9 +501,8 @@ export default function Checkout() {
         console.error("Failed to send email notifications:", emailError);
       }
 
-      await clearCart();
-
       if (paymentMethod === "touch_n_go") {
+        await clearCart();
         navigate(`/payment/touch-n-go/${orderId}`);
       } else {
         const { data: sessionData, error: sessionError } = await supabase.functions.invoke("create-stripe-checkout", {
@@ -520,7 +519,10 @@ export default function Checkout() {
         if (sessionError) throw sessionError;
 
         if (sessionData?.url) {
-          // Progressive redirect with fallback
+          // Clear cart before redirect to prevent cart page flash
+          await clearCart();
+          
+          // Progressive redirect with fallback - keep loading visible until redirect
           setTimeout(() => {
             if (!document.hidden) {
               window.location.href = sessionData.url;
@@ -538,6 +540,9 @@ export default function Checkout() {
               }
             }
           }, 5000);
+          
+          // Keep the function alive to maintain loading state until redirect
+          await new Promise(() => {}); // Never resolves - page will redirect
         } else {
           throw new Error("Failed to create Stripe session");
         }
