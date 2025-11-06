@@ -593,7 +593,7 @@ export default function Auth() {
                     </div>
                     <ReCAPTCHA
                       ref={recaptchaRef}
-                      sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                      sitekey="6LfDjwQsAAAAANp9ULaiKg_u0v-rgMggBqXd_P18"
                       size="invisible"
                     />
                     <Button type="submit" className="w-full" disabled={loading}>
