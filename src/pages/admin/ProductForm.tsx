@@ -13,6 +13,7 @@ import { Loader2, Upload, X, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "@/components/ImageCropper";
 import { logProductCreationError } from "@/lib/error-logger";
+import imageCompression from "browser-image-compression";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -222,11 +223,14 @@ export default function ProductForm() {
         await supabase.from("product_images").update({ is_thumbnail: true }).eq("id", thumbnailId);
       }
 
-      // Upload images (already cropped to 1:1)
+      // Upload images with blur placeholders
       for (let i = 0; i < images.length; i++) {
         const file = images[i];
         const fileExt = file.name.split(".").pop();
         const fileName = `${productId}/${Math.random()}.${fileExt}`;
+        
+        // Generate blur placeholder
+        const blurPlaceholder = await generateBlurPlaceholder(file);
         
         const { error: uploadError } = await supabase.storage
           .from("product-images")
@@ -244,6 +248,7 @@ export default function ProductForm() {
           media_type: 'image',
           display_order: existingImages.length + i,
           is_thumbnail: existingImages.length === 0 && i === 0 && !thumbnailId,
+          blur_placeholder: blurPlaceholder,
         });
       }
 
@@ -357,20 +362,64 @@ export default function ProductForm() {
     },
   });
 
+  const compressImage = async (file: File): Promise<File> => {
+    const options = {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+      fileType: 'image/webp'
+    };
+    try {
+      return await imageCompression(file, options);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return file;
+    }
+  };
+
+  const generateBlurPlaceholder = async (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 20;
+          canvas.height = 20;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.filter = 'blur(10px)';
+            ctx.drawImage(img, 0, 0, 20, 20);
+            resolve(canvas.toDataURL('image/jpeg', 0.5));
+          }
+        };
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (saveMutation.isPending) return; // Prevent double submission
+    if (saveMutation.isPending) return;
     saveMutation.mutate();
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const filesArray = Array.from(files);
-      setPendingImages(filesArray);
-      setCurrentImageIndex(0);
       
-      // Reset input to allow re-selecting same files
+      // Compress all images first
+      toast({ title: "Compressing images...", description: "Please wait" });
+      const compressedFiles = await Promise.all(
+        filesArray.map(file => compressImage(file))
+      );
+      
+      setPendingImages(compressedFiles);
+      setCurrentImageIndex(0);
       e.target.value = '';
       
       // Start with first image
@@ -379,7 +428,7 @@ export default function ProductForm() {
         setImageToCrop(reader.result as string);
         setCropperOpen(true);
       };
-      reader.readAsDataURL(filesArray[0]);
+      reader.readAsDataURL(compressedFiles[0]);
     }
   };
 
@@ -387,7 +436,6 @@ export default function ProductForm() {
     const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
     setImages([...images, croppedFile]);
     
-    // Check if there are more images to process
     const nextIndex = currentImageIndex + 1;
     if (nextIndex < pendingImages.length) {
       setCurrentImageIndex(nextIndex);
@@ -398,9 +446,11 @@ export default function ProductForm() {
       };
       reader.readAsDataURL(pendingImages[nextIndex]);
     } else {
-      // No more images, clear pending
+      // All images processed, close dialog
+      setCropperOpen(false);
       setPendingImages([]);
       setCurrentImageIndex(0);
+      setImageToCrop("");
     }
   };
 

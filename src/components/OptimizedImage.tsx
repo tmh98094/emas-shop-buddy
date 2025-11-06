@@ -8,13 +8,15 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   src: string;
   alt: string;
   fallback?: string;
+  blurDataURL?: string;
   showRetry?: boolean;
 }
 
 export const OptimizedImage = ({ 
   src, 
   alt, 
-  fallback = "/placeholder.svg", 
+  fallback = "/placeholder.svg",
+  blurDataURL,
   className = "",
   showRetry = false,
   ...props 
@@ -73,6 +75,11 @@ export const OptimizedImage = ({
         className={`transition-opacity duration-300 ${isLoading ? "opacity-0 absolute" : "opacity-100"} ${className}`}
         onLoad={handleLoad}
         onError={handleError}
+        style={blurDataURL && isLoading ? {
+          backgroundImage: `url(${blurDataURL})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        } : undefined}
         {...props}
       />
     </>

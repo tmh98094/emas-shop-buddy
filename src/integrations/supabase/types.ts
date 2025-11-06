@@ -540,6 +540,7 @@ export type Database = {
       }
       product_images: {
         Row: {
+          blur_placeholder: string | null
           created_at: string
           display_order: number | null
           id: string
@@ -549,6 +550,7 @@ export type Database = {
           product_id: string
         }
         Insert: {
+          blur_placeholder?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
@@ -558,6 +560,7 @@ export type Database = {
           product_id: string
         }
         Update: {
+          blur_placeholder?: string | null
           created_at?: string
           display_order?: number | null
           id?: string

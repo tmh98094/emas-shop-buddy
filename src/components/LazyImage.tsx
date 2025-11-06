@@ -5,11 +5,12 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
   placeholder?: string;
+  blurDataURL?: string;
   onError?: () => void;
 }
 
-export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", className = "", onError, ...props }: LazyImageProps) => {
-  const [imageSrc, setImageSrc] = useState(placeholder);
+export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", blurDataURL, className = "", onError, ...props }: LazyImageProps) => {
+  const [imageSrc, setImageSrc] = useState(blurDataURL || placeholder);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);

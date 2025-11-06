@@ -25,7 +25,7 @@ interface ProductCardProps {
     preorder_deposit?: number | null;
     is_best_seller?: boolean | null;
     is_new_arrival?: boolean | null;
-    product_images?: Array<{ image_url: string; media_type?: string; display_order?: number }>;
+    product_images?: Array<{ image_url: string; media_type?: string; display_order?: number; blur_placeholder?: string }>;
   };
   imageUrl?: string;
 }
@@ -74,6 +74,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
   const hasVariants = productVariants && productVariants.length > 0;
 
   const displayImage = imageUrl || product.product_images?.find(img => img.display_order === 0)?.image_url || product.product_images?.[0]?.image_url || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80&fm=webp&auto=format";
+  const blurPlaceholder = product.product_images?.find(img => img.display_order === 0)?.blur_placeholder || product.product_images?.[0]?.blur_placeholder;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -130,6 +131,11 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               decoding="async"
               width="400"
               height="400"
+              style={blurPlaceholder ? {
+                backgroundImage: `url(${blurPlaceholder})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              } : undefined}
             />
             {product.stock === 0 && !hasVariants && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

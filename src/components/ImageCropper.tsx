@@ -66,7 +66,6 @@ export const ImageCropper = ({ image, onCropComplete, onClose, open }: ImageCrop
     try {
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
       onCropComplete(croppedImage);
-      onClose();
     } catch (e) {
       console.error(e);
     }
