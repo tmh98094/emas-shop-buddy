@@ -330,6 +330,7 @@ export type Database = {
           notes: string | null
           order_number: string
           order_status: Database["public"]["Enums"]["order_status"]
+          payment_link_generated_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone_number: string
@@ -341,6 +342,8 @@ export type Database = {
           shipping_postcode: string | null
           shipping_state: string | null
           stripe_payment_id: string | null
+          stripe_session_expires_at: string | null
+          stripe_session_url: string | null
           total_amount: number
           updated_at: string
           user_id: string | null
@@ -357,6 +360,7 @@ export type Database = {
           notes?: string | null
           order_number: string
           order_status?: Database["public"]["Enums"]["order_status"]
+          payment_link_generated_at?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone_number: string
@@ -368,6 +372,8 @@ export type Database = {
           shipping_postcode?: string | null
           shipping_state?: string | null
           stripe_payment_id?: string | null
+          stripe_session_expires_at?: string | null
+          stripe_session_url?: string | null
           total_amount: number
           updated_at?: string
           user_id?: string | null
@@ -384,6 +390,7 @@ export type Database = {
           notes?: string | null
           order_number?: string
           order_status?: Database["public"]["Enums"]["order_status"]
+          payment_link_generated_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone_number?: string
@@ -395,6 +402,8 @@ export type Database = {
           shipping_postcode?: string | null
           shipping_state?: string | null
           stripe_payment_id?: string | null
+          stripe_session_expires_at?: string | null
+          stripe_session_url?: string | null
           total_amount?: number
           updated_at?: string
           user_id?: string | null

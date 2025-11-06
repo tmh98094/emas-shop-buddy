@@ -19,6 +19,7 @@ export default function OrderTracking() {
   const [countryCode, setCountryCode] = useState<string>("+60");
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -68,6 +69,33 @@ export default function OrderTracking() {
       case "pending": return "bg-yellow-500";
       case "cancelled": return "bg-red-500";
       default: return "bg-gray-500";
+    }
+  };
+
+  const handlePayNow = async (orderId: string) => {
+    setGeneratingPaymentLink(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-payment-link", {
+        body: { orderId },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Payment Page Opened",
+          description: "Complete your payment in the new tab.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate payment link.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPaymentLink(null);
     }
   };
 
@@ -181,6 +209,24 @@ export default function OrderTracking() {
                       <p className="break-all"><strong><T zh="物流追踪" en="Tracking" />:</strong> {order.postage_delivery_id}</p>
                     )}
                   </div>
+
+                  {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && (
+                    <div className="mt-4">
+                      <Button
+                        onClick={() => handlePayNow(order.id)}
+                        disabled={generatingPaymentLink === order.id}
+                        className="w-full h-11 touch-manipulation"
+                      >
+                        {generatingPaymentLink === order.id ? (
+                          <>
+                            <T zh="生成中..." en="Loading..." />
+                          </>
+                        ) : (
+                          <T zh="立即付款" en="Pay Now" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>

@@ -6,7 +6,7 @@ import { GoldPriceBanner } from "@/components/GoldPriceBanner";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, MapPin, Clock } from "lucide-react";
+import { CheckCircle, Package, MapPin, Clock, Loader2 } from "lucide-react";
 import { T } from "@/components/T";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ export default function OrderConfirmation() {
   const { orderId } = useParams();
   const [user, setUser] = useState<any>(null);
   const [verifying, setVerifying] = useState(false);
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -110,6 +111,35 @@ export default function OrderConfirmation() {
     }
   };
 
+  const handleCompletePayment = async () => {
+    if (!orderId) return;
+    
+    setGeneratingPaymentLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-payment-link", {
+        body: { orderId },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Payment Page Opened",
+          description: "Complete your payment in the new tab.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate payment link.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPaymentLink(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -167,6 +197,42 @@ export default function OrderConfirmation() {
                     />
                   </p>
                 </div>
+              </div>
+            </Card>
+          )}
+
+          {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && (
+            <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400 mt-1 flex-shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <h3 className="font-semibold text-lg text-amber-900 dark:text-amber-100">
+                      <T zh="付款待处理" en="Payment Required" />
+                    </h3>
+                    <p className="text-sm text-amber-900 dark:text-amber-100">
+                      <T 
+                        zh="您的订单已确认，但付款尚未完成。请在24小时内完成付款，否则订单将自动取消。" 
+                        en="Your order is confirmed but payment is incomplete. Please complete payment within 24 hours or the order will be automatically cancelled." 
+                      />
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleCompletePayment}
+                  disabled={generatingPaymentLink}
+                  className="w-full h-12 text-lg"
+                  size="lg"
+                >
+                  {generatingPaymentLink ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      <T zh="生成付款链接..." en="Generating Payment Link..." />
+                    </>
+                  ) : (
+                    <T zh="立即付款" en="Pay Now" />
+                  )}
+                </Button>
               </div>
             </Card>
           )}

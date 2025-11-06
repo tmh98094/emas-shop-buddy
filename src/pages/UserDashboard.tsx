@@ -23,6 +23,7 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -132,6 +133,33 @@ export default function UserDashboard() {
       });
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  const handlePayNow = async (orderId: string) => {
+    setGeneratingPaymentLink(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-payment-link", {
+        body: { orderId },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Payment Page Opened",
+          description: "Complete your payment in the new tab.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate payment link.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPaymentLink(null);
     }
   };
 
@@ -278,6 +306,24 @@ export default function UserDashboard() {
                             <T zh="总计" en="Total" />: RM {formatPrice(parseFloat(order.total_amount))}
                           </span>
                           <div className="flex gap-2 flex-wrap">
+                            {order.payment_status === "pending" && order.order_status === "pending" && order.payment_method !== "touch_n_go" && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="flex-1 md:flex-none h-10 md:h-9 touch-manipulation"
+                                onClick={() => handlePayNow(order.id)}
+                                disabled={generatingPaymentLink === order.id}
+                              >
+                                {generatingPaymentLink === order.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    <T zh="生成中..." en="Loading..." />
+                                  </>
+                                ) : (
+                                  <T zh="立即付款" en="Pay Now" />
+                                )}
+                              </Button>
+                            )}
                             {order.payment_status === "pending" && order.order_status === "pending" && (
                               <Button
                                 variant="destructive"

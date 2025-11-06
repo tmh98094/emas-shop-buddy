@@ -520,9 +520,24 @@ export default function Checkout() {
         if (sessionError) throw sessionError;
 
         if (sessionData?.url) {
-          // Keep loading overlay visible while redirecting
-          // Redirect to Stripe checkout in same window
-          window.location.href = sessionData.url;
+          // Progressive redirect with fallback
+          setTimeout(() => {
+            if (!document.hidden) {
+              window.location.href = sessionData.url;
+            }
+          }, 500);
+
+          // Provide manual fallback after 5 seconds
+          setTimeout(() => {
+            if (!document.hidden) {
+              const shouldContinue = confirm(
+                "Redirecting to payment page... If nothing happens, click OK to open payment page manually."
+              );
+              if (shouldContinue) {
+                window.location.href = sessionData.url;
+              }
+            }
+          }, 5000);
         } else {
           throw new Error("Failed to create Stripe session");
         }
@@ -551,10 +566,13 @@ export default function Checkout() {
               <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-primary">
-                  <T zh="请稍候" en="Please Wait" />
+                  <T zh="处理您的订单" en="Processing Your Order" />
                 </h2>
                 <p className="text-muted-foreground">
-                  <T zh="您将被重定向到支付页面" en="You will be redirected to payment page" />
+                  <T zh="正在生成支付链接..." en="Generating secure payment link..." />
+                </p>
+                <p className="text-sm text-muted-foreground mt-4">
+                  <T zh="您的订单已保存。如果未自动重定向，可以稍后在订单页面完成付款。" en="Your order is saved. If redirect doesn't happen, you can complete payment later from your orders page." />
                 </p>
                 <p className="text-sm text-destructive font-semibold mt-4">
                   <T zh="⚠️ 请勿关闭或重新加载页面" en="⚠️ Do not close or reload the page" />
