@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,8 +13,43 @@ serve(async (req) => {
   }
 
   try {
-    const { text, targetLang } = await req.json();
-    console.log('Translation request:', { text: typeof text === 'string' ? text.substring(0, 50) : `${text.length} items`, targetLang });
+    const { text, targetLang, entityType, entityId } = await req.json();
+    console.log('Translation request:', { 
+      text: typeof text === 'string' ? text.substring(0, 50) : `${text.length} items`, 
+      targetLang,
+      entityType,
+      entityId
+    });
+
+    // Initialize Supabase client for cache lookups
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Check database cache first (only for Chinese to English)
+    if (targetLang === 'en' && entityType && entityId) {
+      const { data: cachedData } = await supabase
+        .from(entityType)
+        .select('name_zh, description_zh')
+        .eq('id', entityId)
+        .single();
+
+      if (cachedData?.name_zh && text === cachedData.name_zh) {
+        console.log('Cache hit for name translation');
+        return new Response(
+          JSON.stringify({ translated: cachedData.name_zh, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (cachedData?.description_zh && text === cachedData.description_zh) {
+        console.log('Cache hit for description translation');
+        return new Response(
+          JSON.stringify({ translated: cachedData.description_zh, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {

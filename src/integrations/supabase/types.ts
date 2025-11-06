@@ -159,28 +159,34 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          description_zh: string | null
           display_order: number | null
           id: string
           image_url: string | null
           name: string
+          name_zh: string | null
           slug: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           display_order?: number | null
           id?: string
           image_url?: string | null
           name: string
+          name_zh?: string | null
           slug: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           display_order?: number | null
           id?: string
           image_url?: string | null
           name?: string
+          name_zh?: string | null
           slug?: string
         }
         Relationships: []
@@ -617,6 +623,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          description_zh: string | null
           gold_type: Database["public"]["Enums"]["gold_type"]
           id: string
           is_best_seller: boolean | null
@@ -626,6 +633,7 @@ export type Database = {
           labour_fee: number
           low_stock_threshold: number | null
           name: string
+          name_zh: string | null
           preorder_deposit: number | null
           slug: string
           stock: number
@@ -638,6 +646,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           gold_type: Database["public"]["Enums"]["gold_type"]
           id?: string
           is_best_seller?: boolean | null
@@ -647,6 +656,7 @@ export type Database = {
           labour_fee?: number
           low_stock_threshold?: number | null
           name: string
+          name_zh?: string | null
           preorder_deposit?: number | null
           slug: string
           stock?: number
@@ -659,6 +669,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           gold_type?: Database["public"]["Enums"]["gold_type"]
           id?: string
           is_best_seller?: boolean | null
@@ -668,6 +679,7 @@ export type Database = {
           labour_fee?: number
           low_stock_threshold?: number | null
           name?: string
+          name_zh?: string | null
           preorder_deposit?: number | null
           slug?: string
           stock?: number
@@ -700,6 +712,9 @@ export type Database = {
           country: string | null
           created_at: string
           email: string | null
+          email_verification_sent_at: string | null
+          email_verification_token: string | null
+          email_verified: boolean | null
           full_name: string | null
           ic_number: string | null
           id: string
@@ -715,6 +730,9 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string | null
+          email_verification_sent_at?: string | null
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           ic_number?: string | null
           id: string
@@ -730,6 +748,9 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string | null
+          email_verification_sent_at?: string | null
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           ic_number?: string | null
           id?: string
@@ -834,33 +855,39 @@ export type Database = {
           category_id: string
           created_at: string
           description: string | null
+          description_zh: string | null
           display_order: number | null
           featured_on_homepage: boolean | null
           id: string
           image_url: string | null
           name: string
+          name_zh: string | null
           slug: string
         }
         Insert: {
           category_id: string
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           display_order?: number | null
           featured_on_homepage?: boolean | null
           id?: string
           image_url?: string | null
           name: string
+          name_zh?: string | null
           slug: string
         }
         Update: {
           category_id?: string
           created_at?: string
           description?: string | null
+          description_zh?: string | null
           display_order?: number | null
           featured_on_homepage?: boolean | null
           id?: string
           image_url?: string | null
           name?: string
+          name_zh?: string | null
           slug?: string
         }
         Relationships: [

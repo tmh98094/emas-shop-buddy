@@ -6,7 +6,7 @@ type Language = 'zh' | 'en';
 interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
-  translate: (zhText: string, enText?: string) => Promise<string>;
+  translate: (zhText: string, enText?: string, entityType?: string, entityId?: string) => Promise<string>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -35,7 +35,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     setLanguage(prev => prev === 'zh' ? 'en' : 'zh');
   };
 
-  const translate = async (zhText: string, enText?: string): Promise<string> => {
+  const translate = async (zhText: string, enText?: string, entityType?: string, entityId?: string): Promise<string> => {
     // If current language is Chinese, return Chinese text
     if (language === 'zh') {
       return zhText;
@@ -60,27 +60,34 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       console.error('Cache read error:', error);
     }
 
-    // Translate using edge function
+    // Translate using edge function with optional cache info
     try {
       const { data, error } = await supabase.functions.invoke('translate', {
-        body: { text: zhText, targetLang: 'en' }
+        body: { 
+          text: zhText, 
+          targetLang: 'en',
+          entityType,
+          entityId
+        }
       });
 
       if (error) throw error;
 
       const translated = data.translated || zhText;
 
-      // Save to cache
-      try {
-        const cacheStr = localStorage.getItem(CACHE_KEY) || '{}';
-        const cache: TranslationCache = JSON.parse(cacheStr);
-        cache[zhText] = {
-          en: translated,
-          timestamp: Date.now()
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-      } catch (error) {
-        console.error('Cache write error:', error);
+      // Save to cache if not from database cache
+      if (!data.cached) {
+        try {
+          const cacheStr = localStorage.getItem(CACHE_KEY) || '{}';
+          const cache: TranslationCache = JSON.parse(cacheStr);
+          cache[zhText] = {
+            en: translated,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+        } catch (error) {
+          console.error('Cache write error:', error);
+        }
       }
 
       return translated;

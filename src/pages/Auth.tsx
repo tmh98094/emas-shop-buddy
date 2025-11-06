@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { GoldPriceBanner } from "@/components/GoldPriceBanner";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
 import { normalizePhone } from "@/lib/phone-utils";
 import { T } from "@/components/T";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ export default function Auth() {
   const [useOtp, setUseOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   
   // Form states
   const [countryCode, setCountryCode] = useState("+60");
@@ -30,11 +34,73 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
 
+  const handleSendEmailVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Verify CAPTCHA
+      const captchaToken = await recaptchaRef.current?.executeAsync();
+      if (!captchaToken) {
+        toast({
+          title: "验证失败",
+          description: "请完成验证",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!email || !email.includes('@')) {
+        toast({
+          title: "邮箱无效",
+          description: "请输入有效的邮箱地址",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+
+      const { error } = await supabase.functions.invoke("send-verification-email", {
+        body: {
+          email,
+          phoneNumber: normalizedPhone,
+        },
+      });
+
+      if (error) throw error;
+
+      setEmailVerificationSent(true);
+      toast({
+        title: "验证邮件已发送",
+        description: "请检查您的邮箱并点击验证链接",
+      });
+    } catch (error: any) {
+      toast({
+        title: "发送失败",
+        description: error.message || "发送验证邮件失败",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      recaptchaRef.current?.reset();
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!emailVerified) {
+        toast({
+          title: "请先验证邮箱",
+          description: "请先验证您的邮箱地址",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!fullName.trim()) {
         toast({
           title: "注册失败",
@@ -496,53 +562,140 @@ export default function Auth() {
 
               {/* Sign Up Tab */}
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div>
-                    <Label htmlFor="full-name"><T zh="全名" en="Full Name" /> *</Label>
-                    <Input
-                      id="full-name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="例如：李小明"
-                      required
+                {!emailVerificationSent && !emailVerified && (
+                  <form onSubmit={handleSendEmailVerification} className="space-y-4">
+                    <div className="bg-muted p-4 rounded-md mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        <T zh="为了防止滥用，我们需要先验证您的邮箱。验证后即可完成注册。" 
+                           en="To prevent abuse, we need to verify your email first. You can complete registration after verification." />
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="email-verify"><T zh="电子邮件" en="Email" /> *</Label>
+                      <Input
+                        id="email-verify"
+                        type="email"
+                        value={email}
+                        placeholder="example@email.com"
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
+                      <PhoneInput
+                        countryCode={countryCode}
+                        phoneNumber={phoneNumber}
+                        onCountryCodeChange={setCountryCode}
+                        onPhoneNumberChange={setPhoneNumber}
+                        required
+                      />
+                    </div>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                      size="invisible"
                     />
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="发送中..." en="Sending..." /> : <T zh="发送验证邮件" en="Send Verification Email" />}
+                    </Button>
+                  </form>
+                )}
+
+                {emailVerificationSent && !emailVerified && (
+                  <div className="space-y-4">
+                    <div className="bg-primary/10 p-4 rounded-md">
+                      <p className="text-sm">
+                        <T zh="验证邮件已发送至" en="Verification email sent to" /> <strong>{email}</strong>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        <T zh="请检查您的邮箱并点击验证链接。验证成功后，请返回此页面继续注册。" 
+                           en="Please check your email and click the verification link. After verification, return to this page to continue." />
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        const { data } = await supabase.functions.invoke("verify-email-token", {
+                          body: { token: new URLSearchParams(window.location.search).get('token') }
+                        });
+                        if (data?.success) {
+                          setEmailVerified(true);
+                          toast({
+                            title: "邮箱验证成功",
+                            description: "您现在可以完成注册了",
+                          });
+                        }
+                      }}
+                    >
+                      <T zh="我已验证，继续注册" en="I've Verified, Continue Registration" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full"
+                      onClick={() => {
+                        setEmailVerificationSent(false);
+                        setEmail("");
+                      }}
+                    >
+                      <T zh="使用其他邮箱" en="Use Different Email" />
+                    </Button>
                   </div>
-                  <div>
-                    <Label><T zh="手机号码" en="Mobile Phone" /> *</Label>
-                    <PhoneInput
-                      countryCode={countryCode}
-                      phoneNumber={phoneNumber}
-                      onCountryCodeChange={setCountryCode}
-                      onPhoneNumberChange={setPhoneNumber}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email-signup"><T zh="电子邮件（可选）" en="Email (Optional)" /></Label>
-                    <Input
-                      id="email-signup"
-                      type="email"
-                      value={email}
-                      placeholder="例如：example@email.com"
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="password-signup"><T zh="密码" en="Password" /> *</Label>
-                    <Input
-                      id="password-signup"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? <T zh="注册中..." en="Signing up..." /> : <T zh="注册" en="Sign Up" />}
-                  </Button>
-                </form>
+                )}
+
+                {emailVerified && (
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="bg-green-50 dark:bg-green-950 p-3 rounded-md mb-4">
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        ✓ <T zh="邮箱已验证" en="Email Verified" />
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="full-name"><T zh="全名" en="Full Name" /> *</Label>
+                      <Input
+                        id="full-name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="例如：李小明"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label><T zh="手机号码" en="Mobile Phone" /></Label>
+                      <Input
+                        value={normalizePhone(phoneNumber, countryCode)}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div>
+                      <Label><T zh="电子邮件" en="Email" /></Label>
+                      <Input
+                        value={email}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="password-signup"><T zh="密码" en="Password" /> *</Label>
+                      <Input
+                        id="password-signup"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? <T zh="注册中..." en="Signing up..." /> : <T zh="完成注册" en="Complete Registration" />}
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
 
             </Tabs>
