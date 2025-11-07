@@ -364,10 +364,11 @@ export default function ProductForm() {
 
   const compressImage = async (file: File): Promise<File> => {
     const options = {
-      maxSizeMB: 0.5,
-      maxWidthOrHeight: 1200,
+      maxSizeMB: 1.5,          // Increased for better quality (jewelry needs detail)
+      maxWidthOrHeight: 1500,   // Higher resolution
       useWebWorker: true,
-      fileType: 'image/webp'
+      fileType: 'image/webp',
+      quality: 0.90             // 90% quality - great balance
     };
     try {
       return await imageCompression(file, options);
