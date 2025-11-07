@@ -229,8 +229,8 @@ export default function ProductForm() {
         const fileExt = file.name.split(".").pop();
         const fileName = `${productId}/${Math.random()}.${fileExt}`;
         
-        // Generate blur placeholder
-        const blurPlaceholder = await generateBlurPlaceholder(file);
+        // Use blur placeholder from file if available, otherwise generate
+        const blurPlaceholder = (file as any).blurPlaceholder || await generateBlurPlaceholder(file);
         
         const { error: uploadError } = await supabase.storage
           .from("product-images")
@@ -363,14 +363,22 @@ export default function ProductForm() {
   });
 
   const compressImage = async (file: File): Promise<File> => {
+    // Only compress if file is too large (>5MB)
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB < 5) {
+      return file; // Don't compress small files - preserve original quality
+    }
+    
     const options = {
-      maxSizeMB: 1.5,          // Increased for better quality (jewelry needs detail)
-      maxWidthOrHeight: 1500,   // Higher resolution
+      maxSizeMB: 3,              // Much larger limit - preserve quality
+      maxWidthOrHeight: 2500,    // Higher resolution for jewelry details
       useWebWorker: true,
-      fileType: 'image/webp',
-      quality: 0.90             // 90% quality - great balance
+      fileType: 'image/jpeg',    // JPEG instead of WebP
+      quality: 0.95,             // 95% quality - minimal loss
+      preserveExif: true         // Keep metadata
     };
     try {
+      console.log(`Compressing large image: ${fileSizeMB.toFixed(2)}MB -> target: 3MB`);
       return await imageCompression(file, options);
     } catch (error) {
       console.error('Error compressing image:', error);
@@ -413,13 +421,8 @@ export default function ProductForm() {
     if (files && files.length > 0) {
       const filesArray = Array.from(files);
       
-      // Compress all images first
-      toast({ title: "Compressing images...", description: "Please wait" });
-      const compressedFiles = await Promise.all(
-        filesArray.map(file => compressImage(file))
-      );
-      
-      setPendingImages(compressedFiles);
+      // Don't compress before cropping - wait until after crop
+      setPendingImages(filesArray);
       setCurrentImageIndex(0);
       e.target.value = '';
       
@@ -429,13 +432,21 @@ export default function ProductForm() {
         setImageToCrop(reader.result as string);
         setCropperOpen(true);
       };
-      reader.readAsDataURL(compressedFiles[0]);
+      reader.readAsDataURL(filesArray[0]);
     }
   };
 
-  const handleCropComplete = (croppedBlob: Blob) => {
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    // Compress the cropped image (only if >5MB)
     const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
-    setImages([...images, croppedFile]);
+    const compressedFile = await compressImage(croppedFile);
+    
+    // Generate blur placeholder
+    const blurPlaceholder = await generateBlurPlaceholder(compressedFile);
+    
+    // Store both the file and its blur placeholder
+    const fileWithBlur = Object.assign(compressedFile, { blurPlaceholder });
+    setImages([...images, fileWithBlur]);
     
     const nextIndex = currentImageIndex + 1;
     if (nextIndex < pendingImages.length) {

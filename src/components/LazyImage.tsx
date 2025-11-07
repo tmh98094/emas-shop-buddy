@@ -66,7 +66,7 @@ export const LazyImage = ({ src, alt, placeholder = "/placeholder.svg", blurData
       ref={imgRef}
       src={imageSrc}
       alt={alt}
-      className={`transition-opacity duration-300 ${isLoading ? "opacity-50" : "opacity-100"} ${className}`}
+      className={`transition-opacity duration-150 ${isLoading ? "opacity-0" : "opacity-100"} ${className}`}
       onLoad={handleLoad}
       onError={handleError}
       {...props}

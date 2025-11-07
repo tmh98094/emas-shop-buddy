@@ -27,14 +27,22 @@ export default function ImageOptimizer() {
   });
 
   const compressImage = async (file: File): Promise<File> => {
+    // Only compress if file is too large (>5MB)
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB < 5) {
+      return file; // Don't compress small files - preserve original quality
+    }
+    
     const options = {
-      maxSizeMB: 1.5,
-      maxWidthOrHeight: 1500,
+      maxSizeMB: 3,              // Much larger limit - preserve quality
+      maxWidthOrHeight: 2500,    // Higher resolution for jewelry details
       useWebWorker: true,
-      fileType: 'image/webp',
-      quality: 0.90
+      fileType: 'image/jpeg',    // JPEG instead of WebP
+      quality: 0.95,             // 95% quality - minimal loss
+      preserveExif: true         // Keep metadata
     };
     try {
+      console.log(`Compressing large image: ${fileSizeMB.toFixed(2)}MB -> target: 3MB`);
       return await imageCompression(file, options);
     } catch (error) {
       console.error('Error compressing image:', error);
@@ -92,12 +100,12 @@ export default function ImageOptimizer() {
         const blurPlaceholder = await generateBlurPlaceholder(compressedFile);
 
         // Upload compressed image
-        const fileName = `${image.product_id}/${Date.now()}-optimized.webp`;
+        const fileName = `${image.product_id}/${Date.now()}-optimized.jpg`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(fileName, compressedFile, {
             upsert: false,
-            contentType: 'image/webp'
+            contentType: 'image/jpeg'
           });
 
         if (uploadError) throw uploadError;
@@ -198,9 +206,10 @@ export default function ImageOptimizer() {
         <div className="bg-muted p-4 rounded-lg space-y-2">
           <h4 className="font-medium">Optimization Settings:</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Max file size: 1.5 MB (preserves quality)</li>
-            <li>• Max resolution: 1500px (high detail)</li>
-            <li>• Format: WebP (90% quality)</li>
+            <li>• Only compresses images larger than 5 MB</li>
+            <li>• Max file size: 3 MB (preserves quality)</li>
+            <li>• Max resolution: 2500px (high detail for jewelry)</li>
+            <li>• Format: JPEG (95% quality - minimal loss)</li>
             <li>• Generates blur placeholders for fast loading</li>
           </ul>
         </div>

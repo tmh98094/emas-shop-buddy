@@ -131,11 +131,6 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               decoding="async"
               width="400"
               height="400"
-              style={blurPlaceholder ? {
-                backgroundImage: `url(${blurPlaceholder})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              } : undefined}
             />
             {product.stock === 0 && !hasVariants && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
