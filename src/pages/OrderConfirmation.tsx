@@ -237,8 +237,8 @@ export default function OrderConfirmation() {
                     </h3>
                     <p className="text-sm text-amber-900 dark:text-amber-100">
                       <T 
-                        zh="您的订单已确认，但付款尚未完成。请在24小时内完成付款，否则订单将自动取消。" 
-                        en="Your order is confirmed but payment is incomplete. Please complete payment within 24 hours or the order will be automatically cancelled." 
+                        zh="您的订单已确认，但付款尚未完成。请在30分钟内完成付款，否则库存将被释放。您仍可稍后付款，但需视库存情况而定。" 
+                        en="Your order is confirmed but payment is incomplete. Please complete payment within 30 minutes or stock will be released. You can still pay later, subject to availability." 
                       />
                     </p>
                   </div>
