@@ -129,6 +129,80 @@ serve(async (req) => {
       );
     }
 
+    // Check stock availability before creating checkout session
+    const { data: orderItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select("product_id, quantity, variant_selection")
+      .eq("order_id", orderId);
+
+    if (itemsError) {
+      console.error('Failed to fetch order items:', itemsError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify stock' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
+
+    // Verify stock for each item
+    for (const item of orderItems) {
+      const { data: variants } = await supabase
+        .from("product_variants")
+        .select("id")
+        .eq("product_id", item.product_id)
+        .limit(1);
+
+      const hasVariants = variants && variants.length > 0;
+
+      if (hasVariants && item.variant_selection) {
+        const variantCombo: Record<string, string> = {};
+        const items = item.variant_selection.split(', ');
+        for (const varItem of items) {
+          if (varItem.includes(': ')) {
+            const [key, value] = varItem.split(': ');
+            variantCombo[key] = value;
+          }
+        }
+
+        const { data: variantStock } = await supabase
+          .from("variant_stock")
+          .select("stock")
+          .eq("product_id", item.product_id)
+          .eq("variant_combination", variantCombo)
+          .single();
+
+        if (!variantStock || variantStock.stock < item.quantity) {
+          console.error('Insufficient variant stock');
+          return new Response(
+            JSON.stringify({ error: 'Some items are out of stock' }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 400,
+            }
+          );
+        }
+      } else {
+        const { data: product } = await supabase
+          .from("products")
+          .select("stock")
+          .eq("id", item.product_id)
+          .single();
+
+        if (!product || product.stock < item.quantity) {
+          console.error('Insufficient product stock');
+          return new Response(
+            JSON.stringify({ error: 'Some items are out of stock' }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 400,
+            }
+          );
+        }
+      }
+    }
+
     console.log("Creating Stripe checkout session for order:", orderNumber);
 
     const method = paymentMethod === 'card' ? 'card' : 'fpx';

@@ -112,10 +112,35 @@ export default function OrderConfirmation() {
   };
 
   const handleCompletePayment = async () => {
-    if (!orderId) return;
+    if (!orderId || !order) return;
     
     setGeneratingPaymentLink(true);
     try {
+      // First check stock availability
+      const { data: stockData, error: stockError } = await supabase.functions.invoke("check-product-stock", {
+        body: { orderId },
+      });
+
+      if (stockError) throw stockError;
+
+      if (!stockData?.inStock) {
+        // Product is out of stock, show WhatsApp option
+        const phoneNumber = "60122379178";
+        const message = encodeURIComponent(
+          `Hi! I would like to complete payment for Order ${order.order_number}. However, some items are now out of stock. Can you help me with this?\n\nOrder ID: ${orderId}`
+        );
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+        window.open(whatsappUrl, "_blank");
+        
+        toast({
+          title: "Items Out of Stock",
+          description: "Some items are no longer available. Please contact us via WhatsApp to proceed.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Stock is available, proceed with payment
       const { data, error } = await supabase.functions.invoke("generate-payment-link", {
         body: { orderId },
       });

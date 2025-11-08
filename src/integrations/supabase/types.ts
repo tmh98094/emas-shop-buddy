@@ -1020,6 +1020,7 @@ export type Database = {
         Returns: boolean
       }
       normalize_phone_sql: { Args: { p_input: string }; Returns: string }
+      restore_stock_for_expired_orders: { Args: never; Returns: undefined }
       update_product_cached_prices: { Args: never; Returns: undefined }
       upsert_gold_settings: {
         Args: {

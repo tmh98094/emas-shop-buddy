@@ -13,7 +13,8 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("created_at, total_amount, order_status")
+        .select("created_at, total_amount, order_status, payment_status")
+        .eq("payment_status", "completed")
         .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
       
       if (error) throw error;
@@ -47,7 +48,13 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("order_items")
-        .select("product_name, quantity, subtotal")
+        .select(`
+          product_name, 
+          quantity, 
+          subtotal,
+          order:orders!inner(payment_status)
+        `)
+        .eq("order.payment_status", "completed")
         .order("quantity", { ascending: false });
 
       if (error) throw error;
@@ -75,10 +82,12 @@ export default function AdminAnalytics() {
         .from("order_items")
         .select(`
           subtotal,
+          order:orders!inner(payment_status),
           product:products(
             category:categories(name)
           )
-        `);
+        `)
+        .eq("order.payment_status", "completed");
 
       if (error) throw error;
 
