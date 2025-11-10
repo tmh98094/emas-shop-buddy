@@ -9,7 +9,7 @@ export default function Dashboard() {
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const [paidOrdersRes, productsRes, pendingOrdersRes] = await Promise.all([
-        supabase.from("orders").select("total_amount", { count: "exact" }).eq("payment_status", "completed"),
+        supabase.from("orders").select("total_amount", { count: "exact" }).eq("payment_status", "completed").neq("phone_number", "+6580565123"),
         supabase.from("products").select("*", { count: "exact" }),
         supabase.from("orders").select("*", { count: "exact" }).eq("order_status", "pending"),
       ]);
