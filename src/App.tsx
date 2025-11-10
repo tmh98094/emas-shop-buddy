@@ -14,7 +14,7 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import TouchNGoPayment from "./pages/TouchNGoPayment";
+
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTracking from "./pages/OrderTracking";
 import Auth from "./pages/Auth";
@@ -34,7 +34,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
 import AdminCustomers from "./pages/admin/Customers";
-import AdminTouchNGo from "./pages/admin/TouchNGo";
+
 import AdminSettings from "./pages/admin/Settings";
 import StockManagement from "./pages/admin/StockManagement";
 import ProductForm from "./pages/admin/ProductForm";
@@ -125,7 +125,7 @@ const App = () => {
           <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment/touch-n-go/:orderId" element={<TouchNGoPayment />} />
+          
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/order-tracking" element={<OrderTracking />} />
           <Route path="/auth" element={<Auth />} />
@@ -157,7 +157,7 @@ const App = () => {
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="stock" element={<StockManagement />} />
-            <Route path="touch-n-go" element={<AdminTouchNGo />} />
+            
             <Route path="settings" element={<AdminSettings />} />
             <Route path="content" element={<AdminContent />} />
             <Route path="error-logs" element={<ErrorLogs />} />

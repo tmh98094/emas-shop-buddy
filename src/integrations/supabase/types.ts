@@ -1046,7 +1046,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "refunded"
-      payment_method: "stripe_fpx" | "touch_n_go"
+      payment_method: "stripe_fpx"
       payment_status: "pending" | "completed" | "failed"
     }
     CompositeTypes: {
@@ -1184,7 +1184,7 @@ export const Constants = {
         "cancelled",
         "refunded",
       ],
-      payment_method: ["stripe_fpx", "touch_n_go"],
+      payment_method: ["stripe_fpx"],
       payment_status: ["pending", "completed", "failed"],
     },
   },

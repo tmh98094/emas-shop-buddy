@@ -195,22 +195,12 @@ export default function OrderTracking() {
                   <div className="mt-4 text-sm md:text-base space-y-2">
                     <p><strong><T zh="付款方式" en="Payment" />:</strong> {order.payment_method.replace("_", " ")}</p>
                     <p><strong><T zh="付款状态" en="Payment Status" />:</strong> {order.payment_status}</p>
-                    {order.payment_method === 'touch_n_go' && order.touch_n_go_payments?.[0] && (
-                      <p>
-                        <strong><T zh="TNG 验证" en="TNG Verification" />:</strong>{" "}
-                        {order.touch_n_go_payments[0].verified ? (
-                          <span className="text-green-600">✓ <T zh="已验证" en="Verified" /></span>
-                        ) : (
-                          <span className="text-yellow-600">⏳ <T zh="等待验证" en="Pending Verification" /></span>
-                        )}
-                      </p>
-                    )}
-                    {order.postage_delivery_id && (
+                  {order.postage_delivery_id && (
                       <p className="break-all"><strong><T zh="物流追踪" en="Tracking" />:</strong> {order.postage_delivery_id}</p>
                     )}
                   </div>
 
-                  {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && (
+                  {order.payment_status === "pending" && order.order_status !== "cancelled" && (
                     <div className="mt-4">
                       <Button
                         onClick={() => handlePayNow(order.id)}

@@ -306,7 +306,7 @@ export default function UserDashboard() {
                             <T zh="总计" en="Total" />: RM {formatPrice(parseFloat(order.total_amount))}
                           </span>
                           <div className="flex gap-2 flex-wrap">
-                            {order.payment_status === "pending" && order.order_status === "pending" && order.payment_method !== "touch_n_go" && (
+                            {order.payment_status === "pending" && order.order_status === "pending" && (
                               <Button
                                 variant="default"
                                 size="sm"

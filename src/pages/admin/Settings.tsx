@@ -14,9 +14,6 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [goldPrice916, setGoldPrice916] = useState("");
   const [goldPrice999, setGoldPrice999] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
-  const [qrPreview, setQrPreview] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [enableCreditCard, setEnableCreditCard] = useState(true);
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
@@ -30,17 +27,15 @@ export default function Settings() {
       const { data, error } = await supabase
         .from("settings")
         .select("key, value")
-        .in("key", ["gold_price_916", "gold_price_999", "touch_n_go_qr", "enable_credit_card", "site_maintenance", "admin_email"]);
+        .in("key", ["gold_price_916", "gold_price_999", "enable_credit_card", "site_maintenance", "admin_email"]);
       if (error) throw error;
       
-      const result: any = { goldPrices: { "916": 0, "999": 0 }, qrCode: "", enableCreditCard: true, maintenance: { enabled: false, message: "We'll be back soon.", whatsapp: "+60122379178" }, adminEmail: "" };
+      const result: any = { goldPrices: { "916": 0, "999": 0 }, enableCreditCard: true, maintenance: { enabled: false, message: "We'll be back soon.", whatsapp: "+60122379178" }, adminEmail: "" };
       data?.forEach(item => {
         if (item.key === "gold_price_916") {
           result.goldPrices["916"] = (item.value as any).price;
         } else if (item.key === "gold_price_999") {
           result.goldPrices["999"] = (item.value as any).price;
-        } else if (item.key === "touch_n_go_qr") {
-          result.qrCode = (item.value as any).qr_code_url || "";
         } else if (item.key === "enable_credit_card") {
           result.enableCreditCard = (item.value as any).enabled ?? true;
         } else if (item.key === "site_maintenance") {
@@ -62,8 +57,6 @@ export default function Settings() {
     if (!initialized && settings) {
       setGoldPrice916(settings.goldPrices["916"].toString());
       setGoldPrice999(settings.goldPrices["999"].toString());
-      setQrCodeUrl(settings.qrCode);
-      setQrPreview(settings.qrCode);
       setEnableCreditCard(settings.enableCreditCard);
       setMaintenanceEnabled(settings.maintenance.enabled);
       setMaintenanceMessage(settings.maintenance.message);
@@ -86,7 +79,7 @@ export default function Settings() {
       const { error } = await supabase.rpc('upsert_gold_settings', {
         price_916: price916,
         price_999: price999,
-        qr_url: qrCodeUrl,
+        qr_url: '',
         updated_by: user?.id ?? null,
       });
 
@@ -103,68 +96,6 @@ export default function Settings() {
       toast({ title: "Error updating gold prices", description: error.message, variant: "destructive" });
     },
   });
-
-  const updateQrCode = useMutation({
-    mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!qrCodeFile) {
-        throw new Error("Please choose a QR image to upload.");
-      }
-
-      const fileExt = qrCodeFile.name.split('.').pop();
-      const uniqueSuffix = Date.now();
-      const fileName = `touch-n-go-qr-${uniqueSuffix}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, qrCodeFile, { upsert: true, cacheControl: '1' });
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
-
-      // Add cache-busting parameter to force browser reload
-      const cacheBustedUrl = `${publicUrl}?v=${Date.now()}`;
-
-      const price916Parsed = Number(goldPrice916);
-      const price999Parsed = Number(goldPrice999);
-      const price916 = Number.isFinite(price916Parsed) ? price916Parsed : (settings?.goldPrices["916"] ?? 0);
-      const price999 = Number.isFinite(price999Parsed) ? price999Parsed : (settings?.goldPrices["999"] ?? 0);
-
-      const { error } = await supabase.rpc('upsert_gold_settings', {
-        price_916: price916,
-        price_999: price999,
-        qr_url: cacheBustedUrl,
-        updated_by: user?.id ?? null,
-      });
-      if (error) throw error;
-
-      setQrCodeUrl(cacheBustedUrl);
-      setQrPreview(cacheBustedUrl);
-      setQrCodeFile(null);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
-      queryClient.invalidateQueries({ queryKey: ["settings", "touch_n_go_qr"] });
-      toast({ title: "QR code updated" });
-    },
-    onError: (error: any) => {
-      console.error('updateQrCode error', error);
-      toast({ title: "Error updating QR code", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setQrCodeFile(file);
-      const reader = new FileReader();
-      reader.onload = () => setQrPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
 
   const updateCreditCardSetting = useMutation({
     mutationFn: async (enabled: boolean) => {
@@ -272,58 +203,6 @@ export default function Settings() {
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-2xl font-bold mb-6">Touch 'n Go QR Code</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="qr-upload" className="cursor-pointer">
-                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
-                  {qrPreview ? (
-                    <div className="relative inline-block">
-                      <img src={qrPreview} alt="QR Code" className="max-w-xs mx-auto rounded" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        aria-label="Remove selected QR image"
-                        className="absolute -top-2 -right-2"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setQrCodeFile(null);
-                            setQrPreview("");
-                          }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <p className="mt-2 font-medium">Click to upload QR code</p>
-                      <p className="text-xs text-muted-foreground mt-1">PNG or JPG format</p>
-                    </>
-                  )}
-                </div>
-                <Input
-                  id="qr-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleQrFileChange}
-                />
-              </Label>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button onClick={() => updateQrCode.mutate()} disabled={updateQrCode.isPending || !qrCodeFile}>
-                {updateQrCode.isPending ? "Saving..." : "Save QR Code"}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
           <h2 className="text-2xl font-bold mb-6">Payment Settings</h2>
           
           <div className="space-y-4">
@@ -331,7 +210,7 @@ export default function Settings() {
               <div className="space-y-0.5">
          <Label htmlFor="credit-card-toggle">Enable Credit Card Payment (Stripe)</Label>
                 <p className="text-sm text-muted-foreground">
-                  Toggle to allow credit card payments via Stripe. FPX and Touch 'n Go are always available.
+                  Toggle to allow credit card payments via Stripe. FPX (Online Banking) is always available.
                 </p>
               </div>
               <Switch
@@ -354,7 +233,7 @@ export default function Settings() {
             <div>
               <Label htmlFor="admin-email">Admin Email Address</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Email address where admin notifications will be sent (out of stock, pre-orders, Touch 'n Go payments)
+                Email address where admin notifications will be sent (out of stock, pre-orders)
               </p>
               <Input
                 id="admin-email"

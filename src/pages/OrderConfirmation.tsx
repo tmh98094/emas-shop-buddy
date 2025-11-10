@@ -207,24 +207,6 @@ export default function OrderConfirmation() {
             <p className="font-semibold">{order.phone_number}</p>
           </div>
 
-          {order.payment_method === "touch_n_go" && (
-            <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-              <div className="flex items-start gap-4">
-                <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400 mt-1 flex-shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg text-amber-900 dark:text-amber-100">
-                    <T zh="Touch'n'Go 付款处理时间" en="Touch'n'Go Payment Processing Time" />
-                  </h3>
-                  <p className="text-sm text-amber-900 dark:text-amber-100">
-                    <T 
-                      zh="由于Touch'N'Go付款需要小助理手动确认，付款状态会在1-2小时能进行更新，若需加急请透过Whatsapp进行催单" 
-                      en="Touch'n'Go payments require manual verification. Payment status will be updated within 1-2 hours. For urgent matters, please contact us via WhatsApp" 
-                    />
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
 
           {order.payment_status === "failed" && (
             <Card className="p-6 mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
@@ -260,7 +242,7 @@ export default function OrderConfirmation() {
             </Card>
           )}
 
-          {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && (
+          {order.payment_status === "pending" && order.order_status !== "cancelled" && (
             <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
               <div className="space-y-4">
                 <div className="flex items-start gap-4">

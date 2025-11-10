@@ -40,7 +40,7 @@ export default function Checkout() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "stripe_card" | "touch_n_go">("stripe_fpx");
+  const [paymentMethod, setPaymentMethod] = useState<"stripe_fpx" | "stripe_card">("stripe_fpx");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [creditCardEnabled, setCreditCardEnabled] = useState(true);
   const [formData, setFormData] = useState({
@@ -361,8 +361,7 @@ export default function Checkout() {
           shipping_postcode: formData.postcode,
           shipping_country: formData.country,
           total_amount: totalAmount,
-          payment_method:
-            paymentMethod === "stripe_card" || paymentMethod === "stripe_fpx" ? "stripe_fpx" : "touch_n_go",
+          payment_method: "stripe_fpx",
           payment_status: "pending",
           order_status: "pending",
         },
@@ -502,7 +501,7 @@ export default function Checkout() {
                 customer_phone: normalizedPhone,
                 total_amount: totalAmount,
                 order_id: orderId,
-                payment_method: paymentMethod === "touch_n_go" ? "Touch N Go" : "Online Banking/Card",
+                payment_method: "Online Banking (FPX)",
                 items_count: itemsCount,
               },
             });
@@ -537,51 +536,46 @@ export default function Checkout() {
         console.error("Failed to send email notifications:", emailError);
       }
 
-      if (paymentMethod === "touch_n_go") {
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke("create-stripe-checkout", {
+        body: {
+          orderId: orderId,
+          orderNumber: orderNumber,
+          amount: totalAmount,
+          successUrl: `${window.location.origin}/order-confirmation/${orderId}`,
+          cancelUrl: `${window.location.origin}/checkout`,
+          paymentMethod: paymentMethod === "stripe_card" ? "card" : "fpx",
+        },
+      });
+
+      if (sessionError) throw sessionError;
+
+      if (sessionData?.url) {
+        // Clear cart before redirect to prevent cart page flash
         await clearCart();
-        navigate(`/payment/touch-n-go/${orderId}`);
-      } else {
-        const { data: sessionData, error: sessionError } = await supabase.functions.invoke("create-stripe-checkout", {
-          body: {
-            orderId: orderId,
-            orderNumber: orderNumber,
-            amount: totalAmount,
-            successUrl: `${window.location.origin}/order-confirmation/${orderId}`,
-            cancelUrl: `${window.location.origin}/checkout`,
-            paymentMethod: paymentMethod === "stripe_card" ? "card" : "fpx",
-          },
-        });
+        
+        // Progressive redirect with fallback - keep loading visible until redirect
+        setTimeout(() => {
+          if (!document.hidden) {
+            window.location.href = sessionData.url;
+          }
+        }, 500);
 
-        if (sessionError) throw sessionError;
-
-        if (sessionData?.url) {
-          // Clear cart before redirect to prevent cart page flash
-          await clearCart();
-          
-          // Progressive redirect with fallback - keep loading visible until redirect
-          setTimeout(() => {
-            if (!document.hidden) {
+        // Provide manual fallback after 5 seconds
+        setTimeout(() => {
+          if (!document.hidden) {
+            const shouldContinue = confirm(
+              "Redirecting to payment page... If nothing happens, click OK to open payment page manually."
+            );
+            if (shouldContinue) {
               window.location.href = sessionData.url;
             }
-          }, 500);
-
-          // Provide manual fallback after 5 seconds
-          setTimeout(() => {
-            if (!document.hidden) {
-              const shouldContinue = confirm(
-                "Redirecting to payment page... If nothing happens, click OK to open payment page manually."
-              );
-              if (shouldContinue) {
-                window.location.href = sessionData.url;
-              }
-            }
-          }, 5000);
-          
-          // Keep the function alive to maintain loading state until redirect
-          await new Promise(() => {}); // Never resolves - page will redirect
-        } else {
-          throw new Error("Failed to create Stripe session");
-        }
+          }
+        }, 5000);
+        
+        // Keep the function alive to maintain loading state until redirect
+        await new Promise(() => {}); // Never resolves - page will redirect
+      } else {
+        throw new Error("Failed to create Stripe session");
       }
     } catch (error: any) {
       console.error("Execute checkout error:", error);
@@ -882,7 +876,7 @@ export default function Checkout() {
                   <div className="flex items-center space-x-2 p-4 border rounded">
                     <RadioGroupItem value="stripe_fpx" id="stripe_fpx" />
                     <Label htmlFor="stripe_fpx" className="flex-1 cursor-pointer">
-                      <T zh="FPX (网上银行)" en="FPX (Online Banking)" />
+                      <T zh="网上银行 (FPX)" en="Online Banking (FPX)" />
                     </Label>
                   </div>
                   {creditCardEnabled && (
@@ -893,12 +887,6 @@ export default function Checkout() {
                       </Label>
                     </div>
                   )}
-                  <div className="flex items-center space-x-2 p-4 border rounded mt-2">
-                    <RadioGroupItem value="touch_n_go" id="touch_n_go" />
-                    <Label htmlFor="touch_n_go" className="flex-1 cursor-pointer">
-                      Touch 'n Go e-Wallet
-                    </Label>
-                  </div>
                 </RadioGroup>
               </Card>
             </div>
