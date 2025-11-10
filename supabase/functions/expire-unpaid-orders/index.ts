@@ -17,22 +17,22 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Running scheduled stock restoration for unpaid orders...");
+    console.log("Running scheduled order expiration check...");
 
-    // Call the database function to restore stock
-    const { error } = await supabase.rpc('restore_stock_for_expired_orders');
+    // Call the database function to expire unpaid orders
+    const { error } = await supabase.rpc('expire_unpaid_orders');
 
     if (error) {
-      console.error("Error restoring stock:", error);
+      console.error("Error expiring orders:", error);
       throw error;
     }
 
-    console.log("Stock restoration completed successfully");
+    console.log("Order expiration check completed successfully");
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Stock restored for expired orders",
+        message: "Expired orders processed successfully",
         timestamp: new Date().toISOString()
       }),
       {
