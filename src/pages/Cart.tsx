@@ -23,6 +23,7 @@ export default function Cart() {
   const { items, updateQuantity, removeItem, refreshPrices, loading } = useCart();
   const navigate = useNavigate();
   const [priceChangeDetected, setPriceChangeDetected] = useState(false);
+  const [outOfStockItems, setOutOfStockItems] = useState<typeof items>([]);
 
   const { data: goldPrices } = useQuery({
     queryKey: ["gold-prices"],
@@ -93,11 +94,44 @@ export default function Cart() {
     );
   }
 
-  // Check for out of stock items
-  const outOfStockItems = items.filter(item => {
-    const product = item.product;
-    return !product || (product.stock ?? 0) < item.quantity;
-  });
+  // Check for out of stock items (including variant stock)
+  useEffect(() => {
+    const checkStock = async () => {
+      const stockCheckResults = await Promise.all(
+        items.map(async (item) => {
+          const product = item.product;
+          if (!product) return item;
+
+          // Check if product has variants
+          if (item.selected_variants && Object.keys(item.selected_variants).length > 0) {
+            // Build variant combination for JSONB query
+            const variantCombo: Record<string, string> = {};
+            Object.values(item.selected_variants).forEach((v: any) => {
+              variantCombo[v.name] = v.value;
+            });
+
+            const { data: variantStock } = await supabase
+              .from("variant_stock")
+              .select("stock")
+              .eq("product_id", item.product_id)
+              .contains("variant_combination", variantCombo)
+              .single();
+
+            return (variantStock?.stock ?? 0) < item.quantity ? item : null;
+          } else {
+            // Check regular product stock
+            return (product.stock ?? 0) < item.quantity ? item : null;
+          }
+        })
+      );
+      
+      setOutOfStockItems(stockCheckResults.filter(Boolean) as typeof items);
+    };
+
+    if (items.length > 0) {
+      checkStock();
+    }
+  }, [items]);
 
   const hasOutOfStock = outOfStockItems.length > 0;
 

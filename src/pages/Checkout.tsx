@@ -400,13 +400,15 @@ export default function Checkout() {
         // Format variant selection for storage
         const variantSelection = item.selected_variants ? formatVariantsForDisplay(item.selected_variants) : null;
 
-        // Calculate adjusted weight based on variants
+        // Use variant weight replacement if available (consistent with ProductDetail/QuickView)
         let adjustedWeight = parseFloat(product.weight_grams as string);
         if (item.selected_variants) {
-          const totalWeightAdjustment = Object.values(item.selected_variants).reduce((sum, variant: any) => {
-            return sum + (variant.weight_adjustment || 0);
-          }, 0);
-          adjustedWeight += totalWeightAdjustment;
+          const variantWithWeight = Object.values(item.selected_variants).find((variant: any) => 
+            variant.weight_adjustment && variant.weight_adjustment > 0
+          );
+          if (variantWithWeight) {
+            adjustedWeight = variantWithWeight.weight_adjustment;
+          }
         }
 
         return {
