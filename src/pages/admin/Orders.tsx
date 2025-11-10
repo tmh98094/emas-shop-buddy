@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Search, RefreshCw } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/invoice-generator";
 import { formatPrice } from "@/lib/price-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [syncing, setSyncing] = useState(false);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function Orders() {
     return () => clearTimeout(t);
   }, [searchInput]);
   const { data: orders, isLoading, refetch } = useQuery({
-    queryKey: ["admin-orders", searchQuery],
+    queryKey: ["admin-orders", searchQuery, orderStatusFilter, paymentStatusFilter],
     queryFn: async () => {
       let query = supabase
         .from("orders")
@@ -39,8 +40,19 @@ export default function Orders() {
           order_items(*)
         `);
       
+      // Search filter
       if (searchQuery) {
         query = query.or(`order_number.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
+      }
+      
+      // Order status filter
+      if (orderStatusFilter !== "all") {
+        query = query.eq("order_status", orderStatusFilter as any);
+      }
+      
+      // Payment status filter
+      if (paymentStatusFilter !== "all") {
+        query = query.eq("payment_status", paymentStatusFilter as any);
       }
       
       query = query.order("created_at", { ascending: false });
@@ -50,35 +62,6 @@ export default function Orders() {
       return data;
     },
   });
-
-  const handleSyncStripePayments = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("sync-stripe-payments");
-      
-      if (error) throw error;
-      
-      const { results } = data;
-      const summary = `✓ ${results.updated} 已更新, ✗ ${results.failed} 失败, ⊘ ${results.skipped} 跳过 (共 ${results.total} 个订单)`;
-      
-      toast({
-        title: "同步完成",
-        description: summary,
-        variant: results.updated > 0 ? "default" : results.failed > 0 ? "destructive" : "default",
-      });
-      
-      // Refetch orders to show updated status
-      await refetch();
-    } catch (error: any) {
-      toast({
-        title: "同步失败",
-        description: error.message || "无法同步 Stripe 支付状态",
-        variant: "destructive",
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleExportInvoice = async (order: any) => {
     // Calculate shipping fee from total and order items
@@ -126,24 +109,6 @@ export default function Orders() {
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl md:text-4xl font-bold text-primary">订单管理</h1>
-        <Button
-          onClick={handleSyncStripePayments}
-          disabled={syncing}
-          variant="outline"
-          className="w-full sm:w-auto"
-        >
-          {syncing ? (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              同步中...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              同步 Stripe 支付状态
-            </>
-          )}
-        </Button>
       </div>
 
       <div className="mb-4">
@@ -155,6 +120,39 @@ export default function Orders() {
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-8 md:pl-9 text-sm h-9"
           />
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="flex-1">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">订单状态</label>
+          <select
+            value={orderStatusFilter}
+            onChange={(e) => setOrderStatusFilter(e.target.value)}
+            className="w-full h-9 text-sm border border-input bg-background rounded-md px-3 py-1"
+          >
+            <option value="all">全部</option>
+            <option value="pending">待处理</option>
+            <option value="processing">处理中</option>
+            <option value="completed">已完成</option>
+            <option value="cancelled">已取消</option>
+            <option value="refunded">已退款</option>
+          </select>
+        </div>
+        
+        <div className="flex-1">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">付款状态</label>
+          <select
+            value={paymentStatusFilter}
+            onChange={(e) => setPaymentStatusFilter(e.target.value)}
+            className="w-full h-9 text-sm border border-input bg-background rounded-md px-3 py-1"
+          >
+            <option value="all">全部</option>
+            <option value="pending">待付款</option>
+            <option value="completed">已付款</option>
+            <option value="failed">失败</option>
+            <option value="cancelled">已取消</option>
+          </select>
         </div>
       </div>
 
