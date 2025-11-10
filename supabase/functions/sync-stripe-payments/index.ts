@@ -24,19 +24,19 @@ serve(async (req) => {
   try {
     console.log("Starting Stripe payment sync...");
 
-    // Get all orders with pending payment that have a stripe_payment_id or stripe_session_url
+    // Get all orders with pending payment that have a stripe_session_url
     const { data: orders, error: fetchError } = await supabase
       .from("orders")
       .select("id, order_number, stripe_payment_id, stripe_session_url, payment_status, order_status")
       .eq("payment_status", "pending")
-      .not("stripe_payment_id", "is", null);
+      .not("stripe_session_url", "is", null);
 
     if (fetchError) {
       console.error("Error fetching orders:", fetchError);
       throw fetchError;
     }
 
-    console.log(`Found ${orders?.length || 0} pending orders with Stripe payment IDs`);
+    console.log(`Found ${orders?.length || 0} pending orders with Stripe checkout sessions`);
 
     const results = {
       total: orders?.length || 0,
@@ -48,7 +48,7 @@ serve(async (req) => {
     if (!orders || orders.length === 0) {
       return new Response(
         JSON.stringify({ 
-          message: "No pending orders with Stripe payment IDs found",
+          message: "No pending orders with Stripe checkout sessions found",
           results 
         }),
         {
@@ -62,19 +62,36 @@ serve(async (req) => {
     for (const order of orders) {
       try {
         console.log(`Checking order ${order.order_number} (ID: ${order.id})`);
+        console.log(`Session URL: ${order.stripe_session_url}`);
         
-        // Retrieve the payment intent from Stripe
-        const paymentIntent = await stripe.paymentIntents.retrieve(order.stripe_payment_id);
-        
-        console.log(`Payment intent status: ${paymentIntent.status}`);
+        // Extract session ID from the Stripe session URL
+        const sessionId = order.stripe_session_url.split('/').pop()?.split('?')[0];
+        if (!sessionId) {
+          console.error(`Could not extract session ID from URL: ${order.stripe_session_url}`);
+          results.failed++;
+          results.details.push({
+            order_number: order.order_number,
+            status: "failed",
+            error: "Invalid session URL",
+          });
+          continue;
+        }
 
-        if (paymentIntent.status === "succeeded") {
+        console.log(`Extracted session ID: ${sessionId}`);
+        
+        // Retrieve the checkout session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        console.log(`Session status: ${session.status}, payment_status: ${session.payment_status}`);
+
+        if (session.payment_status === "paid") {
           // Update order to completed
           const { error: updateError } = await supabase
             .from("orders")
             .update({
               payment_status: "completed",
               order_status: "processing",
+              stripe_payment_id: session.payment_intent as string,
             })
             .eq("id", order.id);
 
@@ -92,7 +109,8 @@ serve(async (req) => {
             results.details.push({
               order_number: order.order_number,
               status: "updated",
-              stripe_status: paymentIntent.status,
+              stripe_status: session.payment_status,
+              payment_intent: session.payment_intent,
             });
             
             // Create admin notification
@@ -107,13 +125,37 @@ serve(async (req) => {
               console.error("Failed to create notification:", notifError);
             }
           }
+        } else if (session.status === "expired") {
+          // Mark as failed
+          console.log(`Session expired for order ${order.order_number}, marking as failed`);
+          
+          const { error: failError } = await supabase
+            .from("orders")
+            .update({
+              payment_status: "failed",
+            })
+            .eq("id", order.id);
+
+          if (failError) {
+            console.error(`Failed to mark order as failed:`, failError);
+            results.failed++;
+          } else {
+            results.updated++;
+            results.details.push({
+              order_number: order.order_number,
+              status: "marked_failed",
+              stripe_status: session.status,
+              reason: "Session expired",
+            });
+          }
         } else {
-          console.log(`Order ${order.order_number} payment status is ${paymentIntent.status}, not updating`);
+          console.log(`Order ${order.order_number} session status is ${session.status}, payment status is ${session.payment_status}, not updating`);
           results.details.push({
             order_number: order.order_number,
             status: "skipped",
-            stripe_status: paymentIntent.status,
-            reason: "Payment not succeeded",
+            stripe_status: session.status,
+            payment_status: session.payment_status,
+            reason: "Payment not completed",
           });
         }
       } catch (error: any) {
