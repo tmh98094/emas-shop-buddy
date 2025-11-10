@@ -27,9 +27,14 @@ serve(async (req) => {
     
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET is not configured");
+      return new Response(JSON.stringify({ error: "Webhook secret not configured" }), { status: 500 });
+    }
+    
     let event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature!, webhookSecret!);
+      event = stripe.webhooks.constructEvent(body, signature!, webhookSecret);
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : String(err);
       console.error("Webhook signature verification failed:", errMessage);
@@ -37,18 +42,23 @@ serve(async (req) => {
     }
 
     console.log("Received Stripe webhook event:", event.type);
+    console.log("Event ID:", event.id);
 
+    // Handle successful payments
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const orderId = session.metadata?.orderId;
 
       if (orderId) {
-        console.log("Updating order payment status for:", orderId);
+        console.log("Processing payment for order ID:", orderId);
+        console.log("Payment intent ID:", session.payment_intent);
+        console.log("Session status:", session.status);
+        console.log("Payment status:", session.payment_status);
         
         // Get order details before updating
         const { data: order, error: orderFetchError } = await supabase
           .from("orders")
-          .select("order_number, full_name, total_amount")
+          .select("order_number, full_name, total_amount, payment_status")
           .eq("id", orderId)
           .single();
 
@@ -56,6 +66,8 @@ serve(async (req) => {
           console.error("Error fetching order:", orderFetchError);
           throw orderFetchError;
         }
+        
+        console.log("Order found:", order.order_number, "Current payment status:", order.payment_status);
         
         const { error } = await supabase
           .from("orders")
@@ -67,10 +79,11 @@ serve(async (req) => {
 
         if (error) {
           console.error("Error updating order:", error);
+          console.error("Error details:", JSON.stringify(error));
           throw error;
         }
 
-        console.log("Order payment status updated successfully");
+        console.log("Order payment status updated to completed successfully");
 
         // Create admin notification for new order
         try {
@@ -79,7 +92,7 @@ serve(async (req) => {
             .insert({
               type: "new_order",
               title: "New Order Placed",
-              message: `Order ${order.order_number} has been placed by ${order.full_name}. Payment confirmed via Stripe.`,
+              message: `Order ${order.order_number} has been placed by ${order.full_name}. Payment confirmed via Stripe (${session.payment_status}).`,
               order_id: orderId,
             });
 
@@ -90,6 +103,60 @@ serve(async (req) => {
           }
         } catch (notifErr) {
           console.error("Failed to create admin notification:", notifErr);
+        }
+      } else {
+        console.warn("No orderId in session metadata");
+      }
+    }
+
+    // Handle expired checkout sessions (failed payments)
+    if (event.type === "checkout.session.expired") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const orderId = session.metadata?.orderId;
+
+      if (orderId) {
+        console.log("Marking order as failed due to expired session:", orderId);
+        
+        const { error } = await supabase
+          .from("orders")
+          .update({
+            payment_status: "failed",
+          })
+          .eq("id", orderId)
+          .eq("payment_status", "pending");
+
+        if (error) {
+          console.error("Error marking order as failed:", error);
+        } else {
+          console.log("Order marked as failed, stock will be automatically restored");
+        }
+      }
+    }
+
+    // Handle payment intent succeeded (backup for FPX and other async payment methods)
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log("Payment intent succeeded:", paymentIntent.id);
+      
+      // Try to find order by payment intent ID
+      const { data: order, error: findError } = await supabase
+        .from("orders")
+        .select("id, order_number, full_name")
+        .eq("stripe_payment_id", paymentIntent.id)
+        .maybeSingle();
+
+      if (order) {
+        console.log("Found order by payment intent:", order.order_number);
+        
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({ payment_status: "completed" })
+          .eq("id", order.id);
+
+        if (updateError) {
+          console.error("Error updating order via payment_intent:", updateError);
+        } else {
+          console.log("Order updated via payment_intent.succeeded");
         }
       }
     }
