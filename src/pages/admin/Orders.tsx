@@ -58,9 +58,13 @@ export default function Orders() {
       
       if (error) throw error;
       
+      const { results } = data;
+      const summary = `✓ ${results.updated} 已更新, ✗ ${results.failed} 失败, ⊘ ${results.skipped} 跳过 (共 ${results.total} 个订单)`;
+      
       toast({
         title: "同步完成",
-        description: `已更新 ${data.results.updated} 个订单，失败 ${data.results.failed} 个`,
+        description: summary,
+        variant: results.updated > 0 ? "default" : results.failed > 0 ? "destructive" : "default",
       });
       
       // Refetch orders to show updated status
