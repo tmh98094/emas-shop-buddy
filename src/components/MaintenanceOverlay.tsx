@@ -5,6 +5,33 @@ import { supabase } from "@/integrations/supabase/client";
 export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) {
   const isAuthRoute = window.location.pathname.startsWith('/auth');
   
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["user-role", session?.id],
+    queryFn: async () => {
+      if (!session?.id) return false;
+      
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      return !!data;
+    },
+    enabled: !!session?.id,
+    staleTime: 60_000,
+  });
+
   const { data } = useQuery({
     queryKey: ["settings", "site_maintenance"],
     queryFn: async () => {
@@ -18,7 +45,7 @@ export function MaintenanceOverlay({ isAdminRoute }: { isAdminRoute: boolean }) 
     staleTime: 60_000,
   });
 
-  const enabled = data?.enabled && !isAdminRoute && !isAuthRoute;
+  const enabled = data?.enabled && !isAuthRoute && !isAdmin;
   const message = data?.message || "We're performing urgent maintenance. We'll be back shortly.";
   const whatsapp = data?.whatsapp || "+60122379178";
 
