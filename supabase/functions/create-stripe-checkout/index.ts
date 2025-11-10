@@ -231,6 +231,14 @@ serve(async (req) => {
         userId: user?.id || 'guest',
         method,
       },
+      payment_intent_data: {
+        metadata: {
+          orderId,
+          orderNumber,
+          userId: user?.id || 'guest',
+          method,
+        },
+      },
     });
 
     console.log("Stripe session created:", session.id);
