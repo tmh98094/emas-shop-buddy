@@ -305,7 +305,7 @@ export default function Checkout() {
             .from("variant_stock")
             .select("stock")
             .eq("product_id", item.product_id)
-            .eq("variant_combination", variantCombo)
+            .contains("variant_combination", variantCombo)
             .single();
           
           if (!variantStock || variantStock.stock < item.quantity) {
