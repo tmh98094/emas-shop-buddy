@@ -24,12 +24,12 @@ serve(async (req) => {
   try {
     console.log("Starting Stripe payment sync...");
 
-    // Get all orders with pending payment that have a stripe_session_url
+    // Get all orders with pending payment that have a stripe_session_url or stripe_session_id
     const { data: orders, error: fetchError } = await supabase
       .from("orders")
-      .select("id, order_number, stripe_payment_id, stripe_session_url, payment_status, order_status")
+      .select("id, order_number, stripe_payment_id, stripe_session_url, stripe_session_id, payment_status, order_status")
       .eq("payment_status", "pending")
-      .not("stripe_session_url", "is", null);
+      .or("stripe_session_url.not.is.null,stripe_session_id.not.is.null");
 
     if (fetchError) {
       console.error("Error fetching orders:", fetchError);
@@ -62,22 +62,35 @@ serve(async (req) => {
     for (const order of orders) {
       try {
         console.log(`Checking order ${order.order_number} (ID: ${order.id})`);
-        console.log(`Session URL: ${order.stripe_session_url}`);
         
-        // Extract session ID from the Stripe session URL
-        const sessionId = order.stripe_session_url.split('/').pop()?.split('?')[0];
-        if (!sessionId) {
-          console.error(`Could not extract session ID from URL: ${order.stripe_session_url}`);
+        // Prefer stored stripe_session_id, fallback to parsing URL
+        let sessionId = order.stripe_session_id;
+        
+        if (!sessionId && order.stripe_session_url) {
+          console.log(`Parsing session URL: ${order.stripe_session_url}`);
+          try {
+            const url = new URL(order.stripe_session_url);
+            const lastSegment = url.pathname.split('/').pop();
+            sessionId = lastSegment?.split(/[?#]/)[0];
+          } catch (urlError) {
+            console.error(`Invalid URL format: ${order.stripe_session_url}`);
+          }
+        }
+        
+        // Validate session ID
+        if (!sessionId || !sessionId.startsWith('cs_') || sessionId.length > 66) {
+          console.error(`Invalid session ID for order ${order.order_number}: ${sessionId}`);
           results.failed++;
           results.details.push({
             order_number: order.order_number,
             status: "failed",
-            error: "Invalid session URL",
+            error: "Invalid session ID format",
+            extracted_id: sessionId?.substring(0, 20) + '...',
           });
           continue;
         }
 
-        console.log(`Extracted session ID: ${sessionId}`);
+        console.log(`Using session ID: ${sessionId.substring(0, 15)}...`);
         
         // Retrieve the checkout session from Stripe
         const session = await stripe.checkout.sessions.retrieve(sessionId);

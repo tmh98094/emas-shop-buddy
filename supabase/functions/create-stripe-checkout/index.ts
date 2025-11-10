@@ -235,12 +235,13 @@ serve(async (req) => {
 
     console.log("Stripe session created:", session.id);
 
-    // Store the session URL in the order
+    // Store the session URL and ID in the order
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
     const { error: updateError } = await supabase
       .from("orders")
       .update({
         stripe_session_url: session.url,
+        stripe_session_id: session.id,
         stripe_session_expires_at: expiresAt.toISOString(),
         payment_link_generated_at: new Date().toISOString(),
       })

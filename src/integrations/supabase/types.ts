@@ -349,6 +349,7 @@ export type Database = {
           shipping_state: string | null
           stripe_payment_id: string | null
           stripe_session_expires_at: string | null
+          stripe_session_id: string | null
           stripe_session_url: string | null
           total_amount: number
           updated_at: string
@@ -379,6 +380,7 @@ export type Database = {
           shipping_state?: string | null
           stripe_payment_id?: string | null
           stripe_session_expires_at?: string | null
+          stripe_session_id?: string | null
           stripe_session_url?: string | null
           total_amount: number
           updated_at?: string
@@ -409,6 +411,7 @@ export type Database = {
           shipping_state?: string | null
           stripe_payment_id?: string | null
           stripe_session_expires_at?: string | null
+          stripe_session_id?: string | null
           stripe_session_url?: string | null
           total_amount?: number
           updated_at?: string
