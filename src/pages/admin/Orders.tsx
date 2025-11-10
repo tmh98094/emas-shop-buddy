@@ -14,19 +14,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, RefreshCw } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/invoice-generator";
 import { formatPrice } from "@/lib/price-utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const t = setTimeout(() => setSearchQuery(searchInput), 400);
     return () => clearTimeout(t);
   }, [searchInput]);
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ["admin-orders", searchQuery],
     queryFn: async () => {
       let query = supabase
@@ -47,6 +50,31 @@ export default function Orders() {
       return data;
     },
   });
+
+  const handleSyncStripePayments = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-stripe-payments");
+      
+      if (error) throw error;
+      
+      toast({
+        title: "同步完成",
+        description: `已更新 ${data.results.updated} 个订单，失败 ${data.results.failed} 个`,
+      });
+      
+      // Refetch orders to show updated status
+      await refetch();
+    } catch (error: any) {
+      toast({
+        title: "同步失败",
+        description: error.message || "无法同步 Stripe 支付状态",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleExportInvoice = async (order: any) => {
     // Calculate shipping fee from total and order items
@@ -92,7 +120,27 @@ export default function Orders() {
 
   return (
     <div>
-      <h1 className="text-2xl md:text-4xl font-bold text-primary mb-6">订单管理</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-4xl font-bold text-primary">订单管理</h1>
+        <Button
+          onClick={handleSyncStripePayments}
+          disabled={syncing}
+          variant="outline"
+          className="w-full sm:w-auto"
+        >
+          {syncing ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              同步中...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              同步 Stripe 支付状态
+            </>
+          )}
+        </Button>
+      </div>
 
       <div className="mb-4">
         <div className="relative max-w-md">
