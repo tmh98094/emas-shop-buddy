@@ -53,26 +53,29 @@ serve(async (req) => {
         try {
           console.log(`Checking order ${order.order_number} (ID: ${order.id})`);
           
-          let sessionId = order.stripe_session_id;
+          // Use the stored session ID directly (no parsing needed)
+          const sessionId = order.stripe_session_id;
           
-          if (!sessionId && order.stripe_session_url) {
-            console.log(`Parsing session URL: ${order.stripe_session_url}`);
-            try {
-              const url = new URL(order.stripe_session_url);
-              const lastSegment = url.pathname.split('/').pop();
-              sessionId = lastSegment?.split(/[?#]/)[0];
-            } catch (urlError) {
-              console.error(`Invalid URL format: ${order.stripe_session_url}`);
-            }
-          }
-          
-          if (!sessionId || !sessionId.startsWith('cs_') || sessionId.length > 66) {
-            console.error(`Invalid session ID for order ${order.order_number}: ${sessionId}`);
+          if (!sessionId || !sessionId.startsWith('cs_')) {
+            console.error(`Invalid or missing session ID for order ${order.order_number}: ${sessionId}`);
             results.failed++;
             results.details.push({
               order_number: order.order_number,
               status: "failed",
-              error: "Invalid session ID format",
+              error: "Invalid or missing session ID",
+              phase: "session_check",
+            });
+            continue;
+          }
+          
+          // Validate session ID length (Stripe max is 66 chars)
+          if (sessionId.length > 66) {
+            console.error(`Session ID too long for order ${order.order_number}: ${sessionId.length} chars`);
+            results.failed++;
+            results.details.push({
+              order_number: order.order_number,
+              status: "failed",
+              error: `Session ID too long: ${sessionId.length} chars`,
               phase: "session_check",
             });
             continue;

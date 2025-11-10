@@ -275,20 +275,56 @@ export default function Checkout() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Validate stock before creating order
+      // Validate stock before creating order (including variants)
       const productIds = items.map((i) => i.product_id);
       const { data: latestProducts, error: latestError } = await supabase
         .from("products")
         .select("id, name, stock")
         .in("id", productIds);
       if (latestError) throw latestError;
-      const outOfStock = items.filter((i) => {
-        const p = latestProducts?.find((lp) => lp.id === i.product_id);
-        return !p || (p.stock ?? 0) < i.quantity;
-      });
-      if (outOfStock.length > 0) {
-        const names = outOfStock.map((i) => i.product.name).join(", ");
-        throw new Error(`Some items are out of stock or insufficient quantity: ${names}. Please adjust your cart.`);
+
+      // Enhanced stock validation including variants
+      for (const item of items) {
+        const { data: variants } = await supabase
+          .from("product_variants")
+          .select("id")
+          .eq("product_id", item.product_id)
+          .limit(1);
+        
+        const hasVariants = variants && variants.length > 0;
+        
+        if (hasVariants && item.selected_variants) {
+          // Build variant combination for variant stock check
+          const variantCombo: Record<string, string> = {};
+          Object.values(item.selected_variants).forEach((v: any) => {
+            variantCombo[v.name] = v.value;
+          });
+          
+          // Check variant stock
+          const { data: variantStock } = await supabase
+            .from("variant_stock")
+            .select("stock")
+            .eq("product_id", item.product_id)
+            .eq("variant_combination", variantCombo)
+            .single();
+          
+          if (!variantStock || variantStock.stock < item.quantity) {
+            const variantDesc = Object.entries(variantCombo)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(", ");
+            throw new Error(
+              `Insufficient stock for ${item.product.name} (${variantDesc}). Available: ${variantStock?.stock || 0}, Requested: ${item.quantity}`
+            );
+          }
+        } else {
+          // Check regular product stock
+          const p = latestProducts?.find((lp) => lp.id === item.product_id);
+          if (!p || (p.stock ?? 0) < item.quantity) {
+            throw new Error(
+              `Insufficient stock for ${item.product.name}. Available: ${p?.stock || 0}, Requested: ${item.quantity}`
+            );
+          }
+        }
       }
 
       const totalAmount = calculateTotal();

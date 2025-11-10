@@ -73,6 +73,7 @@ serve(async (req) => {
           .from("orders")
           .update({
             payment_status: "completed",
+            order_status: "processing",
             stripe_payment_id: session.payment_intent as string,
           })
           .eq("id", orderId);

@@ -347,6 +347,7 @@ export type Database = {
           shipping_country: string | null
           shipping_postcode: string | null
           shipping_state: string | null
+          stock_deducted_at: string | null
           stripe_payment_id: string | null
           stripe_session_expires_at: string | null
           stripe_session_id: string | null
@@ -378,6 +379,7 @@ export type Database = {
           shipping_country?: string | null
           shipping_postcode?: string | null
           shipping_state?: string | null
+          stock_deducted_at?: string | null
           stripe_payment_id?: string | null
           stripe_session_expires_at?: string | null
           stripe_session_id?: string | null
@@ -409,6 +411,7 @@ export type Database = {
           shipping_country?: string | null
           shipping_postcode?: string | null
           shipping_state?: string | null
+          stock_deducted_at?: string | null
           stripe_payment_id?: string | null
           stripe_session_expires_at?: string | null
           stripe_session_id?: string | null
@@ -1023,7 +1026,6 @@ export type Database = {
         Returns: boolean
       }
       normalize_phone_sql: { Args: { p_input: string }; Returns: string }
-      restore_stock_for_expired_orders: { Args: never; Returns: undefined }
       update_product_cached_prices: { Args: never; Returns: undefined }
       upsert_gold_settings: {
         Args: {
