@@ -260,7 +260,7 @@ export default function OrderConfirmation() {
             </Card>
           )}
 
-          {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && order.order_status !== "stock_released" && (
+          {order.payment_status === "pending" && order.payment_method !== "touch_n_go" && order.order_status !== "cancelled" && (
             <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
@@ -296,41 +296,6 @@ export default function OrderConfirmation() {
             </Card>
           )}
 
-          {order.payment_status === "pending" && order.order_status === "stock_released" && (
-            <Card className="p-6 mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400 mt-1 flex-shrink-0" />
-                  <div className="space-y-2 flex-1">
-                    <h3 className="font-semibold text-lg text-amber-900 dark:text-amber-100">
-                      <T zh="库存已释放" en="Stock Released" />
-                    </h3>
-                    <p className="text-sm text-amber-900 dark:text-amber-100">
-                      <T 
-                        zh="由于30分钟内未完成付款，库存已释放。您仍可尝试付款，系统将检查库存是否仍然可用。" 
-                        en="Stock has been released as payment was not completed within 30 minutes. You can still try to pay - the system will check if stock is still available." 
-                      />
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleCompletePayment}
-                  disabled={generatingPaymentLink}
-                  className="w-full h-12 text-lg"
-                  size="lg"
-                >
-                  {generatingPaymentLink ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      <T zh="检查库存并付款..." en="Checking Stock & Payment..." />
-                    </>
-                  ) : (
-                    <T zh="尝试付款" en="Try to Pay" />
-                  )}
-                </Button>
-              </div>
-            </Card>
-          )}
 
           <Card className="p-6 mb-6 bg-muted border-border">
             <div className="flex items-start gap-4">
