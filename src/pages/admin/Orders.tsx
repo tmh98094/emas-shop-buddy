@@ -14,16 +14,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Search } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FileText, Search, CalendarIcon } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/invoice-generator";
 import { formatPrice } from "@/lib/price-utils";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
+  const [fromDate, setFromDate] = useState<Date>();
+  const [toDate, setToDate] = useState<Date>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function Orders() {
     return () => clearTimeout(t);
   }, [searchInput]);
   const { data: orders, isLoading, refetch } = useQuery({
-    queryKey: ["admin-orders", searchQuery, orderStatusFilter, paymentStatusFilter],
+    queryKey: ["admin-orders", searchQuery, orderStatusFilter, paymentStatusFilter, fromDate, toDate],
     queryFn: async () => {
       let query = supabase
         .from("orders")
@@ -53,6 +59,16 @@ export default function Orders() {
       // Payment status filter
       if (paymentStatusFilter !== "all") {
         query = query.eq("payment_status", paymentStatusFilter as any);
+      }
+      
+      // Date range filter
+      if (fromDate) {
+        query = query.gte("created_at", fromDate.toISOString());
+      }
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endOfDay.toISOString());
       }
       
       query = query.order("created_at", { ascending: false });
@@ -154,6 +170,79 @@ export default function Orders() {
             <option value="cancelled">已取消</option>
           </select>
         </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="flex-1">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">开始日期</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full h-9 justify-start text-left font-normal text-sm",
+                  !fromDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {fromDate ? format(fromDate, "PPP") : <span>选择日期</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={fromDate}
+                onSelect={setFromDate}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        
+        <div className="flex-1">
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">结束日期</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full h-9 justify-start text-left font-normal text-sm",
+                  !toDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {toDate ? format(toDate, "PPP") : <span>选择日期</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={toDate}
+                onSelect={setToDate}
+                initialFocus
+                disabled={(date) => fromDate ? date < fromDate : false}
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {(fromDate || toDate) && (
+          <div className="flex items-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromDate(undefined);
+                setToDate(undefined);
+              }}
+              className="h-9 text-xs"
+            >
+              清除日期
+            </Button>
+          </div>
+        )}
       </div>
 
       <Card>
