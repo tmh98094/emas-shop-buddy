@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { calculatePrice, formatPrice } from "@/lib/price-utils";
 import { T } from "@/components/T";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { validateVariantSelection, SelectedVariantsMap } from "@/lib/cart-utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,9 +155,9 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
               )}
             </div>
 
-            {/* Variants */}
+            {/* Variants - Choice Chips Style */}
             {Object.keys(variantGroups).length > 0 && (
-              <div className="space-y-3 border-t border-b py-4">
+              <div className="space-y-4 border-t border-b py-4">
                 <h3 className="font-semibold"><T zh="选择选项" en="Select Options" /></h3>
                 {variantError && (
                   <Alert variant="destructive" className="py-2">
@@ -167,37 +166,32 @@ export function ProductQuickView({ product, goldPrice, open, onOpenChange }: Pro
                   </Alert>
                 )}
                 {Object.keys(variantGroups).map((variantName) => (
-                  <div key={variantName}>
-                    <label className="text-sm font-medium mb-2 block">{variantName}</label>
-                    <Select
-                      value={selectedVariants[variantName]?.id || ""}
-                      onValueChange={(value) => {
-                        const variant = variantGroups[variantName].find((v: any) => v.id === value);
-                        if (variant) {
-                          setSelectedVariants(prev => ({
-                            ...prev,
-                            [variantName]: { 
-                              name: variant.name, 
-                              value: variant.value, 
-                              id: variant.id,
-                              weight_adjustment: variant.weight_adjustment 
-                            }
-                          }));
-                          setVariantError(""); // Clear error on selection
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select ${variantName}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {variantGroups[variantName].map((variant: any) => (
-                          <SelectItem key={variant.id} value={variant.id}>
-                            {variant.value}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div key={variantName} className="space-y-2">
+                    <label className="text-sm font-medium">{variantName}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantGroups[variantName].map((variant: any) => (
+                        <Button
+                          key={variant.id}
+                          type="button"
+                          variant={selectedVariants[variantName]?.id === variant.id ? "default" : "outline"}
+                          className={`rounded-full px-4 ${selectedVariants[variantName]?.id === variant.id ? 'ring-2 ring-primary' : ''}`}
+                          onClick={() => {
+                            setSelectedVariants(prev => ({
+                              ...prev,
+                              [variantName]: { 
+                                name: variant.name, 
+                                value: variant.value, 
+                                id: variant.id,
+                                weight_adjustment: variant.weight_adjustment 
+                              }
+                            }));
+                            setVariantError(""); // Clear error on selection
+                          }}
+                        >
+                          {variant.value}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
