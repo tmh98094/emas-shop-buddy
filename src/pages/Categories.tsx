@@ -17,36 +17,18 @@ export default function Categories() {
   const { language } = useLanguage();
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories:with-count"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select("*")
+        .select("id,name,name_zh,description,description_zh,display_order,slug,image_url,created_at,products(count)")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      
-      // Fetch product counts for each category
-      const categoriesWithCounts = await Promise.all(
-        data.map(async (category) => {
-          const { count, error } = await supabase
-            .from("products")
-            .select("*", { count: "exact", head: true })
-            .eq("category_id", category.id);
-          
-          if (error) {
-            console.error("Error fetching count for category:", category.name, error);
-          }
-          
-          return {
-            ...category,
-            productCount: count || 0,
-          };
-        })
-      );
-      
-      return categoriesWithCounts;
+      return data;
     },
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: content } = useQuery({
@@ -110,7 +92,7 @@ export default function Categories() {
                     </div>
                     <div className="flex justify-center">
                       <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-foreground font-bold px-4 py-1 group-hover:from-primary/30 group-hover:to-accent/30 transition-all">
-                        {(category as any).productCount || 0} <T zh="件商品" en="Products" />
+                        {(category as any).products?.[0]?.count || 0} <T zh="件商品" en="Products" />
                       </Badge>
                     </div>
                   </CardContent>
