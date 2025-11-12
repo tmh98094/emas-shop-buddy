@@ -26,10 +26,7 @@ export default function Categories() {
     slug: "",
     description: "",
     display_order: "0",
-    image_url: "",
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
   const [editingSubCategory, setEditingSubCategory] = useState<any>(null);
@@ -56,33 +53,11 @@ export default function Categories() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      let imageUrl = formData.image_url;
-
-      // Upload image if a new file is selected
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `categories/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, imageFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath);
-
-        imageUrl = publicUrl;
-      }
-
       const categoryData = {
         name: formData.name,
         slug: formData.slug?.trim() || undefined,
         description: formData.description || null,
         display_order: parseInt(formData.display_order),
-        image_url: imageUrl || null,
       };
 
       if (editingCategory) {
@@ -173,10 +148,8 @@ export default function Categories() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", slug: "", description: "", display_order: "0", image_url: "" });
+    setFormData({ name: "", slug: "", description: "", display_order: "0" });
     setEditingCategory(null);
-    setImageFile(null);
-    setImagePreview("");
   };
 
   const resetSubCategoryForm = () => {
@@ -192,29 +165,8 @@ export default function Categories() {
       slug: category.slug,
       description: category.description || "",
       display_order: category.display_order?.toString() || "0",
-      image_url: category.image_url || "",
     });
-    setImagePreview(category.image_url || "");
-    setImageFile(null);
     setIsDialogOpen(true);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const clearImage = () => {
-    setImageFile(null);
-    setImagePreview("");
-    setFormData({ ...formData, image_url: "" });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -308,37 +260,6 @@ export default function Categories() {
                   onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
                 />
               </div>
-              <div>
-                <Label htmlFor="category_image">Category Image</Label>
-                <div className="space-y-2">
-                  {imagePreview ? (
-                    <div className="relative w-full h-40 border rounded-lg overflow-hidden">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={clearImage}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">Upload category image</p>
-                    </div>
-                  )}
-                  <Input
-                    id="category_image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="cursor-pointer"
-                  />
-                </div>
-              </div>
               <Button type="submit" disabled={saveMutation.isPending}>
                 {editingCategory ? "Update" : "Create"} Category
               </Button>
@@ -351,7 +272,6 @@ export default function Categories() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Sub-Categories</TableHead>
@@ -363,15 +283,6 @@ export default function Categories() {
             {categories?.map((category) => (
               <>
                 <TableRow key={category.id}>
-                  <TableCell>
-                    {category.image_url ? (
-                      <img src={category.image_url} alt={category.name} className="w-16 h-16 object-cover rounded" />
-                    ) : (
-                      <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
-                        No Image
-                      </div>
-                    )}
-                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {category.sub_categories && category.sub_categories.length > 0 && (

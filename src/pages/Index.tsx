@@ -37,11 +37,11 @@ const Index = () => {
       
       <main>
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="畅销商品" filter="best_seller" />
+          <ProductSection title="新品上架" filter="new_arrival" />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>
-          <ProductSection title="新品上架" filter="new_arrival" />
+          <ProductSection title="畅销商品" filter="best_seller" />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>

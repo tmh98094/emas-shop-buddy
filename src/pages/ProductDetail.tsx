@@ -487,112 +487,112 @@ export default function ProductDetail() {
               {selectedVariantsDisplay}
             </div>
 
-            <div className="text-2xl lg:text-3xl font-bold text-primary">
-              RM {formatPrice(totalPrice)}
-            </div>
+            {currentStock > 0 && (
+              <>
+                <div className="text-2xl lg:text-3xl font-bold text-primary">
+                  RM {formatPrice(totalPrice)}
+                </div>
 
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p><T zh="重量" en="Weight" />: {getEffectiveWeight()}g</p>
-            </div>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p><T zh="重量" en="Weight" />: {getEffectiveWeight()}g</p>
+                </div>
+              </>
+            )}
 
 
-            {/* Variants Selection */}
-            {Object.keys(variantGroups).length > 0 && (
+            {/* Variants Selection - Choice Chips Style */}
+            {Object.keys(variantGroups).length > 0 && currentStock > 0 && (
               <div className="space-y-4 border-t border-b py-4">
                 <h3 className="font-semibold"><T zh="选择选项" en="Select Options" /></h3>
                 {Object.keys(variantGroups).map((variantName) => (
                   <div key={variantName} className="space-y-2">
                     <label className="text-sm font-medium">{variantName}</label>
-                    <Select
-                      value={selectedVariants[variantName]?.id || ""}
-                      onValueChange={(value) => {
-                        const variant = variantGroups[variantName].find((v: any) => v.id === value);
-                        if (variant) {
-                          setSelectedVariants(prev => ({
-                            ...prev,
-                            [variantName]: { 
-                              name: variant.name, 
-                              value: variant.value, 
-                              id: variant.id,
-                              weight_adjustment: variant.weight_adjustment 
-                            }
-                          }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select ${variantName}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {variantGroups[variantName].map((variant: any) => (
-                          <SelectItem key={variant.id} value={variant.id}>
-                            {variant.value}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-wrap gap-2">
+                      {variantGroups[variantName].map((variant: any) => (
+                        <Button
+                          key={variant.id}
+                          type="button"
+                          variant={selectedVariants[variantName]?.id === variant.id ? "default" : "outline"}
+                          className={`rounded-full px-4 ${selectedVariants[variantName]?.id === variant.id ? 'ring-2 ring-primary' : ''}`}
+                          onClick={() => {
+                            setSelectedVariants(prev => ({
+                              ...prev,
+                              [variantName]: { 
+                                name: variant.name, 
+                                value: variant.value, 
+                                id: variant.id,
+                                weight_adjustment: variant.weight_adjustment 
+                              }
+                            }));
+                          }}
+                        >
+                          {variant.value}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Quantity */}
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <T zh="数量" en="Quantity" />
-                {currentStock > 0 ? (
+            {currentStock > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <T zh="数量" en="Quantity" />
                   <Badge variant="secondary" className="text-xs">
                     <T zh="有货" en="In Stock" />
                   </Badge>
-                ) : (
-                  <Badge variant="destructive" className="text-xs">
-                    <T zh="缺货" en="Out of Stock" />
-                  </Badge>
-                )}
-              </h3>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="h-11 w-11 md:h-10 md:w-10"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="h-5 w-5 md:h-4 md:w-4" />
-                </Button>
-                <span className="text-xl md:text-lg font-semibold w-16 md:w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
-                  className="h-11 w-11 md:h-10 md:w-10"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="h-5 w-5 md:h-4 md:w-4" />
-                </Button>
+                </h3>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="h-11 w-11 md:h-10 md:w-10"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus className="h-5 w-5 md:h-4 md:w-4" />
+                  </Button>
+                  <span className="text-xl md:text-lg font-semibold w-16 md:w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+                    className="h-11 w-11 md:h-10 md:w-10"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus className="h-5 w-5 md:h-4 md:w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-3">
-              <Button
-                onClick={handleAddToCart}
-                disabled={currentStock <= 0}
-                size="lg"
-                className="w-full h-12 text-base md:h-10"
-                aria-label={currentStock === 0 ? "Out of stock" : "Add to cart"}
-              >
-                {currentStock === 0 ? (
-                  <T zh="缺货" en="Out of Stock" />
-                ) : (
+              {currentStock <= 0 ? (
+                <Button
+                  onClick={() => {
+                    const phoneNumber = "60122379178";
+                    const message = encodeURIComponent(
+                      `Hi! I'm interested in the product "${product.name}" which is currently out of stock. Can you let me know when it will be available?\n\nProduct link: ${window.location.origin}/product/${product.slug}`
+                    );
+                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+                    window.open(whatsappUrl, "_blank");
+                  }}
+                  size="lg"
+                  className="w-full h-12 text-base md:h-10"
+                >
+                  <T zh="联系客服进行下单" en="Contact Customer Service" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleAddToCart}
+                  size="lg"
+                  className="w-full h-12 text-base md:h-10"
+                  aria-label="Add to cart"
+                >
                   <T zh="加入购物车" en="Add to Cart" />
-                )}
-              </Button>
-              
-              {currentStock <= 0 && (
-                <OutOfStockWhatsApp
-                  productName={product.name}
-                  productSlug={product.slug}
-                />
+                </Button>
               )}
             </div>
           </div>

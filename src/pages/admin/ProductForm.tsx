@@ -75,6 +75,7 @@ export default function ProductForm() {
       return data;
     },
     enabled: !!formData.category_id,
+    staleTime: 0, // Ensure fresh data on edit
   });
 
   // Fetch product data if editing
@@ -606,6 +607,7 @@ export default function ProductForm() {
             <div>
               <Label htmlFor="sub_category">子分类</Label>
               <Select 
+                key={`${formData.category_id}-${formData.sub_category_id}`}
                 value={formData.sub_category_id} 
                 onValueChange={(value) => setFormData({ ...formData, sub_category_id: value })} 
                 disabled={!formData.category_id}
@@ -614,12 +616,6 @@ export default function ProductForm() {
                   <SelectValue placeholder="选择子分类" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Show existing sub_category if it's not in the current list (preserves value during loading) */}
-                  {formData.sub_category_id && !subCategories?.find(sc => sc.id === formData.sub_category_id) && (
-                    <SelectItem key={formData.sub_category_id} value={formData.sub_category_id}>
-                      Current Selection
-                    </SelectItem>
-                  )}
                   {subCategories?.map((subCat) => (
                     <SelectItem key={subCat.id} value={subCat.id}>{subCat.name}</SelectItem>
                   ))}

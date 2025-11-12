@@ -122,7 +122,7 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               <T zh="快速查看" en="Quick View" />
             </Button>
             
-            <div className="aspect-square overflow-hidden bg-muted">
+            <div className="aspect-square overflow-hidden bg-muted relative">
             <img
               src={displayImage}
               alt={product.name}
@@ -133,8 +133,8 @@ export const ProductCard = ({ product, imageUrl }: ProductCardProps) => {
               height="400"
             />
             {product.stock === 0 && !hasVariants && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white font-semibold text-sm"><T zh="缺货" en="Out of Stock" /></span>
+              <div className="absolute inset-0 bg-gray-500/70 flex items-center justify-center">
+                <span className="text-white font-bold text-lg"><T zh="缺货" en="Out of Stock" /></span>
               </div>
             )}
             {hasVariants && (

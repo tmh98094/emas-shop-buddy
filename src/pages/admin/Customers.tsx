@@ -36,13 +36,14 @@ export default function Customers() {
       const { data: profiles, error: profileError } = await profileQuery.order("created_at", { ascending: false });
       if (profileError) throw profileError;
 
-      // Fetch orders for registered users
+      // Fetch orders for registered users (only completed payments)
       const registeredCustomers = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { data: orders } = await supabase
             .from("orders")
             .select("total_amount")
-            .eq("user_id", profile.id);
+            .eq("user_id", profile.id)
+            .eq("payment_status", "completed");
 
           return {
             id: profile.id,
@@ -70,9 +71,9 @@ export default function Customers() {
 
       const { data: guestOrders } = await guestOrdersQuery;
 
-      // Group guest orders by phone number
+      // Group guest orders by phone number (only completed payments)
       const guestCustomersMap = new Map();
-      guestOrders?.forEach(order => {
+      guestOrders?.filter(order => order.payment_status === "completed").forEach(order => {
         const phone = order.phone_number;
         if (!guestCustomersMap.has(phone)) {
           guestCustomersMap.set(phone, {

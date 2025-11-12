@@ -56,28 +56,14 @@ export const CategorySection = () => {
               {displayedCategories.map((category) => (
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
                   <Card
-                    className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all"
+                    className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all border-2 hover:border-primary"
                     onClick={() => navigate(`/categories/${category.id}/subcategories`)}
                   >
-                    <div className="aspect-square relative bg-secondary">
-                      {category.image_url ? (
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                          decoding="async"
-                          width="400"
-                          height="400"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-4xl">💍</span>
-                        </div>
-                      )}
+                    <div className="aspect-square relative bg-secondary/50 flex items-center justify-center">
+                      <span className="text-5xl">💍</span>
                     </div>
                     <div className="p-4 text-center">
-                      <h3 className="font-semibold">{category.name}</h3>
+                      <h3 className="font-bold group-hover:text-primary transition-colors">{category.name}</h3>
                     </div>
                   </Card>
                 </CarouselItem>

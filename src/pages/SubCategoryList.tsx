@@ -99,26 +99,16 @@ export default function SubCategoryList() {
             {subCategories?.map((subCategory) => (
               <Card
                 key={subCategory.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 group overflow-hidden"
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-primary"
                 onClick={() => navigate(`/products?subCategory=${subCategory.id}`)}
               >
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={
-                      subCategory.image_url ||
-                      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80"
-                    }
-                    alt={subCategory.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                <CardContent className="p-6 text-center">
+                  <div className="mb-4 text-4xl">✨</div>
+                  <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">
                     {subCategory.name}
                   </h3>
                   {subCategory.description && (
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                       {subCategory.description}
                     </p>
                   )}

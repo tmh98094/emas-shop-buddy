@@ -1,4 +1,4 @@
-import logoUrl from '@/assets/logo.png';
+import logoUrl from '@/assets/jj-emas-logo.png';
 
 export interface InvoiceData {
   orderNumber: string;

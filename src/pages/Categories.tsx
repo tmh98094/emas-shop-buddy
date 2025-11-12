@@ -87,33 +87,20 @@ export default function Categories() {
               return (
                 <Card
                   key={category.id}
-                  className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all"
+                  className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all border-2 hover:border-primary"
                   onClick={() => handleCategoryClick(category.id)}
                 >
-                  <div className="aspect-square overflow-hidden bg-muted">
-                    {category.image_url ? (
-                      <img
-                        src={category.image_url}
-                        alt={category.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-6xl">
-                        💍
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                  <CardContent className="p-8 text-center">
+                    <div className="mb-4 text-5xl">💍</div>
+                    <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">
                       {category.name}
                     </h3>
                     {category.description && (
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                         {category.description}
                       </p>
                     )}
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground font-medium">
                       {(category as any).productCount || 0}{" "}
                       <T zh="件商品" en="Products" />
                     </p>
