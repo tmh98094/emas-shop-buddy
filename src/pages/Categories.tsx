@@ -8,9 +8,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { T } from "@/components/T";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SafeHtmlContent } from "@/components/SafeHtmlContent";
+import { getDynamicFontSize } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Categories() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
@@ -84,25 +88,31 @@ export default function Categories() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories?.map((category) => {
+              const displayName = language === "zh" ? category.name_zh || category.name : category.name;
+              const displayDesc = language === "zh" ? category.description_zh || category.description : category.description;
+              
               return (
                 <Card
                   key={category.id}
-                  className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary hover:scale-[1.02]"
+                  className="overflow-hidden cursor-pointer group hover:shadow-2xl transition-all duration-300 border-2 border-l-4 border-primary/20 hover:border-primary hover:scale-[1.03] h-full"
                   onClick={() => handleCategoryClick(category.id)}
                 >
-                  <CardContent className="p-8 text-center bg-gradient-to-br from-background to-muted/20">
-                    <h3 className="font-bold text-2xl mb-3 group-hover:text-primary transition-colors leading-relaxed">
-                      {category.name}
-                    </h3>
-                    {category.description && (
-                      <p className="text-base text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-                        {category.description}
-                      </p>
-                    )}
-                    <p className="text-base text-muted-foreground font-semibold">
-                      {(category as any).productCount || 0}{" "}
-                      <T zh="件商品" en="Products" />
-                    </p>
+                  <CardContent className="p-8 md:p-10 flex flex-col h-full justify-between bg-gradient-to-br from-primary/5 via-secondary/10 to-background group-hover:from-primary/10 group-hover:via-secondary/15 transition-all duration-300 min-h-[180px]">
+                    <div className="flex-1 flex flex-col justify-center text-center mb-4">
+                      <h3 className={`font-extrabold ${getDynamicFontSize(displayName)} mb-3 group-hover:text-primary transition-colors leading-tight tracking-tight line-clamp-3 drop-shadow-sm`}>
+                        {displayName}
+                      </h3>
+                      {displayDesc && (
+                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed line-clamp-2">
+                          {displayDesc}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-center">
+                      <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-foreground font-bold px-4 py-1 group-hover:from-primary/30 group-hover:to-accent/30 transition-all">
+                        {(category as any).productCount || 0} <T zh="件商品" en="Products" />
+                      </Badge>
+                    </div>
                   </CardContent>
                 </Card>
               );

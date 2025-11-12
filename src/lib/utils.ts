@@ -16,3 +16,12 @@ export const validateICNumber = (ic: string): boolean => {
 export const formatICNumber = (ic: string): string => {
   return ic.replace(/\D/g, '');
 };
+
+// Dynamic font size based on text length for responsive card text
+export const getDynamicFontSize = (text: string): string => {
+  const length = text.length;
+  if (length <= 10) return "text-2xl md:text-3xl";
+  if (length <= 20) return "text-xl md:text-2xl";
+  if (length <= 30) return "text-lg md:text-xl";
+  return "text-base md:text-lg";
+};

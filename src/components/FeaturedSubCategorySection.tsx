@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { T } from "@/components/T";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDynamicFontSize } from "@/lib/utils";
 
 export const FeaturedSubCategorySection = () => {
   const navigate = useNavigate();
@@ -64,14 +65,14 @@ export const FeaturedSubCategorySection = () => {
               {subCategories.map((subCategory) => (
                 <CarouselItem key={subCategory.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 lg:basis-1/6">
                   <Card
-                    className="cursor-pointer group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary hover:scale-[1.02] h-full"
+                    className="cursor-pointer group hover:shadow-2xl transition-all duration-300 border-2 border-l-4 border-accent/20 hover:border-accent hover:scale-[1.03] h-full overflow-hidden"
                     onClick={() => handleSubCategoryClick(subCategory.id)}
                   >
-                    <CardContent className="p-6 md:p-8 flex flex-col h-full justify-center text-center bg-gradient-to-br from-background to-muted/20 min-h-[120px]">
-                      <h3 className="font-bold text-base md:text-lg mb-2 group-hover:text-primary transition-colors leading-relaxed">
+                    <CardContent className="p-6 md:p-8 flex flex-col h-full justify-center text-center bg-gradient-to-br from-accent/5 via-muted/10 to-background group-hover:from-accent/10 group-hover:via-muted/15 transition-all duration-300 min-h-[140px]">
+                      <h3 className={`font-extrabold ${getDynamicFontSize(subCategory.name)} mb-2 group-hover:text-accent transition-colors leading-tight tracking-tight line-clamp-2 drop-shadow-sm`}>
                         {subCategory.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-semibold line-clamp-1">
                         {(subCategory.categories as any)?.name}
                       </p>
                     </CardContent>
