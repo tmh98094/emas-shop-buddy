@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "@/hooks/useCart";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import Index from "./pages/Index";
@@ -112,6 +113,9 @@ const App = () => {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith('/admin');
     const isMobile = useIsMobile();
+    
+    // Track visitor analytics (bot-filtered)
+    useAnalytics();
 
     return (
       <>

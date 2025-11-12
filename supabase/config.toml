@@ -3,6 +3,9 @@ project_id = "oscgxbtukrppycrchvdl"
 [functions.auto-sync-pending-payments]
 verify_jwt = false
 
+[functions.expire-unpaid-orders]
+verify_jwt = false
+
 [functions.create-stripe-checkout]
 verify_jwt = true
 

@@ -1006,6 +1006,66 @@ export type Database = {
           },
         ]
       }
+      visitor_analytics: {
+        Row: {
+          browser: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          first_visit: string
+          id: string
+          is_bot: boolean
+          last_visit: string
+          page_views: number
+          pages_visited: Json
+          referrer: string | null
+          session_duration: number | null
+          session_id: string
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          first_visit?: string
+          id?: string
+          is_bot?: boolean
+          last_visit?: string
+          page_views?: number
+          pages_visited?: Json
+          referrer?: string | null
+          session_duration?: number | null
+          session_id: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          first_visit?: string
+          id?: string
+          is_bot?: boolean
+          last_visit?: string
+          page_views?: number
+          pages_visited?: Json
+          referrer?: string | null
+          session_duration?: number | null
+          session_id?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
