@@ -5,10 +5,26 @@ interface BotDetectionResult {
   reason?: string;
 }
 
-const BOT_USER_AGENTS = [
+// Only block obvious scrapers and malicious bots
+// Whitelist legitimate bots for SEO/social media
+const MALICIOUS_BOT_USER_AGENTS = [
+  'scrapy',
+  'python-requests',
+  'curl',
+  'wget',
+  'go-http-client',
+  'axios',
+  'postman',
+  'selenium',
+  'headless',
+  'phantom',
+];
+
+// Bots we want to allow for SEO/social media but not track in analytics
+const LEGITIMATE_BOT_USER_AGENTS = [
   'googlebot',
   'bingbot',
-  'slurp', // Yahoo
+  'slurp',
   'duckduckbot',
   'baiduspider',
   'yandexbot',
@@ -23,16 +39,6 @@ const BOT_USER_AGENTS = [
   'applebot',
   'pinterest',
   'tumblr',
-  'spider',
-  'crawler',
-  'bot',
-  'scrapy',
-  'python-requests',
-  'curl',
-  'wget',
-  'go-http-client',
-  'axios',
-  'postman',
 ];
 
 export const detectBot = (): BotDetectionResult => {
@@ -41,52 +47,62 @@ export const detectBot = (): BotDetectionResult => {
     return { isBot: true, reason: 'Not in browser environment' };
   }
 
-  // Check for headless browser
-  if (navigator.webdriver) {
-    return { isBot: true, reason: 'Webdriver detected' };
-  }
-
-  // Check user agent
   const userAgent = navigator.userAgent.toLowerCase();
-  for (const botPattern of BOT_USER_AGENTS) {
+
+  // Check for malicious scrapers first
+  for (const botPattern of MALICIOUS_BOT_USER_AGENTS) {
     if (userAgent.includes(botPattern)) {
-      return { isBot: true, reason: `Bot user agent: ${botPattern}` };
+      console.log('[Analytics] Blocked malicious bot:', botPattern);
+      return { isBot: true, reason: `Malicious bot: ${botPattern}` };
     }
   }
 
-  // Check for missing browser features
-  if (!navigator.languages || navigator.languages.length === 0) {
-    return { isBot: true, reason: 'No languages detected' };
+  // Check for legitimate bots (for tracking purposes only)
+  for (const botPattern of LEGITIMATE_BOT_USER_AGENTS) {
+    if (userAgent.includes(botPattern)) {
+      console.log('[Analytics] Detected legitimate bot:', botPattern);
+      return { isBot: true, reason: `Legitimate bot: ${botPattern}` };
+    }
   }
 
-  // Check for suspicious screen dimensions
-  if (screen.width === 0 || screen.height === 0) {
-    return { isBot: true, reason: 'Invalid screen dimensions' };
-  }
-
-  // Check for presence of plugins (headless browsers often have none)
-  if (navigator.plugins && navigator.plugins.length === 0 && !userAgent.includes('mobile')) {
-    // Mobile devices legitimately have no plugins, so exclude them
-    return { isBot: true, reason: 'No browser plugins' };
-  }
-
-  // Check for Chrome headless
-  if (userAgent.includes('headless')) {
-    return { isBot: true, reason: 'Headless browser detected' };
+  // Check for headless browser indicators
+  if (navigator.webdriver) {
+    console.log('[Analytics] Detected webdriver');
+    return { isBot: true, reason: 'Webdriver detected' };
   }
 
   // Check for automation frameworks
   // @ts-ignore - checking for automation properties
   if (window.callPhantom || window._phantom || window.phantom) {
+    console.log('[Analytics] Detected PhantomJS');
     return { isBot: true, reason: 'PhantomJS detected' };
   }
 
   // @ts-ignore
   if (window.__nightmare) {
+    console.log('[Analytics] Detected Nightmare');
     return { isBot: true, reason: 'Nightmare detected' };
   }
 
+  // Less aggressive checks - only flag if multiple red flags
+  const redFlags: string[] = [];
+
+  if (!navigator.languages || navigator.languages.length === 0) {
+    redFlags.push('no_languages');
+  }
+
+  if (screen.width === 0 || screen.height === 0) {
+    redFlags.push('invalid_screen');
+  }
+
+  // Only flag as bot if multiple red flags (avoid false positives)
+  if (redFlags.length >= 2) {
+    console.log('[Analytics] Multiple bot indicators:', redFlags);
+    return { isBot: true, reason: `Multiple bot indicators: ${redFlags.join(', ')}` };
+  }
+
   // All checks passed - likely human
+  console.log('[Analytics] Human visitor detected');
   return { isBot: false };
 };
 

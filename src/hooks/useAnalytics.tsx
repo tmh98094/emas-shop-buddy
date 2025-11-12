@@ -43,44 +43,79 @@ export const useAnalytics = () => {
   }, [location.pathname, isBot]);
 
   const initializeSession = async () => {
-    if (!sessionIdRef.current) return;
+    if (!sessionIdRef.current) {
+      console.error('[Analytics] No session ID available');
+      return;
+    }
 
     try {
-      const { data: existingSession } = await supabase
+      console.log('[Analytics] Initializing session:', sessionIdRef.current);
+
+      const { data: existingSession, error: selectError } = await supabase
         .from('visitor_analytics')
         .select('*')
         .eq('session_id', sessionIdRef.current)
-        .single();
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('[Analytics] Error checking existing session:', selectError);
+      }
 
       if (!existingSession) {
         // Create new session
         const params = new URLSearchParams(window.location.search);
+        const { data: { user } } = await supabase.auth.getUser();
         
-        await supabase.from('visitor_analytics').insert({
+        const sessionData = {
           session_id: sessionIdRef.current,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user?.id || null,
           first_visit: new Date().toISOString(),
           last_visit: new Date().toISOString(),
           page_views: 1,
           pages_visited: [location.pathname],
           referrer: document.referrer || null,
-          utm_source: params.get('utm_source'),
-          utm_medium: params.get('utm_medium'),
-          utm_campaign: params.get('utm_campaign'),
+          utm_source: params.get('utm_source') || null,
+          utm_medium: params.get('utm_medium') || null,
+          utm_campaign: params.get('utm_campaign') || null,
           device_type: getDeviceType(),
           browser: getBrowserName(),
           is_bot: false,
           session_duration: 0,
-        });
+        };
+
+        console.log('[Analytics] Creating new session:', sessionData);
+
+        const { error: insertError } = await supabase
+          .from('visitor_analytics')
+          .insert(sessionData);
+
+        if (insertError) {
+          console.error('[Analytics] Failed to create session:', insertError);
+          // Retry once after 2 seconds
+          setTimeout(async () => {
+            console.log('[Analytics] Retrying session creation...');
+            const { error: retryError } = await supabase
+              .from('visitor_analytics')
+              .insert(sessionData);
+            if (retryError) {
+              console.error('[Analytics] Retry failed:', retryError);
+            } else {
+              console.log('[Analytics] Retry succeeded');
+            }
+          }, 2000);
+        } else {
+          console.log('[Analytics] Session created successfully');
+        }
 
         pageViewsRef.current = [location.pathname];
       } else {
+        console.log('[Analytics] Existing session found:', existingSession);
         pageViewsRef.current = Array.isArray(existingSession.pages_visited) 
           ? (existingSession.pages_visited as string[])
           : [];
       }
     } catch (error) {
-      console.error('Analytics initialization error:', error);
+      console.error('[Analytics] Unexpected error during initialization:', error);
     }
   };
 
@@ -95,7 +130,8 @@ export const useAnalytics = () => {
     pageViewsRef.current.push(pathname);
 
     try {
-      await supabase
+      console.log('[Analytics] Tracking page view:', pathname);
+      const { error } = await supabase
         .from('visitor_analytics')
         .update({
           last_visit: new Date().toISOString(),
@@ -104,8 +140,14 @@ export const useAnalytics = () => {
           session_duration: Math.floor((Date.now() - sessionStartRef.current) / 1000),
         })
         .eq('session_id', sessionIdRef.current);
+
+      if (error) {
+        console.error('[Analytics] Page view tracking error:', error);
+      } else {
+        console.log('[Analytics] Page view tracked successfully');
+      }
     } catch (error) {
-      console.error('Page view tracking error:', error);
+      console.error('[Analytics] Unexpected error tracking page view:', error);
     }
   };
 
