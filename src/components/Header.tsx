@@ -18,7 +18,6 @@ export const Header = () => {
     { name: "首页", href: "/", en: "Home" },
     { name: "产品", href: "/products", en: "Shop" },
     { name: "分类", href: "/categories", en: "Categories" },
-    { name: "关于我们", href: "/about", en: "About" },
     { name: "联系我们", href: "/contact", en: "Contact" },
     { name: "查询订单", href: "/order-tracking", en: "Track Order" },
   ];
