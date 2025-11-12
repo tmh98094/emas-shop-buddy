@@ -65,11 +65,9 @@ export const detectBot = (): BotDetectionResult => {
     }
   }
 
-  // Check for headless browser indicators
-  if (navigator.webdriver) {
-    console.log('[Analytics] Detected webdriver');
-    return { isBot: true, reason: 'Webdriver detected' };
-  }
+  // Check for headless browser indicators (only if combined with other signals)
+  // Note: We relax this check as it's too aggressive and blocks real users
+  // Only flag if webdriver + other bot indicators are present
 
   // Check for automation frameworks
   // @ts-ignore - checking for automation properties

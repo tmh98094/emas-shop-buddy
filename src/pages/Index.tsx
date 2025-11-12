@@ -28,9 +28,9 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SEOHead 
-        title="JJ Emas - 马来西亚与新加坡最受欢迎的黄金珠宝店"
-        description="在JJ Emas探索精致的916和999黄金珠宝。马来西亚与新加坡信赖的黄金珠宝店，提供项链、戒指、手镯和耳环，价格竞争力强，品质保证。"
-        keywords="JJ Emas, 马来西亚黄金珠宝, 新加坡黄金珠宝, 916黄金, 999黄金, 黄金项链, 黄金戒指, 黄金手镯, 黄金耳环, emas Malaysia, kedai emas"
+        title="JJ Emas - 黄金饰品"
+        description="探索精致的916和999黄金珠宝，提供项链、戒指、手镯和耳环，价格实惠，品质保证。"
+        keywords="JJ Emas, 黄金饰品, 916黄金, 999黄金, 黄金项链, 黄金戒指, 黄金手镯, 黄金耳环"
       />
       <GoldPriceBanner />
       <Header />
