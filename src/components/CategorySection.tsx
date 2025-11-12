@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./ui/carousel";
@@ -56,15 +56,14 @@ export const CategorySection = () => {
               {displayedCategories.map((category) => (
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
                   <Card
-                    className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all border-2 hover:border-primary"
+                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary hover:scale-[1.02] h-full"
                     onClick={() => navigate(`/categories/${category.id}/subcategories`)}
                   >
-                    <div className="aspect-square relative bg-secondary/50 flex items-center justify-center">
-                      <span className="text-5xl">💍</span>
-                    </div>
-                    <div className="p-4 text-center">
-                      <h3 className="font-bold group-hover:text-primary transition-colors">{category.name}</h3>
-                    </div>
+                    <CardContent className="p-6 md:p-8 flex flex-col h-full justify-center text-center bg-gradient-to-br from-background to-muted/20 min-h-[120px]">
+                      <h3 className="font-bold text-lg md:text-xl group-hover:text-primary transition-colors leading-relaxed">
+                        {category.name}
+                      </h3>
+                    </CardContent>
                   </Card>
                 </CarouselItem>
               ))}

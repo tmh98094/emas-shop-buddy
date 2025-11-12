@@ -77,20 +77,15 @@ export default function SubCategoryList() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Always show "View All Items" card first */}
             <Card
-              className="cursor-pointer hover:shadow-lg transition-all duration-300 group overflow-hidden"
+              className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-2 hover:border-primary hover:scale-[1.02]"
               onClick={() => navigate(`/products?category=${categoryId}`)}
             >
-              <div className="aspect-square overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="text-4xl mb-4">🛍️</div>
-                  <h3 className="text-2xl font-bold text-primary group-hover:scale-110 transition-transform">
-                    <T zh="全部商品" en="All Products" />
-                  </h3>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  <T zh="浏览此分类下的所有产品" en="Browse all products in this category" />
+              <CardContent className="p-8 text-center bg-gradient-to-br from-primary/10 to-primary/5 min-h-[160px] flex flex-col items-center justify-center">
+                <h3 className="font-bold text-2xl mb-3 group-hover:text-primary transition-colors leading-relaxed">
+                  <T zh="全部商品" en="All Products" />
+                </h3>
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  <T zh="浏览所有商品" en="Browse all items" />
                 </p>
               </CardContent>
             </Card>
@@ -99,20 +94,19 @@ export default function SubCategoryList() {
             {subCategories?.map((subCategory) => (
               <Card
                 key={subCategory.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 group border-2 hover:border-primary"
+                className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-2 hover:border-primary hover:scale-[1.02]"
                 onClick={() => navigate(`/products?subCategory=${subCategory.id}`)}
               >
-                <CardContent className="p-6 text-center">
-                  <div className="mb-4 text-4xl">✨</div>
-                  <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">
+                <CardContent className="p-8 text-center bg-gradient-to-br from-background to-muted/20 min-h-[160px] flex flex-col items-center justify-center">
+                  <h3 className="font-bold text-2xl mb-3 group-hover:text-primary transition-colors leading-relaxed">
                     {subCategory.name}
                   </h3>
                   {subCategory.description && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                    <p className="text-base text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
                       {subCategory.description}
                     </p>
                   )}
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-sm">
                     {(subCategory as any).products?.[0]?.count || 0}{" "}
                     <T zh="产品" en="Products" />
                   </Badge>

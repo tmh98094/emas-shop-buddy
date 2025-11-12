@@ -27,7 +27,7 @@ export default function Categories() {
         data.map(async (category) => {
           const { count, error } = await supabase
             .from("products")
-            .select("id", { count: "exact", head: true })
+            .select("*", { count: "exact", head: true })
             .eq("category_id", category.id);
           
           if (error) {
@@ -87,20 +87,19 @@ export default function Categories() {
               return (
                 <Card
                   key={category.id}
-                  className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all border-2 hover:border-primary"
+                  className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary hover:scale-[1.02]"
                   onClick={() => handleCategoryClick(category.id)}
                 >
-                  <CardContent className="p-8 text-center">
-                    <div className="mb-4 text-5xl">💍</div>
-                    <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">
+                  <CardContent className="p-8 text-center bg-gradient-to-br from-background to-muted/20">
+                    <h3 className="font-bold text-2xl mb-3 group-hover:text-primary transition-colors leading-relaxed">
                       {category.name}
                     </h3>
                     {category.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                      <p className="text-base text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
                         {category.description}
                       </p>
                     )}
-                    <p className="text-sm text-muted-foreground font-medium">
+                    <p className="text-base text-muted-foreground font-semibold">
                       {(category as any).productCount || 0}{" "}
                       <T zh="件商品" en="Products" />
                     </p>

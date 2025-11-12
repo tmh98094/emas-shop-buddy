@@ -64,17 +64,14 @@ export const FeaturedSubCategorySection = () => {
               {subCategories.map((subCategory) => (
                 <CarouselItem key={subCategory.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 lg:basis-1/6">
                   <Card
-                    className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all border-2 hover:border-primary"
+                    className="cursor-pointer group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary hover:scale-[1.02] h-full"
                     onClick={() => handleSubCategoryClick(subCategory.id)}
                   >
-                    <CardContent className="p-4 text-center">
-                      <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
-                        ✨
-                      </div>
-                      <h3 className="font-bold text-sm group-hover:text-primary transition-colors mb-1">
+                    <CardContent className="p-6 md:p-8 flex flex-col h-full justify-center text-center bg-gradient-to-br from-background to-muted/20 min-h-[120px]">
+                      <h3 className="font-bold text-base md:text-lg mb-2 group-hover:text-primary transition-colors leading-relaxed">
                         {subCategory.name}
                       </h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {(subCategory.categories as any)?.name}
                       </p>
                     </CardContent>
