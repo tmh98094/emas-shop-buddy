@@ -26,21 +26,48 @@ const AdminAnalytics = () => {
   });
 
   // Check authorization
-  const { isLoading: isCheckingAuth } = useQuery({
+  const { isLoading: isCheckingAuth, error: authError } = useQuery({
     queryKey: ["admin-auth-check"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('[Analytics] User error:', userError);
+        return false;
+      }
+
+      console.log('[Analytics] Checking admin role for user:', user.id);
 
       const { data, error } = await supabase.rpc('has_role', {
         _user_id: user.id,
         _role: 'admin'
       });
 
-      const authorized = !error && data === true;
+      if (error) {
+        console.error('[Analytics] RPC error:', error);
+        // Fallback: Check user_roles table directly
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (roleError) {
+          console.error('[Analytics] Role check error:', roleError);
+        }
+
+        const authorized = !roleError && !!roleData;
+        console.log('[Analytics] Fallback authorization:', authorized);
+        setIsAuthorized(authorized);
+        return authorized;
+      }
+
+      const authorized = data === true;
+      console.log('[Analytics] Authorization result:', authorized);
       setIsAuthorized(authorized);
       return authorized;
     },
+    retry: false,
   });
 
   // Fetch sales data
@@ -328,7 +355,22 @@ const AdminAnalytics = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You are not authorized to view this page.
+            {authError ? (
+              <div className="space-y-2">
+                <p>An error occurred while checking authorization.</p>
+                <p className="text-sm opacity-80">Error: {authError.message}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => window.location.reload()}
+                  className="mt-2"
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              'You are not authorized to view this page. Please ensure you have admin role assigned.'
+            )}
           </AlertDescription>
         </Alert>
       </div>
