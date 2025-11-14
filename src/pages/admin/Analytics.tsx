@@ -14,6 +14,9 @@ import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { formatPrice } from "@/lib/price-utils";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 const AdminAnalytics = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -23,7 +26,7 @@ const AdminAnalytics = () => {
   });
 
   // Check authorization
-  useQuery({
+  const { isLoading: isCheckingAuth } = useQuery({
     queryKey: ["admin-auth-check"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -42,7 +45,7 @@ const AdminAnalytics = () => {
   });
 
   // Fetch sales data
-  const { data: salesData } = useQuery({
+  const { data: salesData, isLoading: isLoadingSales } = useQuery({
     queryKey: ["sales-analytics"],
     queryFn: async () => {
       const { data: orders } = await supabase
@@ -99,7 +102,7 @@ const AdminAnalytics = () => {
   });
 
   // Fetch top products
-  const { data: topProducts } = useQuery({
+  const { data: topProducts, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["top-products"],
     queryFn: async () => {
       const { data } = await supabase
@@ -132,7 +135,7 @@ const AdminAnalytics = () => {
   });
 
   // Fetch category performance
-  const { data: categoryPerformance } = useQuery({
+  const { data: categoryPerformance, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["category-performance"],
     queryFn: async () => {
       const { data } = await supabase
@@ -161,7 +164,7 @@ const AdminAnalytics = () => {
   });
 
   // Fetch low stock items
-  const { data: lowStockItems } = useQuery({
+  const { data: lowStockItems, isLoading: isLoadingStock } = useQuery({
     queryKey: ["low-stock-items"],
     queryFn: async () => {
       const { data } = await supabase
@@ -174,9 +177,10 @@ const AdminAnalytics = () => {
   });
 
   // Fetch visitor analytics
-  const { data: visitorData } = useQuery({
+  const { data: visitorData, isLoading: isLoadingVisitors } = useQuery({
     queryKey: ["visitor-analytics", dateRange],
     enabled: isAuthorized,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       if (!dateRange?.from) return null;
 
@@ -188,7 +192,8 @@ const AdminAnalytics = () => {
         .select("*")
         .gte("first_visit", startDate)
         .lte("first_visit", endDate)
-        .order("first_visit", { ascending: true });
+        .order("first_visit", { ascending: true })
+        .limit(200000);
 
       if (error) {
         console.error('[Analytics] Error fetching visitor data:', error);
@@ -305,15 +310,26 @@ const AdminAnalytics = () => {
     },
   });
 
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+  const totalRevenue = (topProducts as any[])?.reduce((sum: number, p: any) => sum + p.revenue, 0) || 0;
+
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthorized) {
     return (
-      <div className="container mx-auto p-6">
-        <Alert>
+      <div className="container mx-auto p-4 sm:p-6">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You don't have permission to access this analytics dashboard.
+            You are not authorized to view this page.
           </AlertDescription>
         </Alert>
       </div>
@@ -321,237 +337,320 @@ const AdminAnalytics = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Analytics Dashboard
+        </h1>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[300px] justify-start text-left font-normal">
+            <Button variant="outline" className="w-full sm:w-[300px] justify-start text-left font-normal">
               <Calendar className="mr-2 h-4 w-4" />
               {dateRange?.from ? (
                 dateRange.to ? (
                   <>
-                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                    {format(dateRange.to, "LLL dd, y")}
+                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
                   </>
                 ) : (
                   format(dateRange.from, "LLL dd, y")
                 )
               ) : (
-                <span>Pick a date range</span>
+                <span>Pick a date</span>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <div className="p-3 space-y-2 border-b">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
-              >
-                Last 7 days
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => setDateRange({ from: subDays(new Date(), 14), to: new Date() })}
-              >
-                Last 14 days
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => setDateRange({ from: subDays(new Date(), 30), to: new Date() })}
-              >
-                Last 30 days
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => setDateRange({ from: subDays(new Date(), 90), to: new Date() })}
-              >
-                Last 90 days
-              </Button>
+          <PopoverContent className="w-screen sm:w-auto p-0" align="end">
+            <div className="flex flex-col sm:flex-row">
+              <div className="border-b sm:border-b-0 sm:border-r p-3 space-y-2">
+                <p className="text-sm font-medium mb-3">Quick Presets</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => setDateRange({ from: new Date(), to: new Date() })}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
+                >
+                  Last 7 days
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => setDateRange({ from: subDays(new Date(), 14), to: new Date() })}
+                >
+                  Last 14 days
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => setDateRange({ from: subDays(new Date(), 30), to: new Date() })}
+                >
+                  Last 30 days
+                </Button>
+              </div>
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={1}
+                className="pointer-events-auto"
+              />
             </div>
-            <CalendarComponent
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-            />
           </PopoverContent>
         </Popover>
       </div>
 
-      {/* Visitor Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Real Visitors</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{visitorData?.realVisitors || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Human visitors tracked
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bot Traffic</CardTitle>
-            <Bot className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{visitorData?.botTraffic || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Filtered out from analytics
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{visitorData?.totalPageViews || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Total pages viewed
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {visitorData?.conversionRate?.toFixed(2)}%
+      {/* Visitor Analytics Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Visitor Analytics</h2>
+        
+        {/* Visitor Metrics */}
+        {isLoadingVisitors ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+          </div>
+        ) : visitorData ? (
+          <>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Real Visitors</CardTitle>
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    {visitorData.realVisitors}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Human visitors tracked
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-destructive/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Bot Traffic</CardTitle>
+                  <div className="p-2 bg-destructive/10 rounded-full">
+                    <Bot className="h-5 w-5 text-destructive" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-destructive">
+                    {visitorData.botTraffic}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Filtered automated traffic
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+                  <div className="p-2 bg-blue-500/10 rounded-full">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-500">
+                    {visitorData.totalPageViews}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total pages viewed
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                  <div className="p-2 bg-green-500/10 rounded-full">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">
+                    {visitorData.conversionRate}%
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Visitors to orders
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Visitors to purchases
+
+            {/* Visitor Trends Chart */}
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Visitor Trends</CardTitle>
+                <CardDescription>Daily visitor and page view statistics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {visitorData.dailyTrends.length > 0 ? (
+                  <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={visitorData.dailyTrends}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="date" className="text-xs" />
+                        <YAxis className="text-xs" />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Line type="monotone" dataKey="visitors" stroke="hsl(var(--chart-1))" name="Visitors" strokeWidth={2} />
+                        <Line type="monotone" dataKey="pageViews" stroke="hsl(var(--chart-2))" name="Page Views" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="p-4 bg-muted/50 rounded-full mb-4">
+                      <Eye className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium mb-1">No visitor trends data</p>
+                    <p className="text-xs text-muted-foreground max-w-sm">
+                      Data will appear as visitors browse your site over time.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="p-4 bg-muted/50 rounded-full mb-4">
+              <Eye className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium mb-1">No visitor data yet</p>
+            <p className="text-xs text-muted-foreground max-w-sm">
+              Analytics tracking is active. Data will appear as visitors browse your site.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
 
-      {/* Visitor Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visitor Trends</CardTitle>
-          <CardDescription>Daily visitors and page views</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={{}} className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={visitorData?.dailyTrends || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Line type="monotone" dataKey="visitors" stroke="hsl(var(--chart-1))" name="Visitors" />
-                <Line type="monotone" dataKey="pageViews" stroke="hsl(var(--chart-2))" name="Page Views" />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
       {/* Traffic Sources & Device Breakdown */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 mt-4">
         <Card>
           <CardHeader>
             <CardTitle>Traffic Sources</CardTitle>
             <CardDescription>Where your visitors come from</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {visitorData?.trafficSources && visitorData.trafficSources.length > 0 ? (
-                <div className="space-y-2">
-                  {(visitorData.trafficSources as any[]).map((source: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{source.source}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">{source.sessions} sessions</span>
-                        <span className="text-sm text-muted-foreground">({source.pageViews} views)</span>
-                      </div>
+            {visitorData.trafficSources.length > 0 ? (
+              <div className="space-y-3">
+                {visitorData.trafficSources.map((source: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div>
+                      <div className="font-medium">{source.source}</div>
+                      <div className="text-sm text-muted-foreground">{source.pageViews} page views</div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No traffic data available yet. Tracking is active - data will appear as visitors arrive.</p>
-              )}
-            </div>
+                    <Badge variant="secondary">{source.sessions} sessions</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-sm text-muted-foreground">No traffic source data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Device Breakdown</CardTitle>
-            <CardDescription>Visitor device types</CardDescription>
+            <CardDescription>Devices used by visitors</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={{}} className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={visitorData?.deviceBreakdown || []}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: ${entry.value}`}
-                    outerRadius={80}
-                    fill="hsl(var(--chart-1))"
-                    dataKey="value"
-                  >
-                    {(visitorData?.deviceBreakdown || []).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            {visitorData.deviceBreakdown.length > 0 ? (
+              <ChartContainer config={{}} className="h-[250px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={visitorData.deviceBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name}: ${entry.value}`}
+                      outerRadius={80}
+                      fill="hsl(var(--chart-1))"
+                      dataKey="value"
+                    >
+                      {visitorData.deviceBreakdown.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-sm text-muted-foreground">No device data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Page Performance */}
-      <Card>
+      {/* Top Pages */}
+      <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Top Pages</CardTitle>
-          <CardDescription>Most visited pages</CardDescription>
+          <CardTitle>Top Visited Pages</CardTitle>
+          <CardDescription>Most popular pages on your site</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {visitorData?.pagePerformance && visitorData.pagePerformance.length > 0 ? (
-              (visitorData.pagePerformance as any[]).map((page: any, index: number) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <span className="text-sm font-medium">{page.page}</span>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-muted-foreground">{page.views} views</span>
-                    <span className="text-sm text-muted-foreground">{page.sessions} sessions</span>
-                  </div>
+          {visitorData.pagePerformance.length > 0 ? (
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <div className="space-y-2 px-4 sm:px-0">
+                  {visitorData.pagePerformance.map((page: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Badge variant="outline" className="shrink-0">{index + 1}</Badge>
+                        <div className="font-mono text-sm truncate">{page.page}</div>
+                      </div>
+                      <Badge className="shrink-0 ml-2">{page.views} views</Badge>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No page data available yet. Tracking is active - data will appear as visitors browse.</p>
-            )}
-          </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm text-muted-foreground">No page view data available</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Original Revenue Section */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Sales Analytics Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Sales Analytics</h2>
+        
+        {/* Revenue Metrics */}
+        {isLoadingSales ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+          </div>
+        ) : (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
