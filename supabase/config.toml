@@ -1,4 +1,4 @@
-project_id = "oscgxbtukrppycrchvdl"
+project_id = "oqtmawmydqxvekiikfyl"
 
 [functions.auto-sync-pending-payments]
 verify_jwt = false
