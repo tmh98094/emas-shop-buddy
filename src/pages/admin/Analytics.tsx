@@ -32,13 +32,12 @@ const AdminAnalytics = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("phone_number")
-        .eq("id", user.id)
-        .single();
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
 
-      const authorized = profile?.phone_number === "+6580565123";
+      const authorized = !error && data === true;
       setIsAuthorized(authorized);
       return authorized;
     },
@@ -651,130 +650,179 @@ const AdminAnalytics = () => {
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              RM {formatPrice(salesData?.dailySales.reduce((sum: number, day: any) => sum + day.revenue, 0) || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Last 7 days</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Best Seller</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{(topProducts as any)?.[0]?.name?.slice(0, 20) || "N/A"}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Products Sold</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(topProducts as any[])?.reduce((sum: number, p: any) => sum + p.quantity, 0) || 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lowStockItems?.length || 0}</div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <div className="p-2 bg-green-500/10 rounded-full">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl sm:text-3xl font-bold text-green-500">
+                  RM {formatPrice(totalRevenue)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  From all completed orders
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Best Seller</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-full">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-base sm:text-lg font-bold truncate">
+                  {(topProducts as any)?.[0]?.name?.slice(0, 30) || "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Top revenue generator
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Products Sold</CardTitle>
+                <div className="p-2 bg-blue-500/10 rounded-full">
+                  <Package className="h-5 w-5 text-blue-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-500">
+                  {(topProducts as any[])?.reduce((sum: number, p: any) => sum + p.quantity, 0) || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total units sold
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="relative overflow-hidden border-2 hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+                <div className="p-2 bg-orange-500/10 rounded-full">
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-500">
+                  {lowStockItems?.length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Products need restocking
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
       {/* Sales Overview */}
-      <Card>
+      <Card className="mt-4">
         <CardHeader>
           <CardTitle>Sales Overview</CardTitle>
           <CardDescription>Revenue trends over time</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="daily">
-            <TabsList>
-              <TabsTrigger value="daily">Daily (7 days)</TabsTrigger>
-              <TabsTrigger value="weekly">Weekly (30 days)</TabsTrigger>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            </TabsList>
-            <TabsContent value="daily" className="space-y-4">
-              <ChartContainer config={{}} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={salesData?.dailySales || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" name="Revenue (RM)" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </TabsContent>
-            <TabsContent value="weekly" className="space-y-4">
-              <ChartContainer config={{}} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesData?.weeklySales || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </TabsContent>
-            <TabsContent value="monthly" className="space-y-4">
-              <ChartContainer config={{}} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesData?.monthlySales || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </TabsContent>
-          </Tabs>
+          {isLoadingSales ? (
+            <Skeleton className="h-[300px]" />
+          ) : (
+            <Tabs defaultValue="daily">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="daily">Daily</TabsTrigger>
+                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              </TabsList>
+              <TabsContent value="daily" className="space-y-4">
+                <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={salesData?.dailySales || []}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Line type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" name="Revenue (RM)" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </TabsContent>
+              <TabsContent value="weekly" className="space-y-4">
+                <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesData?.weeklySales || []}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="week" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </TabsContent>
+              <TabsContent value="monthly" className="space-y-4">
+                <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesData?.monthlySales || []}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
 
       {/* Top Products & Category Performance */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 mt-4">
         <Card>
           <CardHeader>
             <CardTitle>Top Selling Products</CardTitle>
             <CardDescription>Best performers by revenue</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {(topProducts as any[])?.map((product: any, index: number) => (
-                <div key={product.name} className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">{index + 1}</Badge>
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.quantity} units sold</div>
-                    </div>
+            {isLoadingProducts ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16" />)}
+              </div>
+            ) : (topProducts as any[])?.length > 0 ? (
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle">
+                  <div className="space-y-3 px-4 sm:px-0">
+                    {(topProducts as any[])?.map((product: any, index: number) => (
+                      <div key={product.name} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-300">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Badge variant="outline" className="shrink-0">{index + 1}</Badge>
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">{product.quantity} units sold</div>
+                          </div>
+                        </div>
+                        <div className="font-bold text-primary shrink-0 ml-2">RM {formatPrice(product.revenue)}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="font-bold text-primary">RM {formatPrice(product.revenue)}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-sm text-muted-foreground">No sales data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -784,40 +832,49 @@ const AdminAnalytics = () => {
             <CardDescription>Revenue by category</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryPerformance || []}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => entry.name}
-                    outerRadius={80}
-                    fill="hsl(var(--chart-3))"
-                    dataKey="value"
-                  >
-                    {(categoryPerformance || []).map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            {isLoadingCategories ? (
+              <Skeleton className="h-[300px]" />
+            ) : (categoryPerformance as any[])?.length > 0 ? (
+              <ChartContainer config={{}} className="h-[250px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryPerformance || []}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => entry.name}
+                      outerRadius={80}
+                      fill="hsl(var(--chart-3))"
+                      dataKey="value"
+                    >
+                      {(categoryPerformance || []).map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="text-sm text-muted-foreground">No category data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Low Stock Alert */}
       {lowStockItems && lowStockItems.length > 0 && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>{lowStockItems.length} products</strong> are running low on stock
+        <Alert className="mt-4 border-orange-500/50 bg-orange-500/10">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <AlertDescription className="text-orange-900 dark:text-orange-200">
+            <strong>{lowStockItems.length} products</strong> are running low on stock and need restocking
           </AlertDescription>
         </Alert>
       )}
+      </div>
     </div>
   );
 };
