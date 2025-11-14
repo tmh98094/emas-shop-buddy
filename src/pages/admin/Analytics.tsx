@@ -213,23 +213,37 @@ const AdminAnalytics = () => {
       const startDate = startOfDay(dateRange.from).toISOString();
       const endDate = dateRange.to ? endOfDay(dateRange.to).toISOString() : endOfDay(new Date()).toISOString();
 
-      const { data: sessions, error } = await supabase
-        .from("visitor_analytics")
-        .select("*")
-        .gte("first_visit", startDate)
-        .lte("first_visit", endDate)
-        .order("first_visit", { ascending: true })
-        .limit(200000);
+      // Paginate through all sessions to avoid row limit
+      let allSessions: any[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      
+      while (true) {
+        const { data: sessions, error } = await supabase
+          .from("visitor_analytics")
+          .select("*")
+          .gte("first_visit", startDate)
+          .lte("first_visit", endDate)
+          .order("first_visit", { ascending: true })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
 
-      if (error) {
-        console.error('[Analytics] Error fetching visitor data:', error);
-        return null;
+        if (error) {
+          console.error('[Analytics] Error fetching visitor data:', error);
+          break;
+        }
+        
+        if (!sessions || sessions.length === 0) break;
+        
+        allSessions = [...allSessions, ...sessions];
+        
+        if (sessions.length < pageSize) break;
+        page++;
       }
 
-      console.log('[Analytics] Fetched sessions:', sessions?.length || 0);
+      console.log('[Analytics] Fetched sessions:', allSessions.length);
 
-      const realSessions = sessions?.filter(s => !s.is_bot) || [];
-      const botSessions = sessions?.filter(s => s.is_bot) || [];
+      const realSessions = allSessions.filter(s => !s.is_bot);
+      const botSessions = allSessions.filter(s => s.is_bot);
 
       // Traffic sources
       const trafficSources = realSessions.reduce((acc: any, session) => {
@@ -322,7 +336,7 @@ const AdminAnalytics = () => {
         : 0;
 
       return {
-        totalSessions: sessions?.length || 0,
+        totalSessions: allSessions.length,
         realVisitors: realSessions.length,
         botTraffic: botSessions.length,
         totalPageViews: realSessions.reduce((sum, s) => sum + (s.page_views || 0), 0),
@@ -547,14 +561,43 @@ const AdminAnalytics = () => {
                 {visitorData?.dailyTrends && visitorData.dailyTrends.length > 0 ? (
                   <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={visitorData.dailyTrends}>
+                      <LineChart 
+                        data={visitorData.dailyTrends}
+                        margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="date" className="text-xs" />
-                        <YAxis className="text-xs" />
+                        <XAxis 
+                          dataKey="date" 
+                          className="text-xs"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          tick={{ fontSize: 10 }}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis 
+                          className="text-xs" 
+                          tick={{ fontSize: 10 }}
+                          width={40}
+                        />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Legend wrapperStyle={{ fontSize: '12px' }} />
-                        <Line type="monotone" dataKey="visitors" stroke="hsl(var(--chart-1))" name="Visitors" strokeWidth={2} />
-                        <Line type="monotone" dataKey="pageViews" stroke="hsl(var(--chart-2))" name="Page Views" strokeWidth={2} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="visitors" 
+                          stroke="hsl(var(--chart-1))" 
+                          name="Visitors" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pageViews" 
+                          stroke="hsl(var(--chart-2))" 
+                          name="Page Views" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -628,8 +671,11 @@ const AdminAnalytics = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(entry) => `${entry.name}: ${entry.value}`}
-                      outerRadius={80}
+                      label={(entry) => {
+                        if (typeof window !== 'undefined' && window.innerWidth < 640) return null;
+                        return `${entry.name}: ${entry.value}`;
+                      }}
+                      outerRadius={typeof window !== 'undefined' && window.innerWidth < 640 ? 60 : 80}
                       fill="hsl(var(--chart-1))"
                       dataKey="value"
                     >
@@ -638,6 +684,7 @@ const AdminAnalytics = () => {
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -778,20 +825,41 @@ const AdminAnalytics = () => {
           ) : (
             <Tabs defaultValue="daily">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="daily">Daily</TabsTrigger>
-                <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                <TabsTrigger value="daily" className="text-xs sm:text-sm">Daily</TabsTrigger>
+                <TabsTrigger value="weekly" className="text-xs sm:text-sm">Weekly</TabsTrigger>
+                <TabsTrigger value="monthly" className="text-xs sm:text-sm">Monthly</TabsTrigger>
               </TabsList>
               <TabsContent value="daily" className="space-y-4">
                 <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salesData?.dailySales || []}>
+                    <LineChart 
+                      data={salesData?.dailySales || []}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <XAxis 
+                        dataKey="date" 
+                        className="text-xs"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        tick={{ fontSize: 10 }}
+                      />
+                      <YAxis 
+                        className="text-xs" 
+                        tick={{ fontSize: 10 }}
+                        width={40}
+                      />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" name="Revenue (RM)" strokeWidth={2} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="hsl(var(--chart-1))" 
+                        name="Revenue (RM)" 
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -799,13 +867,28 @@ const AdminAnalytics = () => {
               <TabsContent value="weekly" className="space-y-4">
                 <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesData?.weeklySales || []}>
+                    <BarChart 
+                      data={salesData?.weeklySales || []}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="week" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <XAxis 
+                        dataKey="week" 
+                        className="text-xs" 
+                        tick={{ fontSize: 10 }}
+                      />
+                      <YAxis 
+                        className="text-xs" 
+                        tick={{ fontSize: 10 }}
+                        width={40}
+                      />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
+                      <Bar 
+                        dataKey="revenue" 
+                        fill="hsl(var(--chart-1))" 
+                        name="Revenue (RM)" 
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -813,13 +896,28 @@ const AdminAnalytics = () => {
               <TabsContent value="monthly" className="space-y-4">
                 <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesData?.monthlySales || []}>
+                    <BarChart 
+                      data={salesData?.monthlySales || []}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="month" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <XAxis 
+                        dataKey="month" 
+                        className="text-xs" 
+                        tick={{ fontSize: 10 }}
+                      />
+                      <YAxis 
+                        className="text-xs" 
+                        tick={{ fontSize: 10 }}
+                        width={40}
+                      />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue (RM)" />
+                      <Bar 
+                        dataKey="revenue" 
+                        fill="hsl(var(--chart-1))" 
+                        name="Revenue (RM)" 
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -885,8 +983,11 @@ const AdminAnalytics = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(entry) => entry.name}
-                      outerRadius={80}
+                      label={(entry) => {
+                        if (typeof window !== 'undefined' && window.innerWidth < 640) return null;
+                        return entry.name;
+                      }}
+                      outerRadius={typeof window !== 'undefined' && window.innerWidth < 640 ? 60 : 80}
                       fill="hsl(var(--chart-3))"
                       dataKey="value"
                     >
@@ -895,6 +996,7 @@ const AdminAnalytics = () => {
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
