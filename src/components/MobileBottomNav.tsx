@@ -34,7 +34,8 @@ export function MobileBottomNav() {
     return location.pathname.startsWith(path);
   };
 
-  if (!isMobile) return null;
+  // Don't show mobile nav on admin pages
+  if (!isMobile || location.pathname.startsWith('/admin')) return null;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-inset-bottom">
