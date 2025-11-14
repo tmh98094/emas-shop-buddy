@@ -160,8 +160,14 @@ const AdminAnalytics = () => {
 
       const trafficSources: Record<string, number> = {};
       allSessions.forEach((session) => {
-        const source = session.utm_source || "Direct";
+        const source = parseTrafficSource(session);
         trafficSources[source] = (trafficSources[source] || 0) + 1;
+      });
+
+      const locationData: Record<string, number> = {};
+      allSessions.forEach((session) => {
+        const country = session.country || "Unknown";
+        locationData[country] = (locationData[country] || 0) + 1;
       });
 
       const deviceBreakdown: Record<string, number> = {};
@@ -199,6 +205,10 @@ const AdminAnalytics = () => {
           name,
           value,
         })),
+        locationData: Object.entries(locationData)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10),
         deviceBreakdown: Object.entries(deviceBreakdown).map(([name, value]) => ({
           name,
           value,
@@ -283,9 +293,57 @@ const AdminAnalytics = () => {
           revenue: stats.revenue,
         }))
         .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 10);
+        .slice(0, 5);
     },
     enabled: isAuthorized,
+  });
+
+  // Top spenders
+  const { data: topSpenders, isLoading: topSpendersLoading } = useQuery({
+    queryKey: ["top-spenders", dateRange],
+    queryFn: async () => {
+      if (!dateRange?.from || !dateRange?.to) return [];
+      
+      const startDate = startOfDay(dateRange.from).toISOString();
+      const endDate = endOfDay(dateRange.to).toISOString();
+      
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("full_name, email, phone_number, total_amount")
+        .gte("created_at", startDate)
+        .lte("created_at", endDate)
+        .eq("payment_status", "completed");
+      
+      if (!orders) return [];
+      
+      const spenderStats: Record<string, {
+        name: string;
+        email: string | null;
+        phone: string;
+        totalSpent: number;
+        orderCount: number;
+      }> = {};
+      
+      orders.forEach((order) => {
+        const phone = order.phone_number;
+        if (!spenderStats[phone]) {
+          spenderStats[phone] = {
+            name: order.full_name,
+            email: order.email,
+            phone: phone,
+            totalSpent: 0,
+            orderCount: 0,
+          };
+        }
+        spenderStats[phone].totalSpent += Number(order.total_amount);
+        spenderStats[phone].orderCount++;
+      });
+      
+      return Object.values(spenderStats)
+        .sort((a, b) => b.totalSpent - a.totalSpent)
+        .slice(0, 5);
+    },
+    enabled: isAuthorized && !!dateRange?.from && !!dateRange?.to,
   });
 
   // Category performance
@@ -339,9 +397,37 @@ const AdminAnalytics = () => {
   }
 
   const handleDateSelect = (range: DateRange | undefined) => {
-    if (range?.from && range?.to) {
-      setDateRange(range);
+    setDateRange(range);
+  };
+
+  const clearDateFilter = () => {
+    setDateRange({
+      from: startOfDay(subDays(new Date(), 30)),
+      to: endOfDay(new Date()),
+    });
+  };
+
+  const parseTrafficSource = (session: any) => {
+    // Check UTM source first (most reliable)
+    if (session.utm_source) {
+      return session.utm_source;
     }
+    
+    // Parse referrer URL
+    if (session.referrer) {
+      const referrer = session.referrer.toLowerCase();
+      if (referrer.includes('instagram.com')) return 'Instagram';
+      if (referrer.includes('facebook.com') || referrer.includes('fb.com')) return 'Facebook';
+      if (referrer.includes('google.com')) return 'Google';
+      if (referrer.includes('twitter.com') || referrer.includes('x.com')) return 'Twitter';
+      if (referrer.includes('linkedin.com')) return 'LinkedIn';
+      if (referrer.includes('tiktok.com')) return 'TikTok';
+      if (referrer.includes('youtube.com')) return 'YouTube';
+      if (referrer.includes('whatsapp.com')) return 'WhatsApp';
+      return 'Referral'; // Other websites
+    }
+    
+    return 'Direct'; // No UTM or referrer
   };
 
   return (
@@ -377,11 +463,25 @@ const AdminAnalytics = () => {
               numberOfMonths={isMobile ? 1 : 2}
               className="pointer-events-auto"
             />
-            {(!dateRange?.from || !dateRange?.to) && (
-              <p className="text-xs text-muted-foreground p-3 border-t">
-                Please select both start and end dates
-              </p>
-            )}
+            <div className="p-3 border-t flex items-center justify-between gap-2">
+              {(!dateRange?.from || !dateRange?.to) ? (
+                <p className="text-xs text-muted-foreground">
+                  Please select both start and end dates
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+                </p>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={clearDateFilter}
+                className="text-xs h-7"
+              >
+                Clear
+              </Button>
+            </div>
           </PopoverContent>
         </Popover>
       </div>
@@ -642,6 +742,45 @@ const AdminAnalytics = () => {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Visitor Locations</CardTitle>
+              <CardDescription>Top 10 countries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {visitorLoading ? (
+                <Skeleton className="h-[250px] md:h-[300px] w-full" />
+              ) : visitorData?.locationData?.length ? (
+                <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+                  <BarChart
+                    data={visitorData.locationData}
+                    margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: isMobile ? 9 : 11 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={isMobile ? 80 : 70}
+                    />
+                    <YAxis
+                      domain={[0, 'dataMax + 5']}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
+                      width={40}
+                    />
+                    <Tooltip wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="value" fill={CHART_COLORS[2]} name="Visitors" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] md:h-[300px]">
+                  <p className="text-muted-foreground">No location data available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Top Pages */}
@@ -800,80 +939,125 @@ const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Top Products and Category Performance */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Selling Products</CardTitle>
-              <CardDescription>By revenue</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {topProductsLoading ? (
-                <Skeleton className="h-[250px] md:h-[300px] w-full" />
-              ) : topProducts && topProducts.length > 0 ? (
-                <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-                  <PieChart>
-                    <Pie
-                      data={topProducts}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={!isMobile ? (entry) => `${entry.name}` : undefined}
-                      outerRadius={isMobile ? 60 : 80}
-                      dataKey="revenue"
-                    >
-                      {topProducts.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip wrapperStyle={{ fontSize: '12px' }} />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[250px] md:h-[300px]">
-                  <p className="text-muted-foreground">No product data available</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Top Products */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top 5 Selling Products</CardTitle>
+            <CardDescription>Best performing products by revenue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topProductsLoading ? (
+              <Skeleton className="h-[250px] md:h-[300px] w-full" />
+            ) : topProducts && topProducts.length > 0 ? (
+              <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+                <PieChart>
+                  <Pie
+                    data={topProducts}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={!isMobile ? (entry) => `${entry.name}` : undefined}
+                    outerRadius={isMobile ? 60 : 80}
+                    dataKey="revenue"
+                  >
+                    {topProducts.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip wrapperStyle={{ fontSize: '12px' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] md:h-[300px]">
+                <p className="text-muted-foreground">No product data available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Performance</CardTitle>
-              <CardDescription>Revenue by category</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {categoryLoading ? (
-                <Skeleton className="h-[250px] md:h-[300px] w-full" />
-              ) : categoryPerformance && categoryPerformance.length > 0 ? (
-                <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
-                  <PieChart>
-                    <Pie
-                      data={categoryPerformance}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={!isMobile ? (entry) => `${entry.name}` : undefined}
-                      outerRadius={isMobile ? 60 : 80}
-                      dataKey="revenue"
-                    >
-                      {categoryPerformance.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip wrapperStyle={{ fontSize: '12px' }} />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[250px] md:h-[300px]">
-                  <p className="text-muted-foreground">No category data available</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Top Spenders */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top 5 Spenders</CardTitle>
+            <CardDescription>Highest spending customers in selected period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topSpendersLoading ? (
+              <Skeleton className="h-[250px] md:h-[300px] w-full" />
+            ) : topSpenders && topSpenders.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 font-medium">#</th>
+                      <th className="text-left p-2 font-medium">Name</th>
+                      <th className="text-left p-2 font-medium hidden sm:table-cell">Email</th>
+                      <th className="text-left p-2 font-medium">Phone</th>
+                      <th className="text-right p-2 font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topSpenders.map((spender, index) => (
+                      <tr key={spender.phone} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="p-2 font-medium text-muted-foreground">#{index + 1}</td>
+                        <td className="p-2 truncate max-w-[120px]">{spender.name}</td>
+                        <td className="p-2 hidden sm:table-cell truncate max-w-[150px]">
+                          {spender.email || '-'}
+                        </td>
+                        <td className="p-2 text-xs">{spender.phone}</td>
+                        <td className="p-2 text-right font-semibold">
+                          RM {spender.totalSpent.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] md:h-[300px]">
+                <p className="text-muted-foreground">No customer data for this period</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Category Performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Performance</CardTitle>
+            <CardDescription>Revenue by category</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {categoryLoading ? (
+              <Skeleton className="h-[250px] md:h-[300px] w-full" />
+            ) : categoryPerformance && categoryPerformance.length > 0 ? (
+              <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+                <PieChart>
+                  <Pie
+                    data={categoryPerformance}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={!isMobile ? (entry) => `${entry.name}` : undefined}
+                    outerRadius={isMobile ? 60 : 80}
+                    dataKey="revenue"
+                  >
+                    {categoryPerformance.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip wrapperStyle={{ fontSize: '12px' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] md:h-[300px]">
+                <p className="text-muted-foreground">No category data available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
