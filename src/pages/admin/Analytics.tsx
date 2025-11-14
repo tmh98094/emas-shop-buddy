@@ -474,7 +474,7 @@ const AdminAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    {visitorData.realVisitors}
+                    {visitorData?.realVisitors || 0}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Human visitors tracked
@@ -492,7 +492,7 @@ const AdminAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-destructive">
-                    {visitorData.botTraffic}
+                    {visitorData?.botTraffic || 0}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Filtered automated traffic
@@ -510,7 +510,7 @@ const AdminAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-blue-500">
-                    {visitorData.totalPageViews}
+                    {visitorData?.totalPageViews || 0}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Total pages viewed
@@ -528,7 +528,7 @@ const AdminAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-500">
-                    {visitorData.conversionRate}%
+                    {visitorData?.conversionRate?.toFixed(2) || 0}%
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Visitors to orders
@@ -544,7 +544,7 @@ const AdminAnalytics = () => {
                 <CardDescription>Daily visitor and page view statistics</CardDescription>
               </CardHeader>
               <CardContent>
-                {visitorData.dailyTrends.length > 0 ? (
+                {visitorData?.dailyTrends && visitorData.dailyTrends.length > 0 ? (
                   <ChartContainer config={{}} className="h-[250px] sm:h-[300px] md:h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={visitorData.dailyTrends}>
@@ -593,7 +593,7 @@ const AdminAnalytics = () => {
             <CardDescription>Where your visitors come from</CardDescription>
           </CardHeader>
           <CardContent>
-            {visitorData.trafficSources.length > 0 ? (
+            {visitorData?.trafficSources && visitorData.trafficSources.length > 0 ? (
               <div className="space-y-3">
                 {visitorData.trafficSources.map((source: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
@@ -619,7 +619,7 @@ const AdminAnalytics = () => {
             <CardDescription>Devices used by visitors</CardDescription>
           </CardHeader>
           <CardContent>
-            {visitorData.deviceBreakdown.length > 0 ? (
+            {visitorData?.deviceBreakdown && visitorData.deviceBreakdown.length > 0 ? (
               <ChartContainer config={{}} className="h-[250px] sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -657,7 +657,7 @@ const AdminAnalytics = () => {
           <CardDescription>Most popular pages on your site</CardDescription>
         </CardHeader>
         <CardContent>
-          {visitorData.pagePerformance.length > 0 ? (
+          {visitorData?.pagePerformance && visitorData.pagePerformance.length > 0 ? (
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <div className="inline-block min-w-full align-middle">
                 <div className="space-y-2 px-4 sm:px-0">
