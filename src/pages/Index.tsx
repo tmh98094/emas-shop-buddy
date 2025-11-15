@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
+import FloatingGuestNotice from "@/components/FloatingGuestNotice";
 
 // Lazy load below-the-fold components for better initial load
 const ProductSection = lazy(() => import("@/components/ProductSection").then(m => ({ default: m.ProductSection })));
@@ -54,6 +55,7 @@ const Index = () => {
       </main>
       
       <WhatsAppFloater />
+      <FloatingGuestNotice />
       <Footer />
     </div>
   );
