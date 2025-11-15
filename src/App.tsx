@@ -84,12 +84,18 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const { data: roleData } = await supabase
+      const { data: roleData, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "admin")
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking admin role:", error);
+        navigate("/");
+        return;
+      }
 
       if (roleData) {
         setIsAdmin(true);
