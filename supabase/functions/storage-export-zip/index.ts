@@ -49,74 +49,80 @@ const handler = async (req: Request): Promise<Response> => {
     let fileCount = 0;
     let totalSize = 0;
 
-    // Paginate through all objects
-    let offset = 0;
-    const limit = 100;
-    let hasMore = true;
+    // Recursive function to process all files in a path
+    async function processPath(currentPrefix: string) {
+      let offset = 0;
+      const limit = 100;
+      let hasMore = true;
 
-    while (hasMore) {
-      const { data: objects, error: listError } = await supabase.storage
-        .from(bucket)
-        .list(prefix, {
-          limit,
-          offset,
-          sortBy: { column: "name", order: "asc" },
-        });
+      while (hasMore) {
+        const { data: objects, error: listError } = await supabase.storage
+          .from(bucket)
+          .list(currentPrefix, {
+            limit,
+            offset,
+            sortBy: { column: "name", order: "asc" },
+          });
 
-      if (listError) {
-        console.error("Error listing objects:", listError);
-        return new Response(
-          JSON.stringify({ error: `Failed to list objects: ${listError.message}` }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+        if (listError) {
+          console.error(`Error listing ${currentPrefix}:`, listError);
+          throw new Error(`Failed to list objects: ${listError.message}`);
+        }
 
-      if (!objects || objects.length === 0) {
-        hasMore = false;
-        break;
-      }
+        if (!objects || objects.length === 0) {
+          hasMore = false;
+          break;
+        }
 
-      console.log(`Processing batch: ${objects.length} objects (offset: ${offset})`);
+        console.log(`Processing ${objects.length} objects in ${currentPrefix || '(root)'} (offset: ${offset})`);
 
-      // Download and add each object to zip
-      for (const obj of objects) {
-        if (obj.id === null) continue; // Skip folders
-
-        const path = prefix ? `${prefix}/${obj.name}` : obj.name;
-        
-        try {
-          const { data: fileData, error: downloadError } = await supabase.storage
-            .from(bucket)
-            .download(path);
-
-          if (downloadError) {
-            console.error(`Error downloading ${path}:`, downloadError);
-            continue; // Skip failed files
+        // Process each object
+        for (const obj of objects) {
+          const fullPath = currentPrefix ? `${currentPrefix}/${obj.name}` : obj.name;
+          
+          // If it's a folder (id is null), recursively process it
+          if (obj.id === null) {
+            console.log(`Entering folder: ${fullPath}`);
+            await processPath(fullPath);
+            continue;
           }
 
-          if (fileData) {
-            const arrayBuffer = await fileData.arrayBuffer();
-            zip.file(path, arrayBuffer);
-            fileCount++;
-            totalSize += arrayBuffer.byteLength;
-            
-            if (fileCount % 10 === 0) {
-              console.log(`Added ${fileCount} files to zip (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
+          // It's a file, download and add to zip
+          try {
+            const { data: fileData, error: downloadError } = await supabase.storage
+              .from(bucket)
+              .download(fullPath);
+
+            if (downloadError) {
+              console.error(`Error downloading ${fullPath}:`, downloadError);
+              continue;
             }
+
+            if (fileData) {
+              const arrayBuffer = await fileData.arrayBuffer();
+              zip.file(fullPath, arrayBuffer);
+              fileCount++;
+              totalSize += arrayBuffer.byteLength;
+              
+              if (fileCount % 10 === 0) {
+                console.log(`Added ${fileCount} files to zip (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to process ${fullPath}:`, error);
           }
-        } catch (error) {
-          console.error(`Failed to process ${path}:`, error);
-          // Continue with next file
+        }
+
+        offset += limit;
+        
+        if (objects.length < limit) {
+          hasMore = false;
         }
       }
-
-      offset += limit;
-      
-      // Stop if we got fewer objects than the limit (no more pages)
-      if (objects.length < limit) {
-        hasMore = false;
-      }
     }
+
+    // Start processing from the root or specified prefix
+    await processPath(prefix);
 
     if (fileCount === 0) {
       console.log("No files found in bucket");
