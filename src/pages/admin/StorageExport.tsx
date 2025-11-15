@@ -23,7 +23,7 @@ const StorageExport = () => {
 
       const prefix = prefixes[bucket] || "";
       const chunked = !prefix; // auto-chunk when no prefix provided
-      const maxFolders = 6; // process 6 top-level folders per chunk
+      const maxFolders = 2; // process 2 top-level folders per chunk to stay under limits
 
       toast.info(
         `Starting export of ${bucket}${prefix ? `/${prefix}` : ""}${chunked ? " (auto-chunked)" : ""}...`

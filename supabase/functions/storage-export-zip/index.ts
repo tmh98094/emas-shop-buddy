@@ -54,10 +54,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Timing and batching controls
     const startTime = Date.now();
-    const TIME_BUDGET_MS = Number(Deno.env.get("STORAGE_EXPORT_TIME_LIMIT_MS") ?? "50000");
+    const TIME_BUDGET_MS = Number(Deno.env.get("STORAGE_EXPORT_TIME_LIMIT_MS") ?? "40000");
+    const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB per chunk to stay well under limits
 
     // Parse optional batching options
-    const MAX_FOLDERS = Math.max(1, Math.min(50, bodyMaxFolders ?? 6));
+    const MAX_FOLDERS = Math.max(1, Math.min(50, bodyMaxFolders ?? 2));
     let cursor = Number.isFinite(Number(bodyCursor)) ? Number(bodyCursor) : 0;
 
     // Helper: Add single file to zip
@@ -89,15 +90,15 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Recursive function to process all files in a path with time budget
+    // Recursive function to process all files in a path with time and size budget
     async function processPath(currentPrefix: string) {
       let offset = 0;
       const limit = 100;
       let hasMore = true;
 
       while (hasMore) {
-        if (Date.now() - startTime > TIME_BUDGET_MS) {
-          console.log("Time budget reached while processing path, stopping early");
+        if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
+          console.log(`Budget reached (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB), stopping early`);
           break;
         }
 
@@ -124,8 +125,8 @@ const handler = async (req: Request): Promise<Response> => {
         );
 
         for (const obj of objects) {
-          if (Date.now() - startTime > TIME_BUDGET_MS) {
-            console.log("Time budget reached during object processing, stopping early");
+          if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
+            console.log(`Budget reached during object processing (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB), stopping early`);
             hasMore = false;
             break;
           }
@@ -189,8 +190,8 @@ const handler = async (req: Request): Promise<Response> => {
     let hasMoreTop = true;
 
     while (processedFolders < MAX_FOLDERS && hasMoreTop) {
-      if (Date.now() - startTime > TIME_BUDGET_MS) {
-        console.log("Time budget reached before collecting requested folders");
+      if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
+        console.log(`Budget reached before collecting folders (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB)`);
         break;
       }
 
@@ -216,8 +217,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Iterate this slice and collect work
       for (const obj of objects) {
-        if (Date.now() - startTime > TIME_BUDGET_MS) {
-          console.log("Time budget reached during top-level scan, stopping early");
+        if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
+          console.log(`Budget reached during top-level scan (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB), stopping early`);
           break;
         }
 
