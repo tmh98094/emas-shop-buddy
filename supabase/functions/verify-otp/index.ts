@@ -112,36 +112,48 @@ serve(async (req) => {
       logStep("OTP already verified - idempotent success", { id: otpRecord.id });
     }
 
-    // Locate or create auth user strictly by phone
+    // Locate or create auth user by email format (converted from phone)
     const { data: users, error: listError } = await supabase.auth.admin.listUsers();
     if (listError) {
       logStep("Failed to list users", { error: listError });
       throw new Error("Failed to verify user account");
     }
 
-    const digitsOnly = phoneNumber.replace(/^\+/, "");
-    const existingAuthUser = users.users.find((u: any) => u.phone === phoneNumber || u.phone === digitsOnly);
+    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+    const emailFormat = `${cleanPhone}@jj-emas.app`;
+    const existingAuthUser = users.users.find((u: any) => 
+      u.email === emailFormat || 
+      u.user_metadata?.phone_number === phoneNumber
+    );
 
     let userId = existingAuthUser?.id;
     let isNewUser = false;
 
     if (!userId) {
+      // Convert phone to email format for auth
+      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+      const emailFormat = `${cleanPhone}@jj-emas.app`;
+      
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        phone: phoneNumber,
-        phone_confirm: true,
-        user_metadata: { full_name: fullName || "" },
+        email: emailFormat,
+        email_confirm: true,
+        password: crypto.randomUUID(), // Generate random password
+        user_metadata: { 
+          full_name: fullName || "",
+          phone_number: phoneNumber
+        },
       });
 
       if (authError) {
-        // If creation failed because phone exists, resolve to that user
-        if (authError.message?.includes("phone_exists") || authError.message?.includes("already registered")) {
-          const existingByPhone = users.users.find((u: any) => u.phone === phoneNumber || u.phone === digitsOnly);
-          if (!existingByPhone) {
-            logStep("Auth user not found after phone_exists error");
+        // If creation failed because email exists, resolve to that user
+        if (authError.message?.includes("email") || authError.message?.includes("already registered")) {
+          const existingByEmail = users.users.find((u: any) => u.email === emailFormat);
+          if (!existingByEmail) {
+            logStep("Auth user not found after email_exists error");
             throw new Error("User verification failed");
           }
-          userId = existingByPhone.id;
-          logStep("Found existing auth user after phone_exists", { userId });
+          userId = existingByEmail.id;
+          logStep("Found existing auth user after email_exists", { userId });
         } else {
           logStep("Failed to create auth user", { error: authError });
           throw new Error("Failed to create user account");
@@ -152,7 +164,7 @@ serve(async (req) => {
         logStep("Auth user created", { userId });
       }
     } else {
-      logStep("Found existing auth user by phone", { userId });
+      logStep("Found existing auth user by email", { userId });
     }
 
     // Handle profile creation/update with orphaned profile cleanup

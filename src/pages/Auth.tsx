@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
-import { normalizePhone } from "@/lib/phone-utils";
+import { normalizePhone, phoneToEmail } from "@/lib/phone-utils";
 import { T } from "@/components/T";
 
 export default function Auth() {
@@ -48,14 +48,17 @@ export default function Auth() {
       }
 
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      const emailFormat = phoneToEmail(normalizedPhone);
       
-      // Sign up with phone + password
+      // Sign up with email format (converted from phone)
       const { data, error } = await supabase.auth.signUp({
-        phone: normalizedPhone,
+        email: emailFormat,
         password: password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
+            phone_number: normalizedPhone,
             email: email || null,
           }
         }
@@ -113,9 +116,10 @@ export default function Auth() {
 
     try {
       const normalizedPhone = normalizePhone(phoneNumber, countryCode);
+      const emailFormat = phoneToEmail(normalizedPhone);
       
       const { error } = await supabase.auth.signInWithPassword({
-        phone: normalizedPhone,
+        email: emailFormat,
         password: password,
       });
 
@@ -285,8 +289,9 @@ export default function Auth() {
           console.log(`[OTP] Retry sign-in attempt ${attempt + 1}`);
         }
 
+        const emailFormat = phoneToEmail(serverPhone);
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          phone: serverPhone,
+          email: emailFormat,
           password: loginPassword,
         });
 
