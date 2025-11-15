@@ -113,58 +113,68 @@ serve(async (req) => {
     }
 
     // Locate or create auth user by email format (converted from phone)
-    const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-    if (listError) {
-      logStep("Failed to list users", { error: listError });
-      throw new Error("Failed to verify user account");
-    }
-
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
     const emailFormat = `${cleanPhone}@jj-emas.app`;
-    const existingAuthUser = users.users.find((u: any) => 
-      u.email === emailFormat || 
-      u.user_metadata?.phone_number === phoneNumber
-    );
 
-    let userId = existingAuthUser?.id;
+    // Helper to robustly find a user by email across pages
+    const findUserByEmail = async (email: string) => {
+      const perPage = 200;
+      for (let page = 1; page <= 10; page++) {
+        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+        if (error) {
+          logStep("listUsers error during search", {
+            status: (error as any)?.status,
+            code: (error as any)?.code,
+            message: (error as any)?.message || String(error),
+          });
+          break;
+        }
+        const match = data?.users?.find((u: any) => u.email === email);
+        if (match) return match;
+        if (!data?.users?.length || data.users.length < perPage) break;
+      }
+      return null;
+    };
+
+    let userId: string | undefined;
     let isNewUser = false;
 
-    if (!userId) {
-      // Convert phone to email format for auth
-      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-      const emailFormat = `${cleanPhone}@jj-emas.app`;
-      
+    const existingAuthUser = await findUserByEmail(emailFormat);
+    if (existingAuthUser) {
+      userId = existingAuthUser.id;
+      logStep("Found existing auth user by email (paginated)", { userId });
+    } else {
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: emailFormat,
         email_confirm: true,
         password: crypto.randomUUID(), // Generate random password
-        user_metadata: { 
+        user_metadata: {
           full_name: fullName || "",
-          phone_number: phoneNumber
+          phone_number: phoneNumber,
         },
       });
 
       if (authError) {
-        // If creation failed because email exists, resolve to that user
-        if (authError.message?.includes("email") || authError.message?.includes("already registered")) {
-          const existingByEmail = users.users.find((u: any) => u.email === emailFormat);
-          if (!existingByEmail) {
-            logStep("Auth user not found after email_exists error");
-            throw new Error("User verification failed");
-          }
-          userId = existingByEmail.id;
-          logStep("Found existing auth user after email_exists", { userId });
-        } else {
-          logStep("Failed to create auth user", { error: authError });
-          throw new Error("Failed to create user account");
+        logStep("Failed to create auth user", {
+          status: (authError as any)?.status,
+          code: (authError as any)?.code,
+          message: (authError as any)?.message || String(authError),
+        });
+        const fallback = await findUserByEmail(emailFormat);
+        if (!fallback) {
+          throw new Error("Failed to create or locate user account");
         }
+        userId = fallback.id;
+        logStep("Recovered existing auth user after createUser failure", { userId });
       } else {
-        userId = authData.user.id;
+        userId = authData!.user.id;
         isNewUser = true;
         logStep("Auth user created", { userId });
       }
-    } else {
-      logStep("Found existing auth user by email", { userId });
+    }
+
+    if (!userId) {
+      throw new Error("Failed to resolve user account");
     }
 
     // Handle profile creation/update with orphaned profile cleanup
@@ -229,7 +239,11 @@ serve(async (req) => {
     });
 
     if (updateUserError) {
-      logStep("Failed to update user", { error: updateUserError });
+      logStep("Failed to update user", {
+        status: (updateUserError as any)?.status,
+        code: (updateUserError as any)?.code,
+        message: (updateUserError as any)?.message || String(updateUserError),
+      });
       throw new Error("Failed to finalize authentication");
     }
 
