@@ -218,6 +218,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Scanning ${objects.length} top-level objects from offset ${cursor}`);
 
       // Iterate this slice and collect work
+      let consumed = 0;
       for (const obj of objects) {
         if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
           console.log(`Budget reached during top-level scan (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB), stopping early`);
@@ -232,15 +233,17 @@ const handler = async (req: Request): Promise<Response> => {
           console.log(`Entering folder (batched): ${fullPath}`);
           await processPath(fullPath);
           processedFolders++;
+          consumed++;
 
           if (processedFolders >= MAX_FOLDERS) break;
         } else {
           // Top-level file
           await addFileToZip(fullPath);
+          consumed++;
         }
       }
 
-      cursor += objects.length;
+      cursor += consumed;
 
       // Stop if we've processed enough folders
       if (processedFolders >= MAX_FOLDERS) break;
