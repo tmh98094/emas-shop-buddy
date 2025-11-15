@@ -49,6 +49,7 @@ import AdminContent from "./pages/admin/Content";
 import PreOrders from "./pages/admin/PreOrders";
 import ErrorLogs from "./pages/admin/ErrorLogs";
 import ImageOptimizer from "./pages/admin/ImageOptimizer";
+import StorageExport from "./pages/admin/StorageExport";
 import NotFound from "./pages/NotFound";
 import { WhatsAppFloater } from "./components/WhatsAppFloater";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
@@ -172,6 +173,7 @@ const App = () => {
             <Route path="content" element={<AdminContent />} />
             <Route path="error-logs" element={<ErrorLogs />} />
             <Route path="image-optimizer" element={<ImageOptimizer />} />
+            <Route path="storage-export" element={<StorageExport />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
