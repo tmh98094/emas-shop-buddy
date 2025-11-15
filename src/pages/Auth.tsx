@@ -21,6 +21,7 @@ export default function Auth() {
   const [useOtp, setUseOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
   
   // Form states
   const [countryCode, setCountryCode] = useState("+60");
@@ -29,6 +30,8 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +120,44 @@ export default function Auth() {
       });
 
       if (error) {
+        // Check if this might be an old user that needs migration
+        if (error.message.includes("Invalid login credentials")) {
+          // Check if profile exists (old user)
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, phone_number')
+            .eq('phone_number', normalizedPhone)
+            .maybeSingle();
+          
+          if (profile) {
+            // Old user detected - trigger migration flow
+            toast({
+              title: "账户迁移",
+              description: "检测到您是老用户，正在发送验证码...",
+            });
+            
+            setIsMigrating(true);
+            setUseOtp(true);
+            
+            // Auto-send OTP for migration
+            const { data: otpData, error: otpError } = await supabase.functions.invoke("generate-otp", {
+              body: { phoneNumber: normalizedPhone },
+            });
+            
+            if (otpError || !otpData?.success) {
+              throw new Error(otpData?.error || "无法发送验证码");
+            }
+            
+            setOtpSent(true);
+            toast({
+              title: "验证码已发送",
+              description: "请查收短信并输入验证码，然后设置新密码完成账户迁移",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+        
         let errorMessage = "登录失败，请检查您的信息";
         if (error.message.includes("Invalid login credentials")) {
           errorMessage = "手机号码或密码不正确";
@@ -138,7 +179,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: "登录失败",
-        description: "发生意外错误，请稍后重试",
+        description: error.message || "发生意外错误，请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -185,6 +226,28 @@ export default function Auth() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password if migrating
+    if (isMigrating) {
+      if (!newPassword || newPassword.length < 6) {
+        toast({
+          title: "密码无效",
+          description: "密码必须至少6个字符",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        toast({
+          title: "密码不匹配",
+          description: "两次输入的密码不一致",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     setLoading(true);
 
     try {
@@ -196,6 +259,7 @@ export default function Auth() {
           phoneNumber: normalizedPhone,
           otpCode: otp,
           ...(fullName ? { fullName } : {}),
+          ...(isMigrating && newPassword ? { password: newPassword } : {}),
         },
       });
 
@@ -208,7 +272,8 @@ export default function Auth() {
       // Use the phone number returned by the server to ensure consistency
       const serverPhone = data.phoneNumber || normalizedPhone;
 
-      // Sign in with phone and the OTP code (which was set as temporary password)
+      // Sign in with phone and the password (OTP or new password)
+      const loginPassword = isMigrating ? newPassword : otp;
       let signInSuccess = false;
       let lastError = null;
 
@@ -222,7 +287,7 @@ export default function Auth() {
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
           phone: serverPhone,
-          password: otp, // Use the OTP code that the user entered
+          password: loginPassword,
         });
 
         if (!signInError) {
@@ -240,10 +305,19 @@ export default function Auth() {
         throw new Error("登录失败，请重试或重新获取验证码。");
       }
 
-      toast({
-        title: "登录成功！",
-        description: data.isNewUser ? "欢迎新用户！" : "欢迎回来！",
-      });
+      // Show success message
+      if (data.migrated && data.ordersRemapped > 0) {
+        toast({
+          title: "迁移成功！",
+          description: `欢迎回来！我们已为您关联了 ${data.ordersRemapped} 个订单。`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "登录成功！",
+          description: data.isNewUser ? "欢迎新用户！" : "欢迎回来！",
+        });
+      }
       
       navigate("/");
     } catch (error: any) {
@@ -312,6 +386,9 @@ export default function Auth() {
               setOtpSent(false);
               setOtp("");
               setShowRecovery(false);
+              setIsMigrating(false);
+              setNewPassword("");
+              setConfirmPassword("");
             }} className="mb-6">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin"><T zh="登录" en="Sign In" /></TabsTrigger>
@@ -394,6 +471,17 @@ export default function Auth() {
 
                 {!showRecovery && otpSent && (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    {isMigrating && (
+                      <div className="bg-primary/10 border border-primary/20 rounded-md p-3 mb-4">
+                        <p className="text-sm font-medium text-primary">
+                          <T zh="账户迁移" en="Account Migration" />
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <T zh="请输入验证码并设置新密码完成迁移" en="Enter verification code and set new password to complete migration" />
+                        </p>
+                      </div>
+                    )}
+                    
                     <div>
                       <Label htmlFor="otp"><T zh="验证码" en="Verification Code" /></Label>
                       <Input
@@ -410,8 +498,43 @@ export default function Auth() {
                         <T zh="已发送至" en="Sent to" /> {normalizePhone(phoneNumber, countryCode)}
                       </p>
                     </div>
+                    
+                    {isMigrating && (
+                      <>
+                        <div>
+                          <Label htmlFor="new-password"><T zh="新密码" en="New Password" /> *</Label>
+                          <Input
+                            id="new-password"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <T zh="至少6个字符" en="At least 6 characters" />
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="confirm-password"><T zh="确认新密码" en="Confirm New Password" /> *</Label>
+                          <Input
+                            id="confirm-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                          />
+                        </div>
+                      </>
+                    )}
+                    
                     <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-                      {loading ? <T zh="验证中..." en="Verifying..." /> : <T zh="验证" en="Verify" />}
+                      {loading ? <T zh="验证中..." en="Verifying..." /> : (
+                        isMigrating ? <T zh="完成迁移" en="Complete Migration" /> : <T zh="验证" en="Verify" />
+                      )}
                     </Button>
                     <Button
                       type="button"
@@ -420,6 +543,9 @@ export default function Auth() {
                       onClick={() => {
                         setOtpSent(false);
                         setOtp("");
+                        setIsMigrating(false);
+                        setNewPassword("");
+                        setConfirmPassword("");
                       }}
                     >
                       <T zh="重新输入手机号" en="Change Phone Number" />
