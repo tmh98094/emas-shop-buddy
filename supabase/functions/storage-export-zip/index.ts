@@ -32,7 +32,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { bucket, prefix = "" }: ExportRequest = await req.json();
+    const requestBody: ExportRequest = await req.json();
+    const { bucket, prefix = "", maxFolders: bodyMaxFolders, cursor: bodyCursor } = requestBody;
     
     if (!bucket) {
       return new Response(
@@ -56,7 +57,6 @@ const handler = async (req: Request): Promise<Response> => {
     const TIME_BUDGET_MS = Number(Deno.env.get("STORAGE_EXPORT_TIME_LIMIT_MS") ?? "50000");
 
     // Parse optional batching options
-    const { maxFolders: bodyMaxFolders, cursor: bodyCursor } = (await req.clone().json().catch(() => ({}))) as Partial<ExportRequest>;
     const MAX_FOLDERS = Math.max(1, Math.min(50, bodyMaxFolders ?? 6));
     let cursor = Number.isFinite(Number(bodyCursor)) ? Number(bodyCursor) : 0;
 
