@@ -1,5 +1,8 @@
 project_id = "oqtmawmydqxvekiikfyl"
 
+[functions.admin-magic-login]
+verify_jwt = false
+
 [functions.storage-export-zip]
 verify_jwt = false
 

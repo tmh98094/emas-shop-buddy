@@ -21,6 +21,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Auth from "./pages/Auth";
 import UserProfile from "./pages/UserProfile";
 import UserDashboard from "./pages/UserDashboard";
+import MagicAdminLogin from "./pages/MagicAdminLogin";
 
 import Contact from "./pages/Contact";
 import CategoriesPage from "./pages/Categories";
@@ -58,6 +59,7 @@ import { MobileBottomNav } from "./components/MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
+import { GuestOnlyBanner } from "./components/GuestOnlyBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,9 +141,10 @@ const App = () => {
           
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/order-tracking" element={<OrderTracking />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/admin-magic-login" element={<MagicAdminLogin />} />
           
           <Route path="/contact" element={<Contact />} />
           <Route path="/categories" element={<CategoriesPage />} />

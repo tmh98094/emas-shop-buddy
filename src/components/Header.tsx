@@ -2,17 +2,36 @@ import { ShoppingCart, User, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useCart } from "@/hooks/useCart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { LanguageToggle } from "./LanguageToggle";
 import { T } from "./T";
 import logo from "@/assets/jj-emas-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Header = () => {
   const { items } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [guestModeOnly, setGuestModeOnly] = useState(false);
   
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    // Check if guest mode is enabled
+    const checkGuestMode = async () => {
+      const { data } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'guest_mode_only')
+        .single();
+      
+      if (data?.value && typeof data.value === 'object' && 'enabled' in data.value) {
+        setGuestModeOnly(data.value.enabled as boolean);
+      }
+    };
+    
+    checkGuestMode();
+  }, []);
 
   const navigation = [
     { name: "首页", href: "/", en: "Home" },
@@ -57,11 +76,13 @@ export const Header = () => {
                 )}
               </Button>
             </Link>
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" className="text-foreground hover:text-primary hover:bg-secondary/60">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
+            {!guestModeOnly && (
+              <Link to="/dashboard">
+                <Button variant="ghost" size="icon" className="text-foreground hover:text-primary hover:bg-secondary/60">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
