@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Package, MapPin, Settings, LogOut, User, Download } from "lucide-react";
+import { Package, MapPin, Settings, LogOut, User, Download, MessageCircle } from "lucide-react";
 import { T } from "@/components/T";
 import { generateInvoicePDF, InvoiceData } from "@/lib/invoice-generator";
 import { Loader2 } from "lucide-react";
@@ -24,10 +24,26 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState<string | null>(null);
+  const [guestModeOnly, setGuestModeOnly] = useState(false);
 
   useEffect(() => {
-    loadDashboardData();
+    checkGuestMode();
   }, []);
+
+  const checkGuestMode = async () => {
+    const { data } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'guest_mode_only')
+      .single();
+    
+    if (data?.value && typeof data.value === 'object' && 'enabled' in data.value && data.value.enabled) {
+      setGuestModeOnly(true);
+      setLoading(false);
+    } else {
+      loadDashboardData();
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
