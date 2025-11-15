@@ -5,6 +5,8 @@ import JSZip from "https://esm.sh/jszip@3.10.1";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-token",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Expose-Headers": "X-Export-Has-More, X-Export-Next-Offset, X-Export-Processed-Folders, Content-Disposition, Content-Length"
 };
 
 interface ExportRequest {
