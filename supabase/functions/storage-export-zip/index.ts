@@ -189,9 +189,9 @@ const handler = async (req: Request): Promise<Response> => {
     let processedFolders = 0;
     let scannedObjects = 0;
     const limit = 100;
-    let hasMoreTop = true;
 
-    while (processedFolders < MAX_FOLDERS && hasMoreTop) {
+    // Keep scanning and processing until we hit our folder limit or budgets
+    while (processedFolders < MAX_FOLDERS) {
       if (Date.now() - startTime > TIME_BUDGET_MS || totalSize > MAX_SIZE_BYTES) {
         console.log(`Budget reached before collecting folders (time: ${Date.now() - startTime}ms, size: ${(totalSize / 1024 / 1024).toFixed(2)}MB)`);
         break;
@@ -211,7 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       if (!objects || objects.length === 0) {
-        hasMoreTop = false;
+        // No more objects at all
         break;
       }
 
@@ -242,21 +242,18 @@ const handler = async (req: Request): Promise<Response> => {
 
       cursor += objects.length;
 
-      if (objects.length < limit) {
-        hasMoreTop = false;
-      }
-
+      // Stop if we've processed enough folders
       if (processedFolders >= MAX_FOLDERS) break;
+
+      // Stop if this was a partial batch (no more objects)
+      if (objects.length < limit) break;
     }
 
-    // If still no files but there might be more, peek to see if more objects exist
-    let hasMore = false;
-    if (hasMoreTop) {
-      const { data: peek } = await supabase.storage
-        .from(bucket)
-        .list("", { limit: 1, offset: cursor, sortBy: { column: "name", order: "asc" } });
-      hasMore = !!(peek && peek.length > 0);
-    }
+    // Always check if more objects exist at the final cursor position
+    const { data: peek } = await supabase.storage
+      .from(bucket)
+      .list("", { limit: 1, offset: cursor, sortBy: { column: "name", order: "asc" } });
+    const hasMore = !!(peek && peek.length > 0);
 
     // If we found nothing at all, return 404 like before
     if (fileCount === 0) {
@@ -284,7 +281,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${bucket}-chunk.zip"`,
         "Content-Length": zipBlob.byteLength.toString(),
-        "X-Export-Has-More": hasMoreTop ? "true" : "false",
+        "X-Export-Has-More": hasMore ? "true" : "false",
         "X-Export-Next-Offset": String(cursor),
         "X-Export-Processed-Folders": String(processedFolders),
       },
