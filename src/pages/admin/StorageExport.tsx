@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 const StorageExport = () => {
   const [exporting, setExporting] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [prefixes, setPrefixes] = useState<Record<string, string>>({});
 
   const exportBucket = async (bucket: string) => {
     setExporting(bucket);
@@ -19,7 +21,9 @@ const StorageExport = () => {
         return;
       }
 
-      toast.info(`Starting export of ${bucket}...`);
+      const prefix = prefixes[bucket] || "";
+
+      toast.info(`Starting export of ${bucket}${prefix ? `/${prefix}` : ""}...`);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(
@@ -31,21 +35,20 @@ const StorageExport = () => {
             "x-admin-token": token,
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ bucket }),
+          body: JSON.stringify({ bucket, prefix }),
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Export failed");
       }
 
-      // Create download link
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${bucket}-export.zip`;
+      a.download = `${bucket}${prefix ? `-${(prefix as string).split('/').join('_')}` : ""}-export.zip`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -90,28 +93,36 @@ const StorageExport = () => {
                 <CardDescription>{bucket.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  onClick={() => exportBucket(bucket.name)}
-                  disabled={isExporting}
-                  className="w-full"
-                >
-                  {isExporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Exporting...
-                    </>
-                  ) : isCompleted ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Re-export
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Export ZIP
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Optional prefix (e.g. product-id folder)"
+                    value={prefixes[bucket.name] || ""}
+                    onChange={(e) => setPrefixes((p) => ({ ...p, [bucket.name]: e.target.value }))}
+                    disabled={isExporting}
+                  />
+                  <Button
+                    onClick={() => exportBucket(bucket.name)}
+                    disabled={isExporting}
+                    className="w-full"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Exporting...
+                      </>
+                    ) : isCompleted ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Re-export
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export ZIP
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
