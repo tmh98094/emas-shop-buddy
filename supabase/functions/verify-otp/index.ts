@@ -223,10 +223,8 @@ serve(async (req) => {
       }
     }
 
-    // Update user's phone to be confirmed and set temporary password
+    // Set temporary password for this session (phone is stored in profile and user_metadata)
     const { error: updateUserError } = await supabase.auth.admin.updateUserById(userId, {
-      phone: phoneNumber,
-      phone_confirm: true,
       password: otpCode, // Set OTP as temporary password for this session
     });
 
