@@ -10,6 +10,8 @@ const corsHeaders = {
 interface ExportRequest {
   bucket: string;
   prefix?: string;
+  maxFolders?: number;
+  cursor?: number;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -49,13 +51,56 @@ const handler = async (req: Request): Promise<Response> => {
     let fileCount = 0;
     let totalSize = 0;
 
-    // Recursive function to process all files in a path
+    // Timing and batching controls
+    const startTime = Date.now();
+    const TIME_BUDGET_MS = Number(Deno.env.get("STORAGE_EXPORT_TIME_LIMIT_MS") ?? "50000");
+
+    // Parse optional batching options
+    const { maxFolders: bodyMaxFolders, cursor: bodyCursor } = (await req.clone().json().catch(() => ({}))) as Partial<ExportRequest>;
+    const MAX_FOLDERS = Math.max(1, Math.min(50, bodyMaxFolders ?? 6));
+    let cursor = Number.isFinite(Number(bodyCursor)) ? Number(bodyCursor) : 0;
+
+    // Helper: Add single file to zip
+    async function addFileToZip(fullPath: string) {
+      try {
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from(bucket)
+          .download(fullPath);
+
+        if (downloadError) {
+          console.error(`Error downloading ${fullPath}:`, downloadError);
+          return;
+        }
+
+        if (fileData) {
+          const arrayBuffer = await fileData.arrayBuffer();
+          zip.file(fullPath, arrayBuffer);
+          fileCount++;
+          totalSize += arrayBuffer.byteLength;
+
+          if (fileCount % 10 === 0) {
+            console.log(
+              `Added ${fileCount} files to zip (${(totalSize / 1024 / 1024).toFixed(2)} MB)`
+            );
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to process ${fullPath}:`, error);
+      }
+    }
+
+    // Recursive function to process all files in a path with time budget
     async function processPath(currentPrefix: string) {
       let offset = 0;
       const limit = 100;
       let hasMore = true;
 
       while (hasMore) {
+        if (Date.now() - startTime > TIME_BUDGET_MS) {
+          console.log("Time budget reached while processing path, stopping early");
+          break;
+        }
+
         const { data: objects, error: listError } = await supabase.storage
           .from(bucket)
           .list(currentPrefix, {
@@ -74,82 +119,171 @@ const handler = async (req: Request): Promise<Response> => {
           break;
         }
 
-        console.log(`Processing ${objects.length} objects in ${currentPrefix || '(root)'} (offset: ${offset})`);
+        console.log(
+          `Processing ${objects.length} objects in ${currentPrefix || "(root)"} (offset: ${offset})`
+        );
 
-        // Process each object
         for (const obj of objects) {
-          const fullPath = currentPrefix ? `${currentPrefix}/${obj.name}` : obj.name;
-          
-          // If it's a folder (id is null), recursively process it
-          if (obj.id === null) {
-            console.log(`Entering folder: ${fullPath}`);
-            await processPath(fullPath);
-            continue;
+          if (Date.now() - startTime > TIME_BUDGET_MS) {
+            console.log("Time budget reached during object processing, stopping early");
+            hasMore = false;
+            break;
           }
 
-          // It's a file, download and add to zip
-          try {
-            const { data: fileData, error: downloadError } = await supabase.storage
-              .from(bucket)
-              .download(fullPath);
+          const fullPath = currentPrefix ? `${currentPrefix}/${obj.name}` : obj.name;
 
-            if (downloadError) {
-              console.error(`Error downloading ${fullPath}:`, downloadError);
-              continue;
-            }
-
-            if (fileData) {
-              const arrayBuffer = await fileData.arrayBuffer();
-              zip.file(fullPath, arrayBuffer);
-              fileCount++;
-              totalSize += arrayBuffer.byteLength;
-              
-              if (fileCount % 10 === 0) {
-                console.log(`Added ${fileCount} files to zip (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
-              }
-            }
-          } catch (error) {
-            console.error(`Failed to process ${fullPath}:`, error);
+          if (obj.id === null) {
+            // Folder
+            await processPath(fullPath);
+          } else {
+            // File
+            await addFileToZip(fullPath);
           }
         }
 
         offset += limit;
-        
         if (objects.length < limit) {
           hasMore = false;
         }
       }
     }
 
-    // Start processing from the root or specified prefix
-    await processPath(prefix);
+    // If a prefix is provided, export that subtree directly (no chunking)
+    if (prefix && prefix.length > 0) {
+      await processPath(prefix);
 
+      if (fileCount === 0) {
+        return new Response(
+          JSON.stringify({ error: "No files found in bucket" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(
+        `Generating zip with ${fileCount} files (${(totalSize / 1024 / 1024).toFixed(2)} MB)`
+      );
+
+      const zipBlob = await zip.generateAsync({
+        type: "arraybuffer",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
+
+      return new Response(zipBlob, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${bucket}${prefix ? `-${prefix.split('/').join('_')}` : ""}-export.zip"`,
+          "Content-Length": zipBlob.byteLength.toString(),
+          "X-Export-Has-More": "false",
+          "X-Export-Next-Offset": "0",
+        },
+      });
+    }
+
+    // No prefix: Chunk by top-level folders to avoid runtime limits
+    let processedFolders = 0;
+    let scannedObjects = 0;
+    const limit = 100;
+    let hasMoreTop = true;
+
+    while (processedFolders < MAX_FOLDERS && hasMoreTop) {
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        console.log("Time budget reached before collecting requested folders");
+        break;
+      }
+
+      const { data: objects, error: listError } = await supabase.storage
+        .from(bucket)
+        .list("", {
+          limit,
+          offset: cursor,
+          sortBy: { column: "name", order: "asc" },
+        });
+
+      if (listError) {
+        console.error("Error listing top-level:", listError);
+        throw new Error(`Failed to list objects: ${listError.message}`);
+      }
+
+      if (!objects || objects.length === 0) {
+        hasMoreTop = false;
+        break;
+      }
+
+      console.log(`Scanning ${objects.length} top-level objects from offset ${cursor}`);
+
+      // Iterate this slice and collect work
+      for (const obj of objects) {
+        if (Date.now() - startTime > TIME_BUDGET_MS) {
+          console.log("Time budget reached during top-level scan, stopping early");
+          break;
+        }
+
+        scannedObjects++;
+        const fullPath = obj.name; // top-level
+
+        if (obj.id === null) {
+          // Folder
+          console.log(`Entering folder (batched): ${fullPath}`);
+          await processPath(fullPath);
+          processedFolders++;
+
+          if (processedFolders >= MAX_FOLDERS) break;
+        } else {
+          // Top-level file
+          await addFileToZip(fullPath);
+        }
+      }
+
+      cursor += objects.length;
+
+      if (objects.length < limit) {
+        hasMoreTop = false;
+      }
+
+      if (processedFolders >= MAX_FOLDERS) break;
+    }
+
+    // If still no files but there might be more, peek to see if more objects exist
+    let hasMore = false;
+    if (hasMoreTop) {
+      const { data: peek } = await supabase.storage
+        .from(bucket)
+        .list("", { limit: 1, offset: cursor, sortBy: { column: "name", order: "asc" } });
+      hasMore = !!(peek && peek.length > 0);
+    }
+
+    // If we found nothing at all, return 404 like before
     if (fileCount === 0) {
-      console.log("No files found in bucket");
+      console.log("No files found in current chunk");
       return new Response(
         JSON.stringify({ error: "No files found in bucket" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Generating zip with ${fileCount} files (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
+    console.log(
+      `Generating zip chunk with ${fileCount} files (${(totalSize / 1024 / 1024).toFixed(2)} MB)`
+    );
 
-    // Generate zip
     const zipBlob = await zip.generateAsync({
       type: "arraybuffer",
       compression: "DEFLATE",
       compressionOptions: { level: 6 },
     });
 
-    console.log(`Zip generated: ${(zipBlob.byteLength / 1024 / 1024).toFixed(2)} MB`);
-
     return new Response(zipBlob, {
       status: 200,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${bucket}-export.zip"`,
+        "Content-Disposition": `attachment; filename="${bucket}-chunk.zip"`,
         "Content-Length": zipBlob.byteLength.toString(),
+        "X-Export-Has-More": hasMoreTop ? "true" : "false",
+        "X-Export-Next-Offset": String(cursor),
+        "X-Export-Processed-Folders": String(processedFolders),
       },
     });
   } catch (error: any) {

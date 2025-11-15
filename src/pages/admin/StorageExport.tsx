@@ -22,40 +22,69 @@ const StorageExport = () => {
       }
 
       const prefix = prefixes[bucket] || "";
+      const chunked = !prefix; // auto-chunk when no prefix provided
+      const maxFolders = 6; // process 6 top-level folders per chunk
 
-      toast.info(`Starting export of ${bucket}${prefix ? `/${prefix}` : ""}...`);
+      toast.info(
+        `Starting export of ${bucket}${prefix ? `/${prefix}` : ""}${chunked ? " (auto-chunked)" : ""}...`
+      );
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/storage-export-zip`,
-        {
+
+      let part = 1;
+      let cursor = 0;
+      let totalFiles = 0;
+      let downloadedAny = false;
+
+      do {
+        const response = await fetch(`${supabaseUrl}/functions/v1/storage-export-zip`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "x-admin-token": token,
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ bucket, prefix }),
-        }
-      );
+          body: JSON.stringify({ bucket, prefix, ...(chunked ? { maxFolders, cursor } : {}) }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Export failed");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Export failed on part ${part}`);
+        }
+
+        // Read continuation headers BEFORE consuming the body
+        const hasMore = response.headers.get("X-Export-Has-More") === "true";
+        const nextOffset = parseInt(response.headers.get("X-Export-Next-Offset") || "0", 10);
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${bucket}${prefix ? `-${(prefix as string).split('/').join('_')}` : ""}${chunked ? `-part-${String(part).padStart(3, "0")}` : ""}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        downloadedAny = true;
+        totalFiles += 1; // we don't know exact file count here, just track parts
+        toast.success(`Downloaded ${chunked ? `part ${part}` : `export`} for ${bucket}`);
+
+        if (chunked && hasMore) {
+          part += 1;
+          cursor = Number.isFinite(nextOffset) ? nextOffset : 0;
+          toast.message(`Continuing export... (${part - 1} part${part - 1 > 1 ? "s" : ""} done)`);
+        } else {
+          break;
+        }
+      } while (true);
+
+      if (!downloadedAny) {
+        throw new Error("No files were downloaded");
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${bucket}${prefix ? `-${(prefix as string).split('/').join('_')}` : ""}-export.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
       setCompleted([...completed, bucket]);
-      toast.success(`${bucket} exported successfully!`);
+      toast.success(`${bucket} export completed${chunked ? ` in ${part} part${part > 1 ? "s" : ""}` : ""}!`);
     } catch (error: any) {
       console.error(`Error exporting ${bucket}:`, error);
       toast.error(`Failed to export ${bucket}: ${error.message}`);
