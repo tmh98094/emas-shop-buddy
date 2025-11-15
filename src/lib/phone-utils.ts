@@ -144,3 +144,23 @@ export function normalizeAndParse(input: string, selectedCode: "+60" | "+65") {
   const parsed = parseE164(normalized);
   return { normalized, ...parsed };
 }
+
+/**
+ * Convert phone number to email format for Supabase auth
+ * @param phone - Phone number in E.164 format (e.g., "+60123456789")
+ * @returns Email format (e.g., "60123456789@jj-emas.app")
+ */
+export function phoneToEmail(phone: string): string {
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  return `${cleanPhone}@jj-emas.app`;
+}
+
+/**
+ * Convert email format back to phone number
+ * @param email - Email in format "60123456789@jj-emas.app"
+ * @returns Phone number with + prefix (e.g., "+60123456789")
+ */
+export function emailToPhone(email: string): string {
+  const phone = email.split('@')[0];
+  return `+${phone}`;
+}
